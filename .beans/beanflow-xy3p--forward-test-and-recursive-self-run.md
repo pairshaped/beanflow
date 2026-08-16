@@ -3,13 +3,12 @@
 title: Forward-test and recursive self-run
 status: todo
 type: task
+priority: normal
 tags:
     - ready-for-agent
 created_at: 2026-08-16T22:23:33Z
 updated_at: 2026-08-16T22:23:33Z
 parent: beanflow-fyu6
-blocked_by:
-    - beanflow-smwy
 ---
 
 ## What to build

@@ -19,6 +19,8 @@ import { discoverBeans } from "../dist/core/discovery.js";
 import { activeRunId, loadRunState, persistRunState } from "../dist/core/runstate.js";
 import { statusOf } from "../dist/core/runstate.js";
 import { parseOperation } from "../dist/core/tool.js";
+import { checkBounds, shouldStop } from "../dist/core/safety.js";
+import { stateDir } from "../dist/core/runstate.js";
 
 export default function (pi: ExtensionAPI) {
   pi.on("agent_settled", async (_event, ctx) => {
@@ -28,6 +30,11 @@ export default function (pi: ExtensionAPI) {
     const state = loadRunState(runId);
     const entries = ctx.sessionManager.getBranch() as SessionEntry[];
     const lastStopReason = lastAssistantStopReason(entries);
+
+    if (shouldStop(checkBounds(state, stateDir(), new Date().toISOString()))) {
+      persistRunState({ ...state, phase: "paused", updatedAt: new Date().toISOString() });
+      return;
+    }
 
     if (isAbortedStopReason(lastStopReason) && state.phase !== "paused") {
       persistRunState({ ...state, phase: "paused", updatedAt: new Date().toISOString() });

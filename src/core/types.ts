@@ -46,6 +46,9 @@ export interface RunState {
   blockers: BlockerReceipt[];
   /** Consecutive no-progress attempts per leaf, keyed by leaf id. */
   attempts: Record<string, number>;
+  /** Optional bounds for an unattended run: max total attempts and a deadline. */
+  retryCeiling?: number;
+  deadline?: string | null;
   /** ISO 8601 timestamps. */
   startedAt: string;
   updatedAt: string;
