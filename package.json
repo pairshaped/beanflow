@@ -4,11 +4,20 @@
   "private": true,
   "type": "module",
   "description": "Beans-driven autonomous feature delivery workflow",
+  "keywords": ["pi-package"],
   "engines": {
     "node": ">=20"
   },
   "dependencies": {
     "yaml": "^2.5.0"
+  },
+  "peerDependencies": {
+    "@earendil-works/pi-coding-agent": "*",
+    "typebox": "*"
+  },
+  "pi": {
+    "extensions": ["./extension"],
+    "skills": ["./skills"]
   },
   "scripts": {
     "build": "tsc -p tsconfig.build.json",
