@@ -3,13 +3,12 @@
 title: Freeze deterministic scope manifest and run status
 status: todo
 type: task
+priority: normal
 tags:
     - ready-for-agent
 created_at: 2026-08-16T22:23:32Z
 updated_at: 2026-08-16T22:23:32Z
 parent: beanflow-0c83
-blocked_by:
-    - beanflow-dqlj
 ---
 
 ## What to build
