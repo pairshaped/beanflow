@@ -1,6 +1,10 @@
 ---
 name: beanflow
-description: Carry a feature through a bounded, audited, autonomous delivery run: requirements, an audited Bean tree, implementation in an isolated worktree, and a reviewable completion or blocker report. Use when the user wants to start, resume, check, or land a beanflow run.
+description: >-
+  Carry a feature through a bounded, audited, autonomous delivery run: requirements,
+  an audited Bean tree, implementation in an isolated worktree, and a reviewable
+  completion or blocker report. Use when the user wants to start, resume, check, or
+  land a beanflow run.
 ---
 
 # Beanflow
