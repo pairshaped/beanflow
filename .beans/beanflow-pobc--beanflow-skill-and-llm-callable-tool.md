@@ -3,13 +3,12 @@
 title: beanflow skill and LLM-callable tool
 status: todo
 type: task
+priority: normal
 tags:
     - ready-for-agent
 created_at: 2026-08-16T22:23:33Z
 updated_at: 2026-08-16T22:23:33Z
 parent: beanflow-obm9
-blocked_by:
-    - beanflow-fpt1
 ---
 
 ## What to build

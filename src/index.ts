@@ -12,3 +12,4 @@ export * from './core/selection.js';
 export * from './core/commit.js';
 export * from './core/blockers.js';
 export * from './core/completion.js';
+export * from './core/continuation.js';

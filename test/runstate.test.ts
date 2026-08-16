@@ -2,7 +2,7 @@ import { mkdtempSync, readFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { afterEach, describe, expect, it } from 'vitest';
-import { loadRunState, persistRunState, stateDir, statusOf } from '../src/core/runstate.js';
+import { activeRunId, armRun, disarmRun, loadRunState, persistRunState, stateDir, statusOf } from '../src/core/runstate.js';
 import type { RunState } from '../src/core/types.js';
 
 const origEnv = process.env.BEANFLOW_STATE_DIR;
@@ -52,5 +52,17 @@ describe('run state persistence', () => {
     const status = statusOf(sampleState());
     expect(status.phase).toBe('running');
     expect(status.selectedLeaf?.id).toBe('a');
+  });
+});
+
+describe('active run marker', () => {
+  it('arms, reports, and disarms the active run', () => {
+    const dir = mkdtempSync(join(tmpdir(), 'beanflow-state-'));
+    process.env.BEANFLOW_STATE_DIR = dir;
+    expect(activeRunId()).toBeNull();
+    armRun('run-9');
+    expect(activeRunId()).toBe('run-9');
+    disarmRun();
+    expect(activeRunId()).toBeNull();
   });
 });

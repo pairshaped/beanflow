@@ -1,7 +1,7 @@
 // Run state persistence and status read. State lives under
 // ~/.local/state/beanflow/ by default, overridable with BEANFLOW_STATE_DIR.
 
-import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { homedir } from 'node:os';
 import { join } from 'node:path';
 import type { BeanRef, BlockerReceipt, RunPhase, RunState } from './types.js';
@@ -26,6 +26,30 @@ export function persistRunState(state: RunState): string {
 
 export function loadRunState(runId: string): RunState {
   return deserializeState(readFileSync(stateFile(runId), 'utf8'));
+}
+
+const ACTIVE_RUN_MARKER = 'active-run.json';
+
+export function activeRunMarkerPath(): string {
+  return join(stateDir(), ACTIVE_RUN_MARKER);
+}
+
+/** Mark a run as active so the extension resumes it across turns and restarts. */
+export function armRun(runId: string): void {
+  mkdirSync(stateDir(), { recursive: true });
+  writeFileSync(activeRunMarkerPath(), `${runId}\n`, 'utf8');
+}
+
+export function disarmRun(): void {
+  const path = activeRunMarkerPath();
+  if (existsSync(path)) rmSync(path);
+}
+
+export function activeRunId(): string | null {
+  const path = activeRunMarkerPath();
+  if (!existsSync(path)) return null;
+  const raw = readFileSync(path, 'utf8').trim();
+  return raw || null;
 }
 
 export interface RunStatus {
