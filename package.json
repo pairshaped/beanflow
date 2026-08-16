@@ -1,0 +1,20 @@
+{
+  "name": "beanflow",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Beans-driven autonomous feature delivery workflow",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "test": "vitest run",
+    "typecheck": "tsc -p tsconfig.json --noEmit"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "typescript": "^5.5.0",
+    "vitest": "^3.0.0"
+  }
+}
