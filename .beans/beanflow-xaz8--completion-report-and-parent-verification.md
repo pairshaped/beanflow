@@ -3,13 +3,12 @@
 title: Completion report and parent verification
 status: todo
 type: task
+priority: normal
 tags:
     - ready-for-agent
 created_at: 2026-08-16T22:23:32Z
 updated_at: 2026-08-16T22:23:32Z
 parent: beanflow-twc8
-blocked_by:
-    - beanflow-5tim
 ---
 
 ## What to build

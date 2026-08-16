@@ -10,3 +10,4 @@ export * from './core/runstate.js';
 export * from './core/worktree.js';
 export * from './core/selection.js';
 export * from './core/commit.js';
+export * from './core/blockers.js';
