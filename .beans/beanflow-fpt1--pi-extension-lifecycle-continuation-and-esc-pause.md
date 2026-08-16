@@ -3,13 +3,12 @@
 title: 'Pi extension: lifecycle continuation and Esc pause'
 status: todo
 type: task
+priority: normal
 tags:
     - ready-for-agent
 created_at: 2026-08-16T22:23:32Z
 updated_at: 2026-08-16T22:23:32Z
 parent: beanflow-obm9
-blocked_by:
-    - beanflow-xaz8
 ---
 
 ## What to build
