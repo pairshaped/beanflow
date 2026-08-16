@@ -8,3 +8,5 @@ export * from './core/audit.js';
 export * from './core/manifest.js';
 export * from './core/runstate.js';
 export * from './core/worktree.js';
+export * from './core/selection.js';
+export * from './core/commit.js';

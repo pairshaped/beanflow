@@ -22,6 +22,8 @@ tags:
 parent: beanflow-twc8
 blocked_by:
     - beanflow-7pq9
+priority: normal
+created_at: 2026-08-16T00:00:00Z
 ---
 
 ## What to build
@@ -41,6 +43,8 @@ Do the thing.
     expect(bean.type).toBe('task');
     expect(bean.parent).toBe('beanflow-twc8');
     expect(bean.blockedBy).toEqual(['beanflow-7pq9']);
+    expect(bean.priority).toBe('normal');
+    expect(bean.createdAt).toBe('2026-08-16T00:00:00Z');
     expect(bean.body).toContain('## What to build');
   });
 

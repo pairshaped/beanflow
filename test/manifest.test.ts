@@ -14,6 +14,8 @@ function bean(id: string, opts: Partial<Bean> = {}): Bean {
     parent: null,
     blockedBy: [],
     body: '',
+    priority: 'normal',
+    createdAt: '2026-08-16T00:00:00Z',
     ...opts,
   };
 }

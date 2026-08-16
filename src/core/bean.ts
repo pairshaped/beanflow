@@ -9,6 +9,8 @@ export interface Bean {
   type: string;
   parent: string | null;
   blockedBy: string[];
+  priority: string;
+  createdAt: string;
   body: string;
 }
 
@@ -26,6 +28,8 @@ interface Frontmatter {
   type?: unknown;
   parent?: unknown;
   blocked_by?: unknown;
+  priority?: unknown;
+  created_at?: unknown;
 }
 
 function asString(v: unknown): string | null {
@@ -62,6 +66,8 @@ export function parseBean(path: string, raw: string): Bean {
     type: asString(frontmatter.type) ?? 'task',
     parent: asString(frontmatter.parent),
     blockedBy: asStringList(frontmatter.blocked_by),
+    priority: asString(frontmatter.priority) ?? 'normal',
+    createdAt: asString(frontmatter.created_at) ?? '',
     body,
   };
 }
