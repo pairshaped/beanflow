@@ -3,11 +3,10 @@
 title: Codex wiring and install docs
 status: todo
 type: task
+priority: normal
 created_at: 2026-08-16T23:30:57Z
 updated_at: 2026-08-16T23:30:57Z
 parent: beanflow-s4hl
-blocked_by:
-    - beanflow-9iul
 ---
 
 ## What to build
