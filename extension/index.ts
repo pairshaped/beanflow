@@ -85,6 +85,17 @@ export default function (pi: ExtensionAPI) {
             return { content: [{ type: "text", text: "No active beanflow run to resume." }], details: {} };
           }
           const state = loadRunState(runId);
+          const tree = discoverBeans(join(_ctx.cwd, ".beans"));
+          if (!eligibleWorkRemains(tree, state.manifest, state)) {
+            const blockerCount = state.blockers.length;
+            const blockerDetail = blockerCount > 0
+              ? ` while ${blockerCount} recorded blocker${blockerCount === 1 ? "" : "s"} remain${blockerCount === 1 ? "s" : ""} unresolved`
+              : "";
+            return {
+              content: [{ type: "text", text: `Beanflow cannot resume: no eligible leaf exists${blockerDetail}.` }],
+              details: {},
+            };
+          }
           if (state.phase === "paused") {
             persistRunState({ ...state, phase: "running", updatedAt: new Date().toISOString() });
           }

@@ -1,7 +1,39 @@
-// Map a plain-language beanflow request to an operation. Users never memorize
-// commands; the tool takes one request string and resolves it here.
+// Map a plain-language beanflow request to an operation and decide whether an
+// active run can resume. Users never memorize commands; the tool takes one
+// request string and resolves it here.
+
+import { eligibleWorkRemains } from './continuation.js';
+import type { BeanTree } from './discovery.js';
+import type { RunState } from './types.js';
 
 export type BeanflowOperation = 'status' | 'resume' | 'refresh' | 'land' | 'unknown';
+
+export interface ResumeDecision {
+  canResume: boolean;
+  state: RunState;
+  message: string;
+}
+
+export function decideResume(state: RunState, tree: BeanTree, resumedAt: string): ResumeDecision {
+  if (!eligibleWorkRemains(tree, state.manifest, state)) {
+    const blockerCount = state.blockers.length;
+    const blockerDetail =
+      blockerCount > 0
+        ? ` while ${blockerCount} recorded blocker${blockerCount === 1 ? '' : 's'} remain${blockerCount === 1 ? 's' : ''} unresolved`
+        : '';
+    return {
+      canResume: false,
+      state,
+      message: `Beanflow cannot resume: no eligible leaf exists${blockerDetail}.`,
+    };
+  }
+
+  return {
+    canResume: true,
+    state: state.phase === 'paused' ? { ...state, phase: 'running', updatedAt: resumedAt } : state,
+    message: 'Resuming the beanflow run.',
+  };
+}
 
 export function parseOperation(text: string): BeanflowOperation {
   const t = text.trim().toLowerCase();

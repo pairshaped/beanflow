@@ -3,9 +3,11 @@
 //   node dist/codex/mcp-server.js
 
 import { createInterface } from 'node:readline';
+import { join } from 'node:path';
 import { pathToFileURL } from 'node:url';
+import { discoverBeans } from '../core/discovery.js';
 import { activeRunId, loadRunState, persistRunState, statusOf } from '../core/runstate.js';
-import { parseOperation } from '../core/tool.js';
+import { decideResume, parseOperation } from '../core/tool.js';
 
 export interface McpRequest {
   jsonrpc: string;
@@ -51,10 +53,9 @@ function runBeanflow(request: string): string {
     case 'resume': {
       if (!runId) return 'No active beanflow run to resume.';
       const state = loadRunState(runId);
-      if (state.phase === 'paused') {
-        persistRunState({ ...state, phase: 'running', updatedAt: new Date().toISOString() });
-      }
-      return 'Resuming the beanflow run.';
+      const decision = decideResume(state, discoverBeans(join(process.cwd(), '.beans')), new Date().toISOString());
+      if (decision.state !== state) persistRunState(decision.state);
+      return decision.message;
     }
     case 'refresh':
       return 'Refresh is an explicit re-freeze: re-discover Beans, re-freeze the manifest from the audited parent, and persist the new state. The agent performs this per the beanflow skill.';
