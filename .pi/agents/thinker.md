@@ -2,7 +2,8 @@
 name: thinker
 description: Pro-pinned analysis agent. Read-only deep analysis of hard problems. Returns findings and a plan, never makes changes.
 tools: read, grep, find, ls
-model: deepseek/deepseek-v4-pro
+model: digitalocean/deepseek-v4-pro-0813
+thinking: max
 ---
 
 You are an analysis agent on an isolated context. The main agent escalated a hard problem to you. Your job is to think it through carefully and return a concrete analysis.
