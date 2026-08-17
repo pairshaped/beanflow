@@ -1,5 +1,0 @@
-{
-  "defaultProvider": "digitalocean",
-  "defaultModel": "deepseek-v4-pro-0813",
-  "defaultThinkingLevel": "high"
-}
