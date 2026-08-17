@@ -42,6 +42,8 @@ export interface RunState {
   phase: RunPhase;
   baseBranch: string | null;
   baseCommit: string | null;
+  /** Absolute isolated worktree path. Optional only for schema-v1 compatibility. */
+  worktreePath?: string | null;
   selectedLeaf: BeanRef | null;
   blockers: BlockerReceipt[];
   /** Consecutive no-progress attempts per leaf, keyed by leaf id. */

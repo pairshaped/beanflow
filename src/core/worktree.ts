@@ -4,7 +4,7 @@
 
 import { execFileSync } from 'node:child_process';
 import { existsSync, readFileSync, writeFileSync } from 'node:fs';
-import { join } from 'node:path';
+import { isAbsolute, join, resolve } from 'node:path';
 import { FatalError } from './failure.js';
 
 function git(repoDir: string, args: string[]): string {
@@ -84,15 +84,16 @@ export function setupIsolatedRun(repoDir: string, policy: RepoPolicy): RunSetup 
   }
   checkBaseClean(repoDir);
   const { baseBranch, baseCommit } = resolveBase(repoDir, policy.baseBranch);
-  if (existsSync(policy.worktreeDir)) {
-    throw new FatalError(`worktree path already exists: ${policy.worktreeDir}`);
+  const worktreePath = isAbsolute(policy.worktreeDir) ? policy.worktreeDir : resolve(repoDir, policy.worktreeDir);
+  if (existsSync(worktreePath)) {
+    throw new FatalError(`worktree path already exists: ${worktreePath}`);
   }
   if (policy.ignorePattern) ensureGitignoreEntry(repoDir, policy.ignorePattern);
-  git(repoDir, ['worktree', 'add', '-b', policy.branchName, policy.worktreeDir, baseCommit]);
+  git(repoDir, ['worktree', 'add', '-b', policy.branchName, worktreePath, baseCommit]);
   return {
     baseBranch,
     baseCommit,
     branchName: policy.branchName,
-    worktreePath: policy.worktreeDir,
+    worktreePath,
   };
 }

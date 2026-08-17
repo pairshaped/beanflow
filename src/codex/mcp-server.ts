@@ -6,7 +6,7 @@ import { createInterface } from 'node:readline';
 import { join } from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { discoverBeans } from '../core/discovery.js';
-import { activeRunId, loadRunState, persistRunState, statusOf } from '../core/runstate.js';
+import { activeRunId, isRunWorktree, loadRunState, persistRunState, runWorktreePath, statusOf } from '../core/runstate.js';
 import { decideResume, parseOperation } from '../core/tool.js';
 
 export interface McpRequest {
@@ -53,6 +53,9 @@ function runBeanflow(request: string): string {
     case 'resume': {
       if (!runId) return 'No active beanflow run to resume.';
       const state = loadRunState(runId);
+      if (!isRunWorktree(state, process.cwd())) {
+        return `Beanflow cannot resume from this directory; the active run belongs to ${runWorktreePath(state, process.cwd())}.`;
+      }
       const decision = decideResume(state, discoverBeans(join(process.cwd(), '.beans')), new Date().toISOString());
       if (decision.state !== state) persistRunState(decision.state);
       return decision.message;

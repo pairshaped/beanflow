@@ -23,7 +23,7 @@ export function decideResume(state: RunState, tree: BeanTree, resumedAt: string)
         : '';
     return {
       canResume: false,
-      state,
+      state: state.phase === 'running' ? { ...state, phase: 'paused', updatedAt: resumedAt } : state,
       message: `Beanflow cannot resume: no eligible leaf exists${blockerDetail}.`,
     };
   }

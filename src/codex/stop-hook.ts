@@ -8,7 +8,7 @@ import { join } from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { decideContinuation, eligibleWorkRemains } from '../core/continuation.js';
 import { discoverBeans } from '../core/discovery.js';
-import { activeRunId, loadRunState, persistRunState, stateDir } from '../core/runstate.js';
+import { activeRunId, isRunWorktree, loadRunState, persistRunState, stateDir } from '../core/runstate.js';
 import { checkBounds, shouldStop } from '../core/safety.js';
 
 export interface StopHookInput {
@@ -30,16 +30,23 @@ export function decideStopHook(input: StopHookInput): StopHookDecision {
     if (!runId) return { block: false };
 
     const state = loadRunState(runId);
+    const cwd = input.cwd ?? process.cwd();
+    if (!isRunWorktree(state, cwd)) return { block: false };
+
     if (shouldStop(checkBounds(state, stateDir(), new Date().toISOString()))) {
       persistRunState({ ...state, phase: 'paused', updatedAt: new Date().toISOString() });
       return { block: false };
     }
 
-    const beansDir = join(input.cwd ?? process.cwd(), '.beans');
+    const beansDir = join(cwd, '.beans');
     if (!existsSync(beansDir)) return { block: false };
 
     const tree = discoverBeans(beansDir);
     const eligible = eligibleWorkRemains(tree, state.manifest, state);
+    if (!eligible && state.phase === 'running') {
+      persistRunState({ ...state, phase: 'paused', updatedAt: new Date().toISOString() });
+      return { block: false };
+    }
     const decision = decideContinuation({ phase: state.phase, lastStopReason: null, eligibleWorkRemains: eligible });
     if (decision.shouldContinue) {
       return { block: true, reason: 'Continue the beanflow run: implement the next eligible leaf.' };

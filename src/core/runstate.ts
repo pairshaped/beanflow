@@ -3,7 +3,7 @@
 
 import { existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { homedir } from 'node:os';
-import { join } from 'node:path';
+import { dirname, isAbsolute, join, resolve } from 'node:path';
 import type { BeanRef, BlockerReceipt, RunPhase, RunState } from './types.js';
 import { deserializeState, serializeState } from './state.js';
 
@@ -26,6 +26,17 @@ export function persistRunState(state: RunState): string {
 
 export function loadRunState(runId: string): RunState {
   return deserializeState(readFileSync(stateFile(runId), 'utf8'));
+}
+
+/** Resolve the isolated worktree that owns a run, including legacy states. */
+export function runWorktreePath(state: RunState, fallbackCwd: string): string {
+  if (state.worktreePath) return resolve(state.worktreePath);
+  if (isAbsolute(state.parentBean.path)) return dirname(dirname(state.parentBean.path));
+  return resolve(fallbackCwd);
+}
+
+export function isRunWorktree(state: RunState, cwd: string): boolean {
+  return resolve(cwd) === runWorktreePath(state, cwd);
 }
 
 const ACTIVE_RUN_MARKER = 'active-run.json';

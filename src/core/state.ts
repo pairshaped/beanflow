@@ -52,6 +52,7 @@ function isRunState(x: unknown): x is RunState {
     isRunPhase(x.phase) &&
     (x.baseBranch === null || isString(x.baseBranch)) &&
     (x.baseCommit === null || isString(x.baseCommit)) &&
+    (x.worktreePath === undefined || x.worktreePath === null || isString(x.worktreePath)) &&
     (x.selectedLeaf === null || isBeanRef(x.selectedLeaf)) &&
     Array.isArray(x.blockers) &&
     x.blockers.every(isBlockerReceipt) &&

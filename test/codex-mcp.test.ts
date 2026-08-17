@@ -3,7 +3,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { beforeAll, describe, expect, it } from 'vitest';
 import { handleRequest, type McpRequest } from '../src/codex/mcp-server.js';
-import { armRun, disarmRun, persistRunState } from '../src/core/runstate.js';
+import { armRun, disarmRun, loadRunState, persistRunState } from '../src/core/runstate.js';
 import type { BeanRef, RunState } from '../src/core/types.js';
 
 beforeAll(() => {
@@ -68,7 +68,7 @@ describe('Codex MCP server', () => {
         frozenAt: '2026-08-17T00:00:00Z',
         executableLeaves: [leaf],
       },
-      phase: 'paused',
+      phase: 'running',
       baseBranch: 'main',
       baseCommit: 'abc123',
       selectedLeaf: null,
@@ -86,6 +86,7 @@ describe('Codex MCP server', () => {
       const resp = parse(handleRequest(req(4, 'tools/call', { name: 'beanflow', arguments: { request: 'resume' } })))!;
       const text = (resp.result as { content: { text: string }[] }).content[0].text;
       expect(text).toBe('Beanflow cannot resume: no eligible leaf exists while 1 recorded blocker remains unresolved.');
+      expect(loadRunState(state.runId).phase).toBe('paused');
     } finally {
       process.chdir(originalCwd);
       disarmRun();

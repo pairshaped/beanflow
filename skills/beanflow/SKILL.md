@@ -29,13 +29,16 @@ unrelated work.
    duplicate, oversized, or judgment-dependent leaves. Mark ready-for-agent only
    after the audit passes. Present the tree and order to the owner.
 5. **Isolated run setup** - On an explicit start request, create a branch and
-   worktree, record the base branch and commit, freeze a manifest, and stop on a
-   dirty or ambiguous base. Store state under `~/.local/state/beanflow/`.
+   worktree, record its absolute path plus the base branch and commit, freeze a
+   manifest, and stop on a dirty or ambiguous base. Store state under
+   `~/.local/state/beanflow/`. Continue the run only from that worktree.
 6. **Autonomous execution** - Select one ready leaf (dependency order, then
    priority, then creation order). Implement only its scope. Verify, delete the
    Bean, and commit atomically. Never push. Record blockers with evidence and
-   continue with independent leaves. Esc pauses; a hard stop, retry ceiling, or
-   deadline bounds the run.
+   continue with independent leaves. When no eligible leaf remains, pause instead
+   of polling or auto-continuing; an explicit resume may restart the run after its
+   state changes. Esc pauses; a hard stop, retry ceiling, or deadline bounds the
+   run.
 7. **Completion** - Run parent-level verification and produce a report of
    completed Beans and commits, verification evidence, remaining blockers, and
    owner questions. Delete the parent only when every child is complete and

@@ -3,7 +3,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { afterAll, afterEach, beforeAll, describe, expect, it } from 'vitest';
 import { decideStopHook } from '../src/codex/stop-hook.js';
-import { armRun, disarmRun, persistRunState, stateDir } from '../src/core/runstate.js';
+import { armRun, disarmRun, loadRunState, persistRunState, stateDir } from '../src/core/runstate.js';
 import { createHardStop, removeHardStop } from '../src/core/safety.js';
 import type { RunState } from '../src/core/types.js';
 
@@ -99,6 +99,47 @@ describe('Codex Stop hook', () => {
     const decision = decideStopHook({ hook_event_name: 'Stop', cwd: repo });
     expect(decision.block).toBe(true);
     expect(decision.reason).toMatch(/Continue the beanflow run/);
+  });
+
+  it('does not continue a run from a different working directory', () => {
+    const worktree = makeRepo();
+    const otherCheckout = makeRepo();
+    const state = runState();
+    state.parentBean.path = join(worktree, '.beans', 'e--build-a-widget.md');
+    state.manifest.parentBean.path = state.parentBean.path;
+    persistRunState(state);
+    armRun('r1');
+
+    expect(decideStopHook({ hook_event_name: 'Stop', cwd: otherCheckout }).block).toBe(false);
+  });
+
+  it('pauses the run when every remaining leaf is blocked', () => {
+    const repo = makeRepo();
+    const state = runState({
+      blockers: [
+        {
+          leaf: { id: 'a', path: '.beans/a.md', title: 'A' },
+          evidence: 'Owner input needed',
+          requiredDecision: 'Choose one',
+          recordedAt: 't1',
+        },
+      ],
+    });
+    persistRunState(state);
+    armRun('r1');
+
+    expect(decideStopHook({ hook_event_name: 'Stop', cwd: repo }).block).toBe(false);
+    expect(loadRunState('r1').phase).toBe('paused');
+  });
+
+  it('pauses the run when every manifest leaf is complete', () => {
+    const repo = makeRepo();
+    const state = runState({ manifest: { ...runState().manifest, executableLeaves: [] } });
+    persistRunState(state);
+    armRun('r1');
+
+    expect(decideStopHook({ hook_event_name: 'Stop', cwd: repo }).block).toBe(false);
+    expect(loadRunState('r1').phase).toBe('paused');
   });
 
   it('pauses instead of blocking when a bound is exceeded', () => {

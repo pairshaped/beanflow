@@ -7,7 +7,7 @@
 
 import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
 import { Type } from "typebox";
-import { join } from "node:path";
+import { dirname, isAbsolute, join, resolve } from "node:path";
 import {
   decideContinuation,
   eligibleWorkRemains,
@@ -22,12 +22,30 @@ import { parseOperation } from "../dist/core/tool.js";
 import { checkBounds, shouldStop } from "../dist/core/safety.js";
 import { stateDir } from "../dist/core/runstate.js";
 
+function runWorktreePath(
+  state: { worktreePath?: string | null; parentBean: { path: string } },
+  fallbackCwd: string,
+): string {
+  if (state.worktreePath) return resolve(state.worktreePath);
+  if (isAbsolute(state.parentBean.path)) return dirname(dirname(state.parentBean.path));
+  return resolve(fallbackCwd);
+}
+
+function isRunWorktree(
+  state: { worktreePath?: string | null; parentBean: { path: string } },
+  cwd: string,
+): boolean {
+  return resolve(cwd) === runWorktreePath(state, cwd);
+}
+
 export default function (pi: ExtensionAPI) {
   pi.on("agent_settled", async (_event, ctx) => {
     const runId = activeRunId();
     if (!runId) return;
 
     const state = loadRunState(runId);
+    if (!isRunWorktree(state, ctx.cwd)) return;
+
     const entries = ctx.sessionManager.getBranch() as SessionEntry[];
     const lastStopReason = lastAssistantStopReason(entries);
 
@@ -43,6 +61,10 @@ export default function (pi: ExtensionAPI) {
 
     const tree = discoverBeans(join(ctx.cwd, ".beans"));
     const eligible = eligibleWorkRemains(tree, state.manifest, state);
+    if (!eligible && state.phase === "running") {
+      persistRunState({ ...state, phase: "paused", updatedAt: new Date().toISOString() });
+      return;
+    }
     const decision = decideContinuation({
       phase: state.phase,
       lastStopReason,
@@ -85,8 +107,17 @@ export default function (pi: ExtensionAPI) {
             return { content: [{ type: "text", text: "No active beanflow run to resume." }], details: {} };
           }
           const state = loadRunState(runId);
+          if (!isRunWorktree(state, _ctx.cwd)) {
+            return {
+              content: [{ type: "text", text: `Beanflow cannot resume from this directory; the active run belongs to ${runWorktreePath(state, _ctx.cwd)}.` }],
+              details: {},
+            };
+          }
           const tree = discoverBeans(join(_ctx.cwd, ".beans"));
           if (!eligibleWorkRemains(tree, state.manifest, state)) {
+            if (state.phase === "running") {
+              persistRunState({ ...state, phase: "paused", updatedAt: new Date().toISOString() });
+            }
             const blockerCount = state.blockers.length;
             const blockerDetail = blockerCount > 0
               ? ` while ${blockerCount} recorded blocker${blockerCount === 1 ? "" : "s"} remain${blockerCount === 1 ? "s" : ""} unresolved`
