@@ -33,7 +33,9 @@ unrelated work.
    Invoke the `beanflow` tool with the audited epic id and base branch so it
    records the absolute worktree path plus the base commit, audits and freezes
    the manifest, persists the active run under `~/.local/state/beanflow/`, and
-   selects the first ready leaf. Stop on a dirty or ambiguous worktree.
+   selects the first ready leaf. When the Codex server is rooted in a different
+   checkout, include `in worktree /absolute/path` so beanflow validates the
+   intended checkout. Stop on a dirty or ambiguous worktree.
 6. **Autonomous execution** - Select one ready leaf (dependency order, then
    priority, then creation order). Implement only its scope. Verify, delete the
    Bean, and commit atomically. Never push. Record blockers with evidence and

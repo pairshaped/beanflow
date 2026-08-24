@@ -4,7 +4,8 @@
 
 import { createInterface } from 'node:readline';
 import { execFileSync } from 'node:child_process';
-import { join } from 'node:path';
+import { realpathSync } from 'node:fs';
+import { isAbsolute, join } from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { auditLeaf } from '../core/audit.js';
 import { discoverBeans } from '../core/discovery.js';
@@ -25,13 +26,13 @@ export interface McpRequest {
 const TOOL = {
   name: 'beanflow',
   description:
-    'Drive a Beanflow run with a plain-language request: start from an audited current worktree, check status, resume, refresh the manifest, or land.',
+    'Drive a Beanflow run with a plain-language request: start from an audited current or explicitly named worktree, check status, resume, refresh the manifest, or land.',
   inputSchema: {
     type: 'object',
     properties: {
       request: {
         type: 'string',
-        description: "Plain-language request, e.g. 'start epic beanflow-1234 with base branch main', 'show status', 'resume', 'refresh', or 'land'.",
+        description: "Plain-language request, e.g. 'start epic beanflow-1234 with base branch main in worktree /absolute/path', 'show status', 'resume', 'refresh', or 'land'.",
       },
     },
     required: ['request'],
@@ -55,8 +56,13 @@ function requestedParentId(request: string): string | null {
   return requestValue(request, '(?:epic|parent|bean)');
 }
 
-function git(args: string[]): string {
-  return execFileSync('git', args, { encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'] }).trim();
+function requestedWorktreePath(request: string): string | null {
+  const match = request.match(/\bworktree\s+(?:"([^"]+)"|'([^']+)'|(\S+))/i);
+  return match?.[1] ?? match?.[2] ?? match?.[3] ?? null;
+}
+
+function git(args: string[], cwd: string): string {
+  return execFileSync('git', args, { cwd, encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'] }).trim();
 }
 
 function startFromCurrentWorktree(request: string): string {
@@ -65,18 +71,29 @@ function startFromCurrentWorktree(request: string): string {
   if (!parentId) return 'Beanflow cannot start: specify the audited epic Bean id.';
   const baseBranch = requestValue(request, '(?:base|target)');
   if (!baseBranch) return 'Beanflow cannot start: specify the base branch.';
-  if (git(['status', '--porcelain']) !== '') {
-    return 'Beanflow cannot start: the current worktree is dirty.';
+
+  const requestedPath = requestedWorktreePath(request);
+  if (requestedPath && !isAbsolute(requestedPath)) {
+    return 'Beanflow cannot start: the named worktree path must be absolute.';
+  }
+  let worktreePath: string;
+  try {
+    const candidate = requestedPath ?? process.cwd();
+    worktreePath = realpathSync(git(['rev-parse', '--show-toplevel'], candidate));
+  } catch {
+    return `Beanflow cannot start: ${requestedPath ? `the named worktree ${requestedPath}` : 'the current directory'} is not a Git worktree.`;
+  }
+  if (git(['status', '--porcelain'], worktreePath) !== '') {
+    return `Beanflow cannot start: the ${requestedPath ? 'named' : 'current'} worktree is dirty.`;
   }
 
-  const worktreePath = git(['rev-parse', '--show-toplevel']);
-  const branchName = git(['symbolic-ref', '--short', 'HEAD']);
+  const branchName = git(['symbolic-ref', '--short', 'HEAD'], worktreePath);
   if (branchName === baseBranch) {
     return 'Beanflow cannot start: the current checkout is the base branch, not an isolated feature worktree.';
   }
   let baseCommit: string;
   try {
-    baseCommit = git(['rev-parse', baseBranch]);
+    baseCommit = git(['rev-parse', baseBranch], worktreePath);
   } catch {
     return `Beanflow cannot start: base branch ${baseBranch} does not resolve.`;
   }

@@ -112,6 +112,57 @@ describe('Codex MCP server', () => {
     }
   });
 
+  it('starts from an explicitly named clean worktree when the server cwd is dirty', () => {
+    const repo = mkdtempSync(join(tmpdir(), 'beanflow-mcp-explicit-'));
+    const worktree = join(repo, 'feature-worktree');
+    mkdirSync(join(repo, '.beans'));
+    writeFileSync(
+      join(repo, '.beans', 'test-epic.md'),
+      `---\n# test-epic\ntitle: Test epic\nstatus: in-progress\ntype: epic\ncreated_at: 2026-08-17T00:00:00Z\nupdated_at: 2026-08-17T00:00:00Z\n---\n`,
+    );
+    writeFileSync(
+      join(repo, '.beans', 'test-leaf.md'),
+      `---\n# test-leaf\ntitle: Test leaf\nstatus: todo\ntype: task\nparent: test-epic\ncreated_at: 2026-08-17T00:00:00Z\nupdated_at: 2026-08-17T00:00:00Z\n---\n\n## What to build\n\nImplement one bounded behavior with enough context for autonomous work.\n\n## Acceptance criteria\n\n- [ ] The behavior works.\n\n## Verification\n\nRun the focused test.\n\n## Out of scope\n\nDo not change unrelated behavior.\n`,
+    );
+    writeFileSync(join(repo, 'tracked'), 'clean\n');
+    execFileSync('git', ['init', '-b', 'main'], { cwd: repo });
+    execFileSync('git', ['config', 'user.email', 'dave@rapin.com'], { cwd: repo });
+    execFileSync('git', ['config', 'user.name', 'Dave Rapin'], { cwd: repo });
+    execFileSync('git', ['add', '.'], { cwd: repo });
+    execFileSync('git', ['commit', '-m', 'base'], { cwd: repo });
+    execFileSync('git', ['worktree', 'add', '-b', 'f/test-run', worktree, 'main'], { cwd: repo });
+    writeFileSync(join(repo, 'tracked'), 'dirty\n');
+
+    const originalCwd = process.cwd();
+    process.chdir(repo);
+    try {
+      const resp = parse(handleRequest(req(32, 'tools/call', {
+        name: 'beanflow',
+        arguments: {
+          request: `start epic test-epic with base branch main in worktree ${worktree}`,
+        },
+      })))!;
+      const text = (resp.result as { content: { text: string }[] }).content[0].text;
+      expect(text).toMatch(/Started Beanflow run/);
+      expect(loadRunState(activeRunId()!).worktreePath).toBe(realpathSync(worktree));
+
+      disarmRun();
+      writeFileSync(join(repo, 'tracked'), 'clean\n');
+      writeFileSync(join(worktree, 'tracked'), 'dirty feature\n');
+      const dirtyResp = parse(handleRequest(req(33, 'tools/call', {
+        name: 'beanflow',
+        arguments: {
+          request: `start epic test-epic with base branch main in worktree ${worktree}`,
+        },
+      })))!;
+      const dirtyText = (dirtyResp.result as { content: { text: string }[] }).content[0].text;
+      expect(dirtyText).toMatch(/named worktree is dirty/);
+    } finally {
+      process.chdir(originalCwd);
+      disarmRun();
+    }
+  });
+
   it('refuses to resume when every remaining leaf has a recorded blocker', () => {
     const cwd = mkdtempSync(join(tmpdir(), 'beanflow-mcp-project-'));
     const beansDir = join(cwd, '.beans');
