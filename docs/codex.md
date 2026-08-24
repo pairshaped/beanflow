@@ -2,6 +2,10 @@
 
 Beanflow runs on Codex through three mechanisms: a shared skill, an MCP tool, and a Stop continuation hook.
 
+The MCP tool can bootstrap a run from the current clean feature worktree after
+the Bean tree is audited. A start request names the epic and base branch, for
+example: `start epic beanflow-1234 with base branch main`.
+
 ## Install
 
 1. Build the package: `pnpm build` (compiles `src/codex/` to `dist/codex/`).

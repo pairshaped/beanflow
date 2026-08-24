@@ -29,9 +29,11 @@ unrelated work.
    duplicate, oversized, or judgment-dependent leaves. Mark ready-for-agent only
    after the audit passes. Present the tree and order to the owner.
 5. **Isolated run setup** - On an explicit start request, create a branch and
-   worktree, record its absolute path plus the base branch and commit, freeze a
-   manifest, and stop on a dirty or ambiguous base. Store state under
-   `~/.local/state/beanflow/`. Continue the run only from that worktree.
+   worktree, or adopt the clean isolated worktree the owner already requested.
+   Invoke the `beanflow` tool with the audited epic id and base branch so it
+   records the absolute worktree path plus the base commit, audits and freezes
+   the manifest, persists the active run under `~/.local/state/beanflow/`, and
+   selects the first ready leaf. Stop on a dirty or ambiguous worktree.
 6. **Autonomous execution** - Select one ready leaf (dependency order, then
    priority, then creation order). Implement only its scope. Verify, delete the
    Bean, and commit atomically. Never push. Record blockers with evidence and
@@ -49,5 +51,6 @@ unrelated work.
 
 ## Operations
 
-Use the `beanflow` tool for status, resume, manifest-refresh, and landing. Users
-interact in plain language and do not memorize commands.
+Use the `beanflow` tool for start, status, resume, manifest-refresh, and landing.
+Starting requires the audited epic Bean id and base branch. Users interact in
+plain language and do not memorize commands.

@@ -1,9 +1,10 @@
-import { mkdirSync, mkdtempSync, writeFileSync } from 'node:fs';
+import { execFileSync } from 'node:child_process';
+import { mkdirSync, mkdtempSync, realpathSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { beforeAll, describe, expect, it } from 'vitest';
 import { handleRequest, type McpRequest } from '../src/codex/mcp-server.js';
-import { armRun, disarmRun, loadRunState, persistRunState } from '../src/core/runstate.js';
+import { activeRunId, armRun, disarmRun, loadRunState, persistRunState } from '../src/core/runstate.js';
 import type { BeanRef, RunState } from '../src/core/types.js';
 
 beforeAll(() => {
@@ -48,6 +49,67 @@ describe('Codex MCP server', () => {
     const content = (resp.result as { content: { type: string; text: string }[] }).content;
     expect(content[0].type).toBe('text');
     expect(content[0].text).toMatch(/No active beanflow run/);
+  });
+
+  it('starts from a clean audited feature worktree', () => {
+    const cwd = mkdtempSync(join(tmpdir(), 'beanflow-mcp-start-'));
+    mkdirSync(join(cwd, '.beans'));
+    writeFileSync(
+      join(cwd, '.beans', 'test-epic.md'),
+      `---\n# test-epic\ntitle: Test epic\nstatus: in-progress\ntype: epic\ncreated_at: 2026-08-17T00:00:00Z\nupdated_at: 2026-08-17T00:00:00Z\n---\n`,
+    );
+    writeFileSync(
+      join(cwd, '.beans', 'test-leaf.md'),
+      `---\n# test-leaf\ntitle: Test leaf\nstatus: todo\ntype: task\nparent: test-epic\ncreated_at: 2026-08-17T00:00:00Z\nupdated_at: 2026-08-17T00:00:00Z\n---\n\n## What to build\n\nImplement one bounded behavior with enough context for autonomous work.\n\n## Acceptance criteria\n\n- [ ] The behavior works.\n\n## Verification\n\nRun the focused test.\n\n## Out of scope\n\nDo not change unrelated behavior.\n`,
+    );
+    execFileSync('git', ['init', '-b', 'main'], { cwd });
+    execFileSync('git', ['config', 'user.email', 'dave@rapin.com'], { cwd });
+    execFileSync('git', ['config', 'user.name', 'Dave Rapin'], { cwd });
+    execFileSync('git', ['add', '.'], { cwd });
+    execFileSync('git', ['commit', '-m', 'base'], { cwd });
+    execFileSync('git', ['switch', '-c', 'f/test-run'], { cwd });
+
+    const originalCwd = process.cwd();
+    process.chdir(cwd);
+    try {
+      const resp = parse(handleRequest(req(30, 'tools/call', {
+        name: 'beanflow',
+        arguments: { request: 'start epic test-epic with base branch main' },
+      })))!;
+      const text = (resp.result as { content: { text: string }[] }).content[0].text;
+      expect(text).toMatch(/Started Beanflow run/);
+      expect(text).toMatch(/selected test-leaf/);
+      const runId = activeRunId();
+      expect(runId).not.toBeNull();
+      expect(loadRunState(runId!).worktreePath).toBe(realpathSync(cwd));
+    } finally {
+      process.chdir(originalCwd);
+      disarmRun();
+    }
+  });
+
+  it('refuses to start from a dirty worktree', () => {
+    const cwd = mkdtempSync(join(tmpdir(), 'beanflow-mcp-dirty-'));
+    execFileSync('git', ['init', '-b', 'main'], { cwd });
+    execFileSync('git', ['config', 'user.email', 'dave@rapin.com'], { cwd });
+    execFileSync('git', ['config', 'user.name', 'Dave Rapin'], { cwd });
+    writeFileSync(join(cwd, 'tracked'), 'clean\n');
+    execFileSync('git', ['add', '.'], { cwd });
+    execFileSync('git', ['commit', '-m', 'base'], { cwd });
+    execFileSync('git', ['switch', '-c', 'f/test-run'], { cwd });
+    writeFileSync(join(cwd, 'tracked'), 'dirty\n');
+
+    const originalCwd = process.cwd();
+    process.chdir(cwd);
+    try {
+      const resp = parse(handleRequest(req(31, 'tools/call', {
+        name: 'beanflow',
+        arguments: { request: 'start epic test-epic with base branch main' },
+      })))!;
+      expect((resp.result as { content: { text: string }[] }).content[0].text).toMatch(/worktree is dirty/);
+    } finally {
+      process.chdir(originalCwd);
+    }
   });
 
   it('refuses to resume when every remaining leaf has a recorded blocker', () => {

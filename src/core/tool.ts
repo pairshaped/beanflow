@@ -6,7 +6,7 @@ import { eligibleWorkRemains } from './continuation.js';
 import type { BeanTree } from './discovery.js';
 import type { RunState } from './types.js';
 
-export type BeanflowOperation = 'status' | 'resume' | 'refresh' | 'land' | 'unknown';
+export type BeanflowOperation = 'start' | 'status' | 'resume' | 'refresh' | 'land' | 'unknown';
 
 export interface ResumeDecision {
   canResume: boolean;
@@ -38,6 +38,7 @@ export function decideResume(state: RunState, tree: BeanTree, resumedAt: string)
 export function parseOperation(text: string): BeanflowOperation {
   const t = text.trim().toLowerCase();
   if (!t) return 'unknown';
+  if (/\bstart\b|\bbegin\b|\bbootstrap\b|\badopt (?:this|the) worktree\b/.test(t)) return 'start';
   if (/\bstatus\b|\bprogress\b|\bwhere are we\b/.test(t)) return 'status';
   if (/\bresume\b|\bcontinue\b|\bkeep going\b|\bcarry on\b/.test(t)) return 'resume';
   if (/\brefresh\b|\bre-?freeze\b|\brefreeze\b|\bnew child\b|\bupdate manifest\b/.test(t)) return 'refresh';

@@ -3,11 +3,17 @@
 //   node dist/codex/mcp-server.js
 
 import { createInterface } from 'node:readline';
+import { execFileSync } from 'node:child_process';
 import { join } from 'node:path';
 import { pathToFileURL } from 'node:url';
+import { auditLeaf } from '../core/audit.js';
 import { discoverBeans } from '../core/discovery.js';
+import { freezeManifest } from '../core/manifest.js';
 import { activeRunId, isRunWorktree, loadRunState, persistRunState, runWorktreePath, statusOf } from '../core/runstate.js';
+import { armRun } from '../core/runstate.js';
+import { selectNextLeaf } from '../core/selection.js';
 import { decideResume, parseOperation } from '../core/tool.js';
+import type { RunState } from '../core/types.js';
 
 export interface McpRequest {
   jsonrpc: string;
@@ -19,13 +25,13 @@ export interface McpRequest {
 const TOOL = {
   name: 'beanflow',
   description:
-    'Drive a Beanflow run with a plain-language request: check status, resume, refresh the manifest, or land.',
+    'Drive a Beanflow run with a plain-language request: start from an audited current worktree, check status, resume, refresh the manifest, or land.',
   inputSchema: {
     type: 'object',
     properties: {
       request: {
         type: 'string',
-        description: "Plain-language request, e.g. 'show status', 'resume', 'refresh', or 'land'.",
+        description: "Plain-language request, e.g. 'start epic beanflow-1234 with base branch main', 'show status', 'resume', 'refresh', or 'land'.",
       },
     },
     required: ['request'],
@@ -40,10 +46,88 @@ function error(id: McpRequest['id'], code: number, message: string): string {
   return JSON.stringify({ jsonrpc: '2.0', id, error: { code, message } });
 }
 
+function requestValue(request: string, label: string): string | null {
+  const match = request.match(new RegExp(`\\b${label}\\s+(?:branch\\s+)?([A-Za-z0-9._/-]+)`, 'i'));
+  return match?.[1] ?? null;
+}
+
+function requestedParentId(request: string): string | null {
+  return requestValue(request, '(?:epic|parent|bean)');
+}
+
+function git(args: string[]): string {
+  return execFileSync('git', args, { encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'] }).trim();
+}
+
+function startFromCurrentWorktree(request: string): string {
+  if (activeRunId()) return 'Beanflow cannot start: another run is already active.';
+  const parentId = requestedParentId(request);
+  if (!parentId) return 'Beanflow cannot start: specify the audited epic Bean id.';
+  const baseBranch = requestValue(request, '(?:base|target)');
+  if (!baseBranch) return 'Beanflow cannot start: specify the base branch.';
+  if (git(['status', '--porcelain']) !== '') {
+    return 'Beanflow cannot start: the current worktree is dirty.';
+  }
+
+  const worktreePath = git(['rev-parse', '--show-toplevel']);
+  const branchName = git(['symbolic-ref', '--short', 'HEAD']);
+  if (branchName === baseBranch) {
+    return 'Beanflow cannot start: the current checkout is the base branch, not an isolated feature worktree.';
+  }
+  let baseCommit: string;
+  try {
+    baseCommit = git(['rev-parse', baseBranch]);
+  } catch {
+    return `Beanflow cannot start: base branch ${baseBranch} does not resolve.`;
+  }
+
+  const now = new Date().toISOString();
+  const tree = discoverBeans(join(worktreePath, '.beans'));
+  let manifest;
+  try {
+    manifest = freezeManifest(tree, parentId, now);
+  } catch (err) {
+    return `Beanflow cannot start: ${(err as Error).message}`;
+  }
+  const failures = manifest.executableLeaves
+    .map((leaf) => auditLeaf(tree.byId.get(leaf.id)!, tree))
+    .filter((audit) => !audit.passed);
+  if (failures.length > 0) {
+    const detail = failures
+      .map((audit) => `${audit.leaf.id}: ${audit.findings.filter((finding) => !finding.pass).map((finding) => finding.check).join(', ')}`)
+      .join('; ');
+    return `Beanflow cannot start: the manifest audit failed (${detail}).`;
+  }
+
+  const leaves = manifest.executableLeaves.map((leaf) => tree.byId.get(leaf.id)!);
+  const selected = selectNextLeaf(leaves, new Set(), new Set());
+  const runId = `${parentId}-${Date.now()}`;
+  const state: RunState = {
+    schemaVersion: 1,
+    runId,
+    parentBean: manifest.parentBean,
+    manifest,
+    phase: 'running',
+    baseBranch,
+    baseCommit,
+    worktreePath,
+    selectedLeaf: selected ? manifest.executableLeaves.find((leaf) => leaf.id === selected.id)! : null,
+    blockers: [],
+    attempts: {},
+    startedAt: now,
+    updatedAt: now,
+  };
+  persistRunState(state);
+  armRun(runId);
+  return `Started Beanflow run ${runId} in ${worktreePath} on ${branchName}; frozen ${manifest.executableLeaves.length} leaves and selected ${state.selectedLeaf?.id ?? 'none'}.`;
+}
+
 function runBeanflow(request: string): string {
   const op = parseOperation(request);
   const runId = activeRunId();
   switch (op) {
+    case 'start':
+      return startFromCurrentWorktree(request);
     case 'status': {
       if (!runId) return 'No active beanflow run.';
       const state = loadRunState(runId);
