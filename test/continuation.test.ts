@@ -126,4 +126,13 @@ describe('eligibleWorkRemains', () => {
     expect(eligibleWorkRemains(tree, manifest, runState({ manifest }))).toBe(true);
     expect(nextEligibleLeaf(tree, manifest, runState({ manifest }))?.id).toBe('b');
   });
+
+  it('treats a completed manifest leaf as completed even while its file remains', () => {
+    const epic = leaf('e', { type: 'epic' });
+    const a = leaf('a', { parent: 'e', status: 'completed' });
+    const b = leaf('b', { parent: 'e', blockedBy: ['a'] });
+    const tree = buildTree([epic, a, b]);
+    const manifest: ScopeManifest = { parentBean: ref('e'), frozenAt: 't0', executableLeaves: [ref('a'), ref('b')] };
+    expect(nextEligibleLeaf(tree, manifest, runState({ manifest }))?.id).toBe('b');
+  });
 });

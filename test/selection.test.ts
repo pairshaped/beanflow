@@ -38,6 +38,14 @@ describe('selectNextLeaf', () => {
     expect(selectNextLeaf([a, b], new Set(), new Set(['a']))?.id).toBe('b');
   });
 
+  it('never selects terminal leaves', () => {
+    const completed = bean('completed', { status: 'completed' });
+    const scrapped = bean('scrapped', { status: 'scrapped' });
+    const todo = bean('todo');
+    expect(selectNextLeaf([completed, scrapped, todo], new Set(), new Set())?.id).toBe('todo');
+    expect(selectNextLeaf([completed, scrapped], new Set(), new Set())).toBeNull();
+  });
+
   it('breaks ties by priority then creation order', () => {
     const low = bean('low', { priority: 'low', createdAt: '2026-01-01T00:00:00Z' });
     const high = bean('high', { priority: 'high', createdAt: '2026-01-02T00:00:00Z' });

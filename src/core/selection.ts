@@ -21,6 +21,7 @@ export function selectNextLeaf(
   blocked: ReadonlySet<string>,
 ): Bean | null {
   const ready = leaves.filter((leaf) => {
+    if (leaf.status === 'completed' || leaf.status === 'scrapped') return false;
     if (completed.has(leaf.id) || blocked.has(leaf.id)) return false;
     return leaf.blockedBy.every((dep) => completed.has(dep));
   });

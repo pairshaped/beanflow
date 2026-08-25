@@ -51,7 +51,12 @@ export function decideContinuation(opts: {
 
 /** Next selectable manifest leaf after deleted Beans are treated as completed. */
 export function nextEligibleLeaf(tree: BeanTree, manifest: ScopeManifest, state: RunState): BeanRef | null {
-  const completed = manifest.executableLeaves.filter((l) => !tree.byId.has(l.id)).map((l) => l.id);
+  const completed = manifest.executableLeaves
+    .filter((leaf) => {
+      const current = tree.byId.get(leaf.id);
+      return !current || current.status === 'completed';
+    })
+    .map((leaf) => leaf.id);
   const blocked = blockedLeafIds(state);
   const leaves = manifest.executableLeaves
     .filter((l) => tree.byId.has(l.id))

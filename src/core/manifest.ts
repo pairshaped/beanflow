@@ -32,7 +32,12 @@ function topologicalSort(leaves: Bean[], tree: BeanTree): Bean[] {
   const ids = new Set(leaves.map((b) => b.id));
   for (const leaf of leaves) {
     for (const dep of leaf.blockedBy) {
-      if (!tree.byId.has(dep)) throw new FatalError(`leaf ${leaf.id} is blocked by unknown bean ${dep}`);
+      const dependency = tree.byId.get(dep);
+      if (!dependency) throw new FatalError(`leaf ${leaf.id} is blocked by unknown bean ${dep}`);
+      if (dependency.status === 'completed') continue;
+      if (dependency.status === 'scrapped') {
+        throw new FatalError(`leaf ${leaf.id} is blocked by scrapped bean ${dep}`);
+      }
       if (!ids.has(dep)) throw new FatalError(`leaf ${leaf.id} is blocked by ${dep}, which is outside the frozen scope`);
     }
   }
@@ -44,6 +49,7 @@ function topologicalSort(leaves: Bean[], tree: BeanTree): Bean[] {
   }
   for (const leaf of leaves) {
     for (const dep of leaf.blockedBy) {
+      if (tree.byId.get(dep)?.status === 'completed') continue;
       indegree.set(leaf.id, (indegree.get(leaf.id) ?? 0) + 1);
       dependents.get(dep)!.push(leaf.id);
     }
@@ -76,7 +82,9 @@ export function freezeManifest(tree: BeanTree, parentId: string, frozenAt: strin
   if (tree.kindOf.get(parentId) !== 'grouping') {
     throw new FatalError(`parent ${parentId} is not a grouping bean`);
   }
-  const leaves = collectLeafDescendants(tree, parentId);
+  const leaves = collectLeafDescendants(tree, parentId).filter(
+    (leaf) => leaf.status !== 'completed' && leaf.status !== 'scrapped',
+  );
   if (leaves.length === 0) throw new FatalError(`parent ${parentId} has no executable descendants`);
   return {
     parentBean: toBeanRef(parent),

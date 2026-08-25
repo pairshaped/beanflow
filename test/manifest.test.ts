@@ -31,6 +31,24 @@ describe('freezeManifest', () => {
     expect(manifest.executableLeaves.map((x) => x.id)).toEqual(['a', 'b', 'c']);
   });
 
+  it('omits terminal leaves and treats completed dependencies as satisfied', () => {
+    const epic = bean('e', { type: 'epic' });
+    const completed = bean('a', { parent: 'e', status: 'completed' });
+    const scrapped = bean('unused', { parent: 'e', status: 'scrapped' });
+    const remaining = bean('b', { parent: 'e', blockedBy: ['a'] });
+    const manifest = freezeManifest(buildTree([epic, completed, scrapped, remaining]), 'e', 't0');
+    expect(manifest.executableLeaves.map((leaf) => leaf.id)).toEqual(['b']);
+  });
+
+  it('rejects a remaining leaf blocked by a scrapped dependency', () => {
+    const epic = bean('e', { type: 'epic' });
+    const scrapped = bean('a', { parent: 'e', status: 'scrapped' });
+    const remaining = bean('b', { parent: 'e', blockedBy: ['a'] });
+    expect(() => freezeManifest(buildTree([epic, scrapped, remaining]), 'e', 't0')).toThrow(
+      /blocked by scrapped bean a/,
+    );
+  });
+
   it('rejects an unknown parent', () => {
     const tree = buildTree([bean('a')]);
     expect(() => freezeManifest(tree, 'nope', 't0')).toThrow(FatalError);
