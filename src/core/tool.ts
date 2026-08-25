@@ -2,7 +2,7 @@
 // active run can resume. Users never memorize commands; the tool takes one
 // request string and resolves it here.
 
-import { eligibleWorkRemains } from './continuation.js';
+import { nextEligibleLeaf } from './continuation.js';
 import type { BeanTree } from './discovery.js';
 import type { RunState } from './types.js';
 
@@ -15,7 +15,8 @@ export interface ResumeDecision {
 }
 
 export function decideResume(state: RunState, tree: BeanTree, resumedAt: string): ResumeDecision {
-  if (!eligibleWorkRemains(tree, state.manifest, state)) {
+  const selectedLeaf = nextEligibleLeaf(tree, state.manifest, state);
+  if (!selectedLeaf) {
     const blockerCount = state.blockers.length;
     const blockerDetail =
       blockerCount > 0
@@ -23,14 +24,21 @@ export function decideResume(state: RunState, tree: BeanTree, resumedAt: string)
         : '';
     return {
       canResume: false,
-      state: state.phase === 'running' ? { ...state, phase: 'paused', updatedAt: resumedAt } : state,
+      state: state.phase === 'running' || state.selectedLeaf !== null
+        ? { ...state, phase: 'paused', selectedLeaf: null, updatedAt: resumedAt }
+        : state,
       message: `Beanflow cannot resume: no eligible leaf exists${blockerDetail}.`,
     };
   }
 
   return {
     canResume: true,
-    state: state.phase === 'paused' ? { ...state, phase: 'running', updatedAt: resumedAt } : state,
+    state: {
+      ...state,
+      phase: 'running',
+      selectedLeaf,
+      updatedAt: resumedAt,
+    },
     message: 'Resuming the beanflow run.',
   };
 }

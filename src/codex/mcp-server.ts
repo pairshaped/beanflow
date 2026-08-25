@@ -9,6 +9,7 @@ import { isAbsolute, join } from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { auditLeaf } from '../core/audit.js';
 import { discoverBeans } from '../core/discovery.js';
+import { nextEligibleLeaf } from '../core/continuation.js';
 import { freezeManifest } from '../core/manifest.js';
 import { activeRunId, isRunWorktree, loadRunState, persistRunState, runWorktreePath, statusOf } from '../core/runstate.js';
 import { armRun } from '../core/runstate.js';
@@ -58,7 +59,7 @@ function requestedParentId(request: string): string | null {
 
 function requestedWorktreePath(request: string): string | null {
   const match = request.match(/\bworktree\s+(?:"([^"]+)"|'([^']+)'|(\S+))/i);
-  return match?.[1] ?? match?.[2] ?? match?.[3] ?? null;
+  return match?.[1] ?? match?.[2] ?? match?.[3]?.replace(/[.,;:!?]+$/, '') ?? null;
 }
 
 function git(args: string[], cwd: string): string {
@@ -149,7 +150,9 @@ function runBeanflow(request: string): string {
       if (!runId) return 'No active beanflow run.';
       const state = loadRunState(runId);
       const s = statusOf(state);
-      return `Run ${runId}: phase=${s.phase}, selected=${s.selectedLeaf?.id ?? 'none'}, blockers=${s.blockers.length}.`;
+      const tree = discoverBeans(join(runWorktreePath(state, process.cwd()), '.beans'));
+      const selectedLeaf = nextEligibleLeaf(tree, state.manifest, state);
+      return `Run ${runId}: phase=${s.phase}, selected=${selectedLeaf?.id ?? 'none'}, blockers=${s.blockers.length}.`;
     }
     case 'resume': {
       if (!runId) return 'No active beanflow run to resume.';

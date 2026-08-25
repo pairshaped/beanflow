@@ -6,7 +6,7 @@ import { existsSync } from 'node:fs';
 import { createInterface } from 'node:readline';
 import { join } from 'node:path';
 import { pathToFileURL } from 'node:url';
-import { decideContinuation, eligibleWorkRemains } from '../core/continuation.js';
+import { decideContinuation, nextEligibleLeaf } from '../core/continuation.js';
 import { discoverBeans } from '../core/discovery.js';
 import { activeRunId, isRunWorktree, loadRunState, persistRunState, stateDir } from '../core/runstate.js';
 import { checkBounds, shouldStop } from '../core/safety.js';
@@ -42,10 +42,14 @@ export function decideStopHook(input: StopHookInput): StopHookDecision {
     if (!existsSync(beansDir)) return { block: false };
 
     const tree = discoverBeans(beansDir);
-    const eligible = eligibleWorkRemains(tree, state.manifest, state);
+    const selectedLeaf = nextEligibleLeaf(tree, state.manifest, state);
+    const eligible = selectedLeaf !== null;
     if (!eligible && state.phase === 'running') {
-      persistRunState({ ...state, phase: 'paused', updatedAt: new Date().toISOString() });
+      persistRunState({ ...state, phase: 'paused', selectedLeaf: null, updatedAt: new Date().toISOString() });
       return { block: false };
+    }
+    if (selectedLeaf?.id !== state.selectedLeaf?.id) {
+      persistRunState({ ...state, selectedLeaf, updatedAt: new Date().toISOString() });
     }
     const decision = decideContinuation({ phase: state.phase, lastStopReason: null, eligibleWorkRemains: eligible });
     if (decision.shouldContinue) {

@@ -5,6 +5,7 @@ import {
   eligibleWorkRemains,
   isAbortedStopReason,
   lastAssistantStopReason,
+  nextEligibleLeaf,
   type SessionEntry,
 } from '../src/core/continuation.js';
 import { buildTree } from '../src/core/discovery.js';
@@ -123,5 +124,6 @@ describe('eligibleWorkRemains', () => {
     const tree = buildTree([epic, b]); // 'a' is gone
     const manifest: ScopeManifest = { parentBean: ref('e'), frozenAt: 't0', executableLeaves: [ref('a'), ref('b')] };
     expect(eligibleWorkRemains(tree, manifest, runState({ manifest }))).toBe(true);
+    expect(nextEligibleLeaf(tree, manifest, runState({ manifest }))?.id).toBe('b');
   });
 });

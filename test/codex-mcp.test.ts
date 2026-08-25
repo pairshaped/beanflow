@@ -163,6 +163,95 @@ describe('Codex MCP server', () => {
     }
   });
 
+  it('ignores terminal sentence punctuation after an unquoted named worktree', () => {
+    const repo = mkdtempSync(join(tmpdir(), 'beanflow-mcp-punctuation-'));
+    const worktree = join(repo, 'feature-worktree');
+    mkdirSync(join(repo, '.beans'));
+    writeFileSync(
+      join(repo, '.beans', 'test-epic.md'),
+      `---\n# test-epic\ntitle: Test epic\nstatus: in-progress\ntype: epic\ncreated_at: 2026-08-17T00:00:00Z\nupdated_at: 2026-08-17T00:00:00Z\n---\n`,
+    );
+    writeFileSync(
+      join(repo, '.beans', 'test-leaf.md'),
+      `---\n# test-leaf\ntitle: Test leaf\nstatus: todo\ntype: task\nparent: test-epic\ncreated_at: 2026-08-17T00:00:00Z\nupdated_at: 2026-08-17T00:00:00Z\n---\n\n## What to build\n\nImplement one bounded behavior with enough context for autonomous work.\n\n## Acceptance criteria\n\n- [ ] The behavior works.\n\n## Verification\n\nRun the focused test.\n\n## Out of scope\n\nDo not change unrelated behavior.\n`,
+    );
+    writeFileSync(join(repo, 'tracked'), 'clean\n');
+    execFileSync('git', ['init', '-b', 'main'], { cwd: repo });
+    execFileSync('git', ['config', 'user.email', 'dave@rapin.com'], { cwd: repo });
+    execFileSync('git', ['config', 'user.name', 'Dave Rapin'], { cwd: repo });
+    execFileSync('git', ['add', '.'], { cwd: repo });
+    execFileSync('git', ['commit', '-m', 'base'], { cwd: repo });
+    execFileSync('git', ['worktree', 'add', '-b', 'f/test-run', worktree, 'main'], { cwd: repo });
+
+    try {
+      const resp = parse(handleRequest(req(34, 'tools/call', {
+        name: 'beanflow',
+        arguments: {
+          request: `start epic test-epic with base branch main in worktree ${worktree}.`,
+        },
+      })))!;
+      const text = (resp.result as { content: { text: string }[] }).content[0].text;
+      expect(text).toMatch(/Started Beanflow run/);
+      expect(loadRunState(activeRunId()!).worktreePath).toBe(realpathSync(worktree));
+    } finally {
+      disarmRun();
+    }
+  });
+
+  it('reports the next eligible leaf after the selected leaf is deleted', () => {
+    const cwd = mkdtempSync(join(tmpdir(), 'beanflow-mcp-status-'));
+    mkdirSync(join(cwd, '.beans'));
+    writeFileSync(
+      join(cwd, '.beans', 'next.md'),
+      `---\n# next\ntitle: Next leaf\nstatus: todo\ntype: task\ncreated_at: 2026-08-17T00:00:00Z\nupdated_at: 2026-08-17T00:00:00Z\n---\n`,
+    );
+    const state: RunState = {
+      schemaVersion: 1,
+      runId: 'advanced-run',
+      parentBean: { id: 'epic', path: '.beans/epic.md', title: 'Epic' },
+      manifest: {
+        parentBean: { id: 'epic', path: '.beans/epic.md', title: 'Epic' },
+        frozenAt: '2026-08-17T00:00:00Z',
+        executableLeaves: [
+          { id: 'done', path: '.beans/done.md', title: 'Done leaf' },
+          { id: 'next', path: '.beans/next.md', title: 'Next leaf' },
+        ],
+      },
+      phase: 'running',
+      baseBranch: 'main',
+      baseCommit: 'abc123',
+      worktreePath: realpathSync(cwd),
+      selectedLeaf: { id: 'done', path: '.beans/done.md', title: 'Done leaf' },
+      blockers: [],
+      attempts: {},
+      startedAt: '2026-08-17T00:00:00Z',
+      updatedAt: '2026-08-17T00:00:00Z',
+    };
+    persistRunState(state);
+    armRun(state.runId);
+
+    const originalCwd = process.cwd();
+    process.chdir(cwd);
+    try {
+      const resp = parse(handleRequest(req(35, 'tools/call', {
+        name: 'beanflow',
+        arguments: { request: 'show status' },
+      })))!;
+      const text = (resp.result as { content: { text: string }[] }).content[0].text;
+      expect(text).toMatch(/selected=next/);
+
+      const resume = parse(handleRequest(req(36, 'tools/call', {
+        name: 'beanflow',
+        arguments: { request: 'resume' },
+      })))!;
+      expect((resume.result as { content: { text: string }[] }).content[0].text).toMatch(/Resuming/);
+      expect(loadRunState(state.runId).selectedLeaf?.id).toBe('next');
+    } finally {
+      process.chdir(originalCwd);
+      disarmRun();
+    }
+  });
+
   it('refuses to resume when every remaining leaf has a recorded blocker', () => {
     const cwd = mkdtempSync(join(tmpdir(), 'beanflow-mcp-project-'));
     const beansDir = join(cwd, '.beans');

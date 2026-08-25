@@ -27,7 +27,9 @@ unrelated work.
 4. **Audit** - Audit every executable leaf for focused scope, context, acceptance
    criteria, verification, dependencies, and safe autonomy. Reject vague,
    duplicate, oversized, or judgment-dependent leaves. Mark ready-for-agent only
-   after the audit passes. Present the tree and order to the owner.
+   after the audit passes. Each leaf must use the exact `## What to build`,
+   `## Acceptance criteria`, `## Verification`, and `## Out of scope` headings;
+   acceptance criteria must be checkboxes. Present the tree and order to the owner.
 5. **Isolated run setup** - On an explicit start request, create a branch and
    worktree, or adopt the clean isolated worktree the owner already requested.
    Invoke the `beanflow` tool with the audited epic id and base branch so it
