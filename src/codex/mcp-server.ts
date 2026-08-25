@@ -62,6 +62,25 @@ function requestedWorktreePath(request: string): string | null {
   return match?.[1] ?? match?.[2] ?? match?.[3]?.replace(/[.,;:!?]+$/, '') ?? null;
 }
 
+function resumeWorktreePath(request: string): { path: string | null; error: string | null } {
+  const requestedPath = requestedWorktreePath(request);
+  if (!requestedPath) return { path: process.cwd(), error: null };
+  if (!isAbsolute(requestedPath)) {
+    return { path: null, error: 'Beanflow cannot resume: the named worktree path must be absolute.' };
+  }
+  try {
+    return {
+      path: realpathSync(git(['rev-parse', '--show-toplevel'], requestedPath)),
+      error: null,
+    };
+  } catch {
+    return {
+      path: null,
+      error: `Beanflow cannot resume: the named worktree ${requestedPath} is not a Git worktree.`,
+    };
+  }
+}
+
 function git(args: string[], cwd: string): string {
   return execFileSync('git', args, { cwd, encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'] }).trim();
 }
@@ -170,13 +189,16 @@ function runBeanflow(request: string): string {
     case 'resume': {
       if (!runId) return 'No active beanflow run to resume.';
       const state = loadRunState(runId);
-      if (!runWorktreeExists(state, process.cwd())) {
-        return `Beanflow cannot resume run ${runId}: its recorded worktree ${runWorktreePath(state, process.cwd())} no longer exists. Start a new run explicitly to retire it.`;
+      const requested = resumeWorktreePath(request);
+      if (requested.error) return requested.error;
+      const cwd = requested.path!;
+      if (!runWorktreeExists(state, cwd)) {
+        return `Beanflow cannot resume run ${runId}: its recorded worktree ${runWorktreePath(state, cwd)} no longer exists. Start a new run explicitly to retire it.`;
       }
-      if (!isRunWorktree(state, process.cwd())) {
-        return `Beanflow cannot resume from this directory; the active run belongs to ${runWorktreePath(state, process.cwd())}.`;
+      if (!isRunWorktree(state, cwd)) {
+        return `Beanflow cannot resume from this directory; the active run belongs to ${runWorktreePath(state, cwd)}.`;
       }
-      const decision = decideResume(state, discoverBeans(join(process.cwd(), '.beans')), new Date().toISOString());
+      const decision = decideResume(state, discoverBeans(join(cwd, '.beans')), new Date().toISOString());
       if (decision.state !== state) persistRunState(decision.state);
       return decision.message;
     }

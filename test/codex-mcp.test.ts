@@ -298,6 +298,7 @@ describe('Codex MCP server', () => {
 
   it('reports the next eligible leaf after the selected leaf is deleted', () => {
     const cwd = mkdtempSync(join(tmpdir(), 'beanflow-mcp-status-'));
+    execFileSync('git', ['init', '-q', '-b', 'main'], { cwd });
     mkdirSync(join(cwd, '.beans'));
     writeFileSync(
       join(cwd, '.beans', 'next.md'),
@@ -328,8 +329,6 @@ describe('Codex MCP server', () => {
     persistRunState(state);
     armRun(state.runId);
 
-    const originalCwd = process.cwd();
-    process.chdir(cwd);
     try {
       const resp = parse(handleRequest(req(35, 'tools/call', {
         name: 'beanflow',
@@ -340,12 +339,52 @@ describe('Codex MCP server', () => {
 
       const resume = parse(handleRequest(req(36, 'tools/call', {
         name: 'beanflow',
-        arguments: { request: 'resume' },
+        arguments: { request: `resume in worktree ${cwd}` },
       })))!;
       expect((resume.result as { content: { text: string }[] }).content[0].text).toMatch(/Resuming/);
       expect(loadRunState(state.runId).selectedLeaf?.id).toBe('next');
     } finally {
-      process.chdir(originalCwd);
+      disarmRun();
+    }
+  });
+
+  it('rejects invalid named resume worktrees', () => {
+    const cwd = mkdtempSync(join(tmpdir(), 'beanflow-mcp-invalid-resume-'));
+    const state: RunState = {
+      schemaVersion: 1,
+      runId: 'invalid-resume-run',
+      parentBean: { id: 'epic', path: join(cwd, '.beans', 'epic.md'), title: 'Epic' },
+      manifest: {
+        parentBean: { id: 'epic', path: join(cwd, '.beans', 'epic.md'), title: 'Epic' },
+        frozenAt: 't0',
+        executableLeaves: [],
+      },
+      phase: 'running',
+      baseBranch: 'main',
+      baseCommit: 'abc123',
+      worktreePath: cwd,
+      selectedLeaf: null,
+      blockers: [],
+      attempts: {},
+      startedAt: 't0',
+      updatedAt: 't0',
+    };
+    persistRunState(state);
+    armRun(state.runId);
+
+    try {
+      const relative = parse(handleRequest(req(37, 'tools/call', {
+        name: 'beanflow',
+        arguments: { request: 'resume in worktree relative/path' },
+      })))!;
+      expect((relative.result as { content: { text: string }[] }).content[0].text).toMatch(/must be absolute/);
+
+      const nonGit = parse(handleRequest(req(38, 'tools/call', {
+        name: 'beanflow',
+        arguments: { request: `resume in worktree ${cwd}` },
+      })))!;
+      expect((nonGit.result as { content: { text: string }[] }).content[0].text).toMatch(/is not a Git worktree/);
+    } finally {
       disarmRun();
     }
   });

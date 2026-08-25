@@ -46,10 +46,17 @@ export function decideResume(state: RunState, tree: BeanTree, resumedAt: string)
 export function parseOperation(text: string): BeanflowOperation {
   const t = text.trim().toLowerCase();
   if (!t) return 'unknown';
-  if (/\bstart\b|\bbegin\b|\bbootstrap\b|\badopt (?:this|the) worktree\b/.test(t)) return 'start';
-  if (/\bstatus\b|\bprogress\b|\bwhere are we\b/.test(t)) return 'status';
-  if (/\bresume\b|\bcontinue\b|\bkeep going\b|\bcarry on\b/.test(t)) return 'resume';
-  if (/\brefresh\b|\bre-?freeze\b|\brefreeze\b|\bnew child\b|\bupdate manifest\b/.test(t)) return 'refresh';
-  if (/\bland\b|\bmerge\b|\bfast-?forward\b|\bship\b/.test(t)) return 'land';
-  return 'unknown';
+  const matches: Array<{ operation: Exclude<BeanflowOperation, 'unknown'>; index: number }> = [];
+  for (const [operation, pattern] of [
+    ['start', /\bstart\b|\bbegin\b|\bbootstrap\b|\badopt (?:this|the) worktree\b/],
+    ['status', /\bstatus\b|\bprogress\b|\bwhere are we\b/],
+    ['resume', /\bresume\b|\bcontinue\b|\bkeep going\b|\bcarry on\b/],
+    ['refresh', /\brefresh\b|\bre-?freeze\b|\brefreeze\b|\bnew child\b|\bupdate manifest\b/],
+    ['land', /\bland\b|\bmerge\b|\bfast-?forward\b|\bship\b/],
+  ] as const) {
+    const match = pattern.exec(t);
+    if (match) matches.push({ operation, index: match.index });
+  }
+  matches.sort((left, right) => left.index - right.index);
+  return matches[0]?.operation ?? 'unknown';
 }
