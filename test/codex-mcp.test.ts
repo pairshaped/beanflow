@@ -51,6 +51,81 @@ describe('Codex MCP server', () => {
     expect(content[0].text).toMatch(/No active beanflow run/);
   });
 
+  it('reports a stale run when its recorded worktree no longer exists', () => {
+    const missingWorktree = join(tmpdir(), `missing-beanflow-worktree-${Date.now()}`);
+    const state: RunState = {
+      schemaVersion: 1,
+      runId: 'stale-run',
+      parentBean: { id: 'epic', path: join(missingWorktree, '.beans', 'epic.md'), title: 'Epic' },
+      manifest: {
+        parentBean: { id: 'epic', path: join(missingWorktree, '.beans', 'epic.md'), title: 'Epic' },
+        frozenAt: '2026-08-17T00:00:00Z',
+        executableLeaves: [],
+      },
+      phase: 'running',
+      baseBranch: 'main',
+      baseCommit: 'abc123',
+      worktreePath: missingWorktree,
+      selectedLeaf: null,
+      blockers: [],
+      attempts: {},
+      startedAt: '2026-08-17T00:00:00Z',
+      updatedAt: '2026-08-17T00:00:00Z',
+    };
+    persistRunState(state);
+    armRun(state.runId);
+
+    try {
+      const resp = parse(handleRequest(req(4, 'tools/call', {
+        name: 'beanflow',
+        arguments: { request: 'show status' },
+      })))!;
+      expect((resp.result as { content: { text: string }[] }).content[0].text).toMatch(
+        /stale: its recorded worktree .* no longer exists/,
+      );
+    } finally {
+      disarmRun();
+    }
+  });
+
+  it('does not replace an active run whose worktree still exists', () => {
+    const cwd = mkdtempSync(join(tmpdir(), 'beanflow-live-run-'));
+    const state: RunState = {
+      schemaVersion: 1,
+      runId: 'live-run',
+      parentBean: { id: 'epic', path: join(cwd, '.beans', 'epic.md'), title: 'Epic' },
+      manifest: {
+        parentBean: { id: 'epic', path: join(cwd, '.beans', 'epic.md'), title: 'Epic' },
+        frozenAt: '2026-08-17T00:00:00Z',
+        executableLeaves: [],
+      },
+      phase: 'running',
+      baseBranch: 'main',
+      baseCommit: 'abc123',
+      worktreePath: cwd,
+      selectedLeaf: null,
+      blockers: [],
+      attempts: {},
+      startedAt: '2026-08-17T00:00:00Z',
+      updatedAt: '2026-08-17T00:00:00Z',
+    };
+    persistRunState(state);
+    armRun(state.runId);
+
+    try {
+      const resp = parse(handleRequest(req(5, 'tools/call', {
+        name: 'beanflow',
+        arguments: { request: 'start epic other-epic with base branch main' },
+      })))!;
+      expect((resp.result as { content: { text: string }[] }).content[0].text).toMatch(
+        /another run is already active/,
+      );
+      expect(activeRunId()).toBe(state.runId);
+    } finally {
+      disarmRun();
+    }
+  });
+
   it('starts from a clean audited feature worktree', () => {
     const cwd = mkdtempSync(join(tmpdir(), 'beanflow-mcp-start-'));
     mkdirSync(join(cwd, '.beans'));
@@ -69,6 +144,28 @@ describe('Codex MCP server', () => {
     execFileSync('git', ['commit', '-m', 'base'], { cwd });
     execFileSync('git', ['switch', '-c', 'f/test-run'], { cwd });
 
+    const missingWorktree = join(tmpdir(), `retired-beanflow-worktree-${Date.now()}`);
+    persistRunState({
+      schemaVersion: 1,
+      runId: 'replaced-stale-run',
+      parentBean: { id: 'old-epic', path: join(missingWorktree, '.beans', 'old-epic.md'), title: 'Old epic' },
+      manifest: {
+        parentBean: { id: 'old-epic', path: join(missingWorktree, '.beans', 'old-epic.md'), title: 'Old epic' },
+        frozenAt: '2026-08-17T00:00:00Z',
+        executableLeaves: [],
+      },
+      phase: 'running',
+      baseBranch: 'main',
+      baseCommit: 'abc123',
+      worktreePath: missingWorktree,
+      selectedLeaf: null,
+      blockers: [],
+      attempts: {},
+      startedAt: '2026-08-17T00:00:00Z',
+      updatedAt: '2026-08-17T00:00:00Z',
+    });
+    armRun('replaced-stale-run');
+
     const originalCwd = process.cwd();
     process.chdir(cwd);
     try {
@@ -77,6 +174,7 @@ describe('Codex MCP server', () => {
         arguments: { request: 'start epic test-epic with base branch main' },
       })))!;
       const text = (resp.result as { content: { text: string }[] }).content[0].text;
+      expect(text).toMatch(/Retired stale Beanflow run replaced-stale-run/);
       expect(text).toMatch(/Started Beanflow run/);
       expect(text).toMatch(/selected test-leaf/);
       const runId = activeRunId();

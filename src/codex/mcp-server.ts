@@ -11,7 +11,7 @@ import { auditLeaf } from '../core/audit.js';
 import { discoverBeans } from '../core/discovery.js';
 import { nextEligibleLeaf } from '../core/continuation.js';
 import { freezeManifest } from '../core/manifest.js';
-import { activeRunId, isRunWorktree, loadRunState, persistRunState, runWorktreePath, statusOf } from '../core/runstate.js';
+import { activeRunId, disarmRun, isRunWorktree, loadRunState, persistRunState, runWorktreeExists, runWorktreePath, statusOf } from '../core/runstate.js';
 import { armRun } from '../core/runstate.js';
 import { selectNextLeaf } from '../core/selection.js';
 import { decideResume, parseOperation } from '../core/tool.js';
@@ -67,7 +67,16 @@ function git(args: string[], cwd: string): string {
 }
 
 function startFromCurrentWorktree(request: string): string {
-  if (activeRunId()) return 'Beanflow cannot start: another run is already active.';
+  const activeId = activeRunId();
+  let retiredStaleRun: string | null = null;
+  if (activeId) {
+    const activeState = loadRunState(activeId);
+    if (runWorktreeExists(activeState, process.cwd())) {
+      return 'Beanflow cannot start: another run is already active.';
+    }
+    disarmRun();
+    retiredStaleRun = activeId;
+  }
   const parentId = requestedParentId(request);
   if (!parentId) return 'Beanflow cannot start: specify the audited epic Bean id.';
   const baseBranch = requestValue(request, '(?:base|target)');
@@ -137,7 +146,8 @@ function startFromCurrentWorktree(request: string): string {
   };
   persistRunState(state);
   armRun(runId);
-  return `Started Beanflow run ${runId} in ${worktreePath} on ${branchName}; frozen ${manifest.executableLeaves.length} leaves and selected ${state.selectedLeaf?.id ?? 'none'}.`;
+  const staleNotice = retiredStaleRun ? `Retired stale Beanflow run ${retiredStaleRun}. ` : '';
+  return `${staleNotice}Started Beanflow run ${runId} in ${worktreePath} on ${branchName}; frozen ${manifest.executableLeaves.length} leaves and selected ${state.selectedLeaf?.id ?? 'none'}.`;
 }
 
 function runBeanflow(request: string): string {
@@ -149,6 +159,9 @@ function runBeanflow(request: string): string {
     case 'status': {
       if (!runId) return 'No active beanflow run.';
       const state = loadRunState(runId);
+      if (!runWorktreeExists(state, process.cwd())) {
+        return `Run ${runId} is stale: its recorded worktree ${runWorktreePath(state, process.cwd())} no longer exists. Start a new run explicitly to retire it.`;
+      }
       const s = statusOf(state);
       const tree = discoverBeans(join(runWorktreePath(state, process.cwd()), '.beans'));
       const selectedLeaf = nextEligibleLeaf(tree, state.manifest, state);
@@ -157,6 +170,9 @@ function runBeanflow(request: string): string {
     case 'resume': {
       if (!runId) return 'No active beanflow run to resume.';
       const state = loadRunState(runId);
+      if (!runWorktreeExists(state, process.cwd())) {
+        return `Beanflow cannot resume run ${runId}: its recorded worktree ${runWorktreePath(state, process.cwd())} no longer exists. Start a new run explicitly to retire it.`;
+      }
       if (!isRunWorktree(state, process.cwd())) {
         return `Beanflow cannot resume from this directory; the active run belongs to ${runWorktreePath(state, process.cwd())}.`;
       }

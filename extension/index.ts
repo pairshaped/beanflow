@@ -16,7 +16,7 @@ import {
   type SessionEntry,
 } from "../dist/core/continuation.js";
 import { discoverBeans } from "../dist/core/discovery.js";
-import { activeRunId, loadRunState, persistRunState } from "../dist/core/runstate.js";
+import { activeRunId, loadRunState, persistRunState, runWorktreeExists } from "../dist/core/runstate.js";
 import { statusOf } from "../dist/core/runstate.js";
 import { parseOperation } from "../dist/core/tool.js";
 import { checkBounds, shouldStop } from "../dist/core/safety.js";
@@ -98,6 +98,12 @@ export default function (pi: ExtensionAPI) {
             return { content: [{ type: "text", text: "No active beanflow run." }], details: {} };
           }
           const state = loadRunState(runId);
+          if (!runWorktreeExists(state, _ctx.cwd)) {
+            return {
+              content: [{ type: "text", text: `Run ${runId} is stale: its recorded worktree ${runWorktreePath(state, _ctx.cwd)} no longer exists. Start a new run explicitly to retire it.` }],
+              details: {},
+            };
+          }
           const s = statusOf(state);
           const text = `Run ${runId}: phase=${s.phase}, selected=${s.selectedLeaf?.id ?? "none"}, blockers=${s.blockers.length}.`;
           return { content: [{ type: "text", text }], details: {} };
@@ -107,6 +113,12 @@ export default function (pi: ExtensionAPI) {
             return { content: [{ type: "text", text: "No active beanflow run to resume." }], details: {} };
           }
           const state = loadRunState(runId);
+          if (!runWorktreeExists(state, _ctx.cwd)) {
+            return {
+              content: [{ type: "text", text: `Beanflow cannot resume run ${runId}: its recorded worktree ${runWorktreePath(state, _ctx.cwd)} no longer exists. Start a new run explicitly to retire it.` }],
+              details: {},
+            };
+          }
           if (!isRunWorktree(state, _ctx.cwd)) {
             return {
               content: [{ type: "text", text: `Beanflow cannot resume from this directory; the active run belongs to ${runWorktreePath(state, _ctx.cwd)}.` }],

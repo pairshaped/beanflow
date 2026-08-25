@@ -39,6 +39,11 @@ export function isRunWorktree(state: RunState, cwd: string): boolean {
   return resolve(cwd) === runWorktreePath(state, cwd);
 }
 
+/** Whether the worktree recorded by a run still exists on disk. */
+export function runWorktreeExists(state: RunState, fallbackCwd: string): boolean {
+  return existsSync(runWorktreePath(state, fallbackCwd));
+}
+
 const ACTIVE_RUN_MARKER = 'active-run.json';
 
 export function activeRunMarkerPath(): string {
