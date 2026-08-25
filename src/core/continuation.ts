@@ -65,6 +65,14 @@ export function nextEligibleLeaf(tree: BeanTree, manifest: ScopeManifest, state:
   return selected ? manifest.executableLeaves.find((leaf) => leaf.id === selected.id) ?? null : null;
 }
 
+/** True when every frozen leaf has been deleted or explicitly completed. */
+export function allManifestLeavesComplete(tree: BeanTree, manifest: ScopeManifest): boolean {
+  return manifest.executableLeaves.every((leaf) => {
+    const current = tree.byId.get(leaf.id);
+    return !current || current.status === 'completed';
+  });
+}
+
 /** True when some manifest leaf is still selectable (present, unblocked, deps done). */
 export function eligibleWorkRemains(tree: BeanTree, manifest: ScopeManifest, state: RunState): boolean {
   return nextEligibleLeaf(tree, manifest, state) !== null;

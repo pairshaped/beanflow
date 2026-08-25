@@ -2,7 +2,7 @@
 // active run can resume. Users never memorize commands; the tool takes one
 // request string and resolves it here.
 
-import { nextEligibleLeaf } from './continuation.js';
+import { allManifestLeavesComplete, nextEligibleLeaf } from './continuation.js';
 import type { BeanTree } from './discovery.js';
 import type { RunState } from './types.js';
 
@@ -17,6 +17,33 @@ export interface ResumeDecision {
 export function decideResume(state: RunState, tree: BeanTree, resumedAt: string): ResumeDecision {
   const selectedLeaf = nextEligibleLeaf(tree, state.manifest, state);
   if (!selectedLeaf) {
+    if (allManifestLeavesComplete(tree, state.manifest)) {
+      const parentExists = tree.byId.has(state.parentBean.id);
+      if (!parentExists) {
+        return {
+          canResume: false,
+          state: {
+            ...state,
+            phase: 'completed',
+            selectedLeaf: null,
+            updatedAt: resumedAt,
+          },
+          message: 'Beanflow run is complete: every scoped leaf and the parent Bean are gone.',
+        };
+      }
+      if (state.blockers.length === 0) {
+        return {
+          canResume: true,
+          state: {
+            ...state,
+            phase: 'running',
+            selectedLeaf: null,
+            updatedAt: resumedAt,
+          },
+          message: `Every scoped leaf is complete. Run parent-level verification for ${state.parentBean.id}, then delete the parent Bean only if it passes.`,
+        };
+      }
+    }
     const blockerCount = state.blockers.length;
     const blockerDetail =
       blockerCount > 0

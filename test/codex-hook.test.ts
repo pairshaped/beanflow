@@ -1,4 +1,4 @@
-import { mkdirSync, mkdtempSync, writeFileSync } from 'node:fs';
+import { mkdirSync, mkdtempSync, unlinkSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { afterAll, afterEach, beforeAll, describe, expect, it } from 'vitest';
@@ -132,14 +132,27 @@ describe('Codex Stop hook', () => {
     expect(loadRunState('r1').phase).toBe('paused');
   });
 
-  it('pauses the run when every manifest leaf is complete', () => {
+  it('continues into parent verification when every manifest leaf is complete', () => {
     const repo = makeRepo();
     const state = runState({ manifest: { ...runState().manifest, executableLeaves: [] } });
     persistRunState(state);
     armRun('r1');
 
+    const decision = decideStopHook({ hook_event_name: 'Stop', cwd: repo });
+    expect(decision.block).toBe(true);
+    expect(decision.reason).toContain('verify parent e');
+    expect(loadRunState('r1').phase).toBe('running');
+  });
+
+  it('completes the run after parent verification deletes the parent Bean', () => {
+    const repo = makeRepo();
+    const state = runState({ manifest: { ...runState().manifest, executableLeaves: [] } });
+    persistRunState(state);
+    armRun('r1');
+    unlinkSync(join(repo, '.beans', 'e--build-a-widget.md'));
+
     expect(decideStopHook({ hook_event_name: 'Stop', cwd: repo }).block).toBe(false);
-    expect(loadRunState('r1').phase).toBe('paused');
+    expect(loadRunState('r1').phase).toBe('completed');
   });
 
   it('pauses instead of blocking when a bound is exceeded', () => {

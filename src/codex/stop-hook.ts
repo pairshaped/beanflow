@@ -6,7 +6,7 @@ import { existsSync } from 'node:fs';
 import { createInterface } from 'node:readline';
 import { join } from 'node:path';
 import { pathToFileURL } from 'node:url';
-import { decideContinuation, nextEligibleLeaf } from '../core/continuation.js';
+import { allManifestLeavesComplete, decideContinuation, nextEligibleLeaf } from '../core/continuation.js';
 import { discoverBeans } from '../core/discovery.js';
 import { activeRunId, isRunWorktree, loadRunState, persistRunState, stateDir } from '../core/runstate.js';
 import { checkBounds, shouldStop } from '../core/safety.js';
@@ -44,6 +44,19 @@ export function decideStopHook(input: StopHookInput): StopHookDecision {
     const tree = discoverBeans(beansDir);
     const selectedLeaf = nextEligibleLeaf(tree, state.manifest, state);
     const eligible = selectedLeaf !== null;
+    if (!eligible && allManifestLeavesComplete(tree, state.manifest)) {
+      if (!tree.byId.has(state.parentBean.id)) {
+        persistRunState({ ...state, phase: 'completed', selectedLeaf: null, updatedAt: new Date().toISOString() });
+        return { block: false };
+      }
+      if (state.blockers.length === 0) {
+        persistRunState({ ...state, phase: 'running', selectedLeaf: null, updatedAt: new Date().toISOString() });
+        return {
+          block: true,
+          reason: `Continue the beanflow run: verify parent ${state.parentBean.id} and delete it only if verification passes.`,
+        };
+      }
+    }
     if (!eligible && state.phase === 'running') {
       persistRunState({ ...state, phase: 'paused', selectedLeaf: null, updatedAt: new Date().toISOString() });
       return { block: false };
