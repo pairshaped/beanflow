@@ -1,8 +1,9 @@
-import { mkdtempSync, readFileSync } from 'node:fs';
+import { execFileSync } from 'node:child_process';
+import { mkdtempSync, readFileSync, realpathSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { afterEach, describe, expect, it } from 'vitest';
-import { activeRunId, armRun, disarmRun, loadRunState, persistRunState, stateDir, statusOf } from '../src/core/runstate.js';
+import { activeRunId, armRun, disarmRun, loadRunState, persistRunState, stateDir, stateFile, statusOf, worktreeStateDir } from '../src/core/runstate.js';
 import type { RunState } from '../src/core/types.js';
 
 const origEnv = process.env.BEANFLOW_STATE_DIR;
@@ -64,5 +65,36 @@ describe('active run marker', () => {
     expect(activeRunId()).toBe('run-9');
     disarmRun();
     expect(activeRunId()).toBeNull();
+  });
+
+  it('stores worktree run metadata in private Git state', () => {
+    const repo = mkdtempSync(join(tmpdir(), 'beanflow-worktree-state-'));
+    execFileSync('git', ['init', '-q', '-b', 'main'], { cwd: repo });
+    const state = { ...sampleState(), worktreePath: realpathSync(repo) };
+
+    persistRunState(state, repo);
+    armRun(state.runId, repo);
+
+    expect(worktreeStateDir(repo)).toContain(join('.git', 'beanflow'));
+    expect(activeRunId(repo)).toBe(state.runId);
+    expect(loadRunState(state.runId, repo)).toEqual(state);
+    expect(execFileSync('git', ['status', '--porcelain'], { cwd: repo, encoding: 'utf8' })).toBe('');
+    disarmRun(repo);
+  });
+
+  it('migrates a matching legacy global run into its worktree state', () => {
+    process.env.BEANFLOW_STATE_DIR = mkdtempSync(join(tmpdir(), 'beanflow-legacy-global-'));
+    const repo = mkdtempSync(join(tmpdir(), 'beanflow-legacy-state-'));
+    execFileSync('git', ['init', '-q', '-b', 'main'], { cwd: repo });
+    const state = { ...sampleState(), worktreePath: realpathSync(repo) };
+
+    persistRunState(state);
+    armRun(state.runId);
+
+    expect(activeRunId(repo)).toBe(state.runId);
+    expect(activeRunId()).toBeNull();
+    expect(() => readFileSync(stateFile(state.runId), 'utf8')).toThrow();
+    expect(loadRunState(state.runId, repo)).toEqual(state);
+    disarmRun(repo);
   });
 });

@@ -6,6 +6,12 @@ The MCP tool can bootstrap a run from the current clean feature worktree after
 the Bean tree is audited. A start request names the epic and base branch, for
 example: `start epic beanflow-1234 with base branch main`.
 
+Run state belongs to the isolated worktree and is stored under that worktree's
+private Git administrative directory. It never appears in `git status` and
+cannot be committed. Separate worktrees can have active runs at the same time.
+When the MCP server is rooted in another checkout, name the intended worktree
+in start, status, and resume requests.
+
 ## Install
 
 1. Build the package: `pnpm build` (compiles `src/codex/` to `dist/codex/`).

@@ -8,7 +8,7 @@ import { join } from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { allManifestLeavesComplete, decideContinuation, nextEligibleLeaf } from '../core/continuation.js';
 import { discoverBeans } from '../core/discovery.js';
-import { activeRunId, isRunWorktree, loadRunState, persistRunState, stateDir } from '../core/runstate.js';
+import { activeRunId, isRunWorktree, loadRunState, persistRunState, worktreeStateDir } from '../core/runstate.js';
 import { checkBounds, shouldStop } from '../core/safety.js';
 
 export interface StopHookInput {
@@ -26,15 +26,15 @@ export function decideStopHook(input: StopHookInput): StopHookDecision {
     if (input.hook_event_name && input.hook_event_name !== 'Stop') {
       return { block: false };
     }
-    const runId = activeRunId();
+    const cwd = input.cwd ?? process.cwd();
+    const runId = activeRunId(cwd);
     if (!runId) return { block: false };
 
-    const state = loadRunState(runId);
-    const cwd = input.cwd ?? process.cwd();
+    const state = loadRunState(runId, cwd);
     if (!isRunWorktree(state, cwd)) return { block: false };
 
-    if (shouldStop(checkBounds(state, stateDir(), new Date().toISOString()))) {
-      persistRunState({ ...state, phase: 'paused', updatedAt: new Date().toISOString() });
+    if (shouldStop(checkBounds(state, worktreeStateDir(cwd), new Date().toISOString()))) {
+      persistRunState({ ...state, phase: 'paused', updatedAt: new Date().toISOString() }, cwd);
       return { block: false };
     }
 
@@ -46,11 +46,11 @@ export function decideStopHook(input: StopHookInput): StopHookDecision {
     const eligible = selectedLeaf !== null;
     if (!eligible && allManifestLeavesComplete(tree, state.manifest)) {
       if (!tree.byId.has(state.parentBean.id)) {
-        persistRunState({ ...state, phase: 'completed', selectedLeaf: null, updatedAt: new Date().toISOString() });
+        persistRunState({ ...state, phase: 'completed', selectedLeaf: null, updatedAt: new Date().toISOString() }, cwd);
         return { block: false };
       }
       if (state.blockers.length === 0) {
-        persistRunState({ ...state, phase: 'running', selectedLeaf: null, updatedAt: new Date().toISOString() });
+        persistRunState({ ...state, phase: 'running', selectedLeaf: null, updatedAt: new Date().toISOString() }, cwd);
         return {
           block: true,
           reason: `Continue the beanflow run: verify parent ${state.parentBean.id} and delete it only if verification passes.`,
@@ -58,11 +58,11 @@ export function decideStopHook(input: StopHookInput): StopHookDecision {
       }
     }
     if (!eligible && state.phase === 'running') {
-      persistRunState({ ...state, phase: 'paused', selectedLeaf: null, updatedAt: new Date().toISOString() });
+      persistRunState({ ...state, phase: 'paused', selectedLeaf: null, updatedAt: new Date().toISOString() }, cwd);
       return { block: false };
     }
     if (selectedLeaf?.id !== state.selectedLeaf?.id) {
-      persistRunState({ ...state, selectedLeaf, updatedAt: new Date().toISOString() });
+      persistRunState({ ...state, selectedLeaf, updatedAt: new Date().toISOString() }, cwd);
     }
     const decision = decideContinuation({ phase: state.phase, lastStopReason: null, eligibleWorkRemains: eligible });
     if (decision.shouldContinue) {

@@ -62,21 +62,23 @@ function requestedWorktreePath(request: string): string | null {
   return match?.[1] ?? match?.[2] ?? match?.[3]?.replace(/[.,;:!?]+$/, '') ?? null;
 }
 
-function resumeWorktreePath(request: string): { path: string | null; error: string | null } {
+function requestWorktreeContext(request: string, operation: string): { path: string | null; error: string | null } {
   const requestedPath = requestedWorktreePath(request);
-  if (!requestedPath) return { path: process.cwd(), error: null };
-  if (!isAbsolute(requestedPath)) {
-    return { path: null, error: 'Beanflow cannot resume: the named worktree path must be absolute.' };
+  const candidate = requestedPath ?? process.cwd();
+  if (requestedPath && !isAbsolute(requestedPath)) {
+    return { path: null, error: `Beanflow cannot ${operation}: the named worktree path must be absolute.` };
   }
   try {
     return {
-      path: realpathSync(git(['rev-parse', '--show-toplevel'], requestedPath)),
+      path: realpathSync(git(['rev-parse', '--show-toplevel'], candidate)),
       error: null,
     };
   } catch {
     return {
       path: null,
-      error: `Beanflow cannot resume: the named worktree ${requestedPath} is not a Git worktree.`,
+      error: requestedPath
+        ? `Beanflow cannot ${operation}: the named worktree ${requestedPath} is not a Git worktree.`
+        : `Beanflow cannot ${operation}: the current directory is not a Git worktree.`,
     };
   }
 }
@@ -86,16 +88,6 @@ function git(args: string[], cwd: string): string {
 }
 
 function startFromCurrentWorktree(request: string): string {
-  const activeId = activeRunId();
-  let retiredStaleRun: string | null = null;
-  if (activeId) {
-    const activeState = loadRunState(activeId);
-    if (runWorktreeExists(activeState, process.cwd())) {
-      return 'Beanflow cannot start: another run is already active.';
-    }
-    disarmRun();
-    retiredStaleRun = activeId;
-  }
   const parentId = requestedParentId(request);
   if (!parentId) return 'Beanflow cannot start: specify the audited epic Bean id.';
   const baseBranch = requestValue(request, '(?:base|target)');
@@ -111,6 +103,17 @@ function startFromCurrentWorktree(request: string): string {
     worktreePath = realpathSync(git(['rev-parse', '--show-toplevel'], candidate));
   } catch {
     return `Beanflow cannot start: ${requestedPath ? `the named worktree ${requestedPath}` : 'the current directory'} is not a Git worktree.`;
+  }
+
+  const activeId = activeRunId(worktreePath);
+  let retiredStaleRun: string | null = null;
+  if (activeId) {
+    const activeState = loadRunState(activeId, worktreePath);
+    if (runWorktreeExists(activeState, worktreePath)) {
+      return `Beanflow cannot start: run ${activeId} is already active in ${worktreePath}.`;
+    }
+    disarmRun(worktreePath);
+    retiredStaleRun = activeId;
   }
   if (git(['status', '--porcelain'], worktreePath) !== '') {
     return `Beanflow cannot start: the ${requestedPath ? 'named' : 'current'} worktree is dirty.`;
@@ -163,35 +166,39 @@ function startFromCurrentWorktree(request: string): string {
     startedAt: now,
     updatedAt: now,
   };
-  persistRunState(state);
-  armRun(runId);
+  persistRunState(state, worktreePath);
+  armRun(runId, worktreePath);
   const staleNotice = retiredStaleRun ? `Retired stale Beanflow run ${retiredStaleRun}. ` : '';
   return `${staleNotice}Started Beanflow run ${runId} in ${worktreePath} on ${branchName}; frozen ${manifest.executableLeaves.length} leaves and selected ${state.selectedLeaf?.id ?? 'none'}.`;
 }
 
 function runBeanflow(request: string): string {
   const op = parseOperation(request);
-  const runId = activeRunId();
   switch (op) {
     case 'start':
       return startFromCurrentWorktree(request);
     case 'status': {
-      if (!runId) return 'No active beanflow run.';
-      const state = loadRunState(runId);
-      if (!runWorktreeExists(state, process.cwd())) {
-        return `Run ${runId} is stale: its recorded worktree ${runWorktreePath(state, process.cwd())} no longer exists. Start a new run explicitly to retire it.`;
+      const requested = requestWorktreeContext(request, 'show status');
+      if (requested.error) return requested.error;
+      const cwd = requested.path!;
+      const runId = activeRunId(cwd);
+      if (!runId) return `No active beanflow run in ${cwd}.`;
+      const state = loadRunState(runId, cwd);
+      if (!runWorktreeExists(state, cwd)) {
+        return `Run ${runId} is stale: its recorded worktree ${runWorktreePath(state, cwd)} no longer exists. Start a new run explicitly to retire it.`;
       }
       const s = statusOf(state);
-      const tree = discoverBeans(join(runWorktreePath(state, process.cwd()), '.beans'));
+      const tree = discoverBeans(join(runWorktreePath(state, cwd), '.beans'));
       const selectedLeaf = nextEligibleLeaf(tree, state.manifest, state);
       return `Run ${runId}: phase=${s.phase}, selected=${selectedLeaf?.id ?? 'none'}, blockers=${s.blockers.length}.`;
     }
     case 'resume': {
-      if (!runId) return 'No active beanflow run to resume.';
-      const state = loadRunState(runId);
-      const requested = resumeWorktreePath(request);
+      const requested = requestWorktreeContext(request, 'resume');
       if (requested.error) return requested.error;
       const cwd = requested.path!;
+      const runId = activeRunId(cwd);
+      if (!runId) return `No active beanflow run to resume in ${cwd}.`;
+      const state = loadRunState(runId, cwd);
       if (!runWorktreeExists(state, cwd)) {
         return `Beanflow cannot resume run ${runId}: its recorded worktree ${runWorktreePath(state, cwd)} no longer exists. Start a new run explicitly to retire it.`;
       }
@@ -199,7 +206,7 @@ function runBeanflow(request: string): string {
         return `Beanflow cannot resume from this directory; the active run belongs to ${runWorktreePath(state, cwd)}.`;
       }
       const decision = decideResume(state, discoverBeans(join(cwd, '.beans')), new Date().toISOString());
-      if (decision.state !== state) persistRunState(decision.state);
+      if (decision.state !== state) persistRunState(decision.state, cwd);
       return decision.message;
     }
     case 'refresh':

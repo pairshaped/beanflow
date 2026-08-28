@@ -52,6 +52,8 @@ describe('Codex MCP server', () => {
   });
 
   it('reports a stale run when its recorded worktree no longer exists', () => {
+    const cwd = mkdtempSync(join(tmpdir(), 'beanflow-stale-owner-'));
+    execFileSync('git', ['init', '-q', '-b', 'f/stale-owner'], { cwd });
     const missingWorktree = join(tmpdir(), `missing-beanflow-worktree-${Date.now()}`);
     const state: RunState = {
       schemaVersion: 1,
@@ -72,24 +74,25 @@ describe('Codex MCP server', () => {
       startedAt: '2026-08-17T00:00:00Z',
       updatedAt: '2026-08-17T00:00:00Z',
     };
-    persistRunState(state);
-    armRun(state.runId);
+    persistRunState(state, cwd);
+    armRun(state.runId, cwd);
 
     try {
       const resp = parse(handleRequest(req(4, 'tools/call', {
         name: 'beanflow',
-        arguments: { request: 'show status' },
+        arguments: { request: `show status in worktree ${cwd}` },
       })))!;
       expect((resp.result as { content: { text: string }[] }).content[0].text).toMatch(
         /stale: its recorded worktree .* no longer exists/,
       );
     } finally {
-      disarmRun();
+      disarmRun(cwd);
     }
   });
 
   it('does not replace an active run whose worktree still exists', () => {
     const cwd = mkdtempSync(join(tmpdir(), 'beanflow-live-run-'));
+    execFileSync('git', ['init', '-q', '-b', 'f/live-run'], { cwd });
     const state: RunState = {
       schemaVersion: 1,
       runId: 'live-run',
@@ -102,27 +105,27 @@ describe('Codex MCP server', () => {
       phase: 'running',
       baseBranch: 'main',
       baseCommit: 'abc123',
-      worktreePath: cwd,
+      worktreePath: realpathSync(cwd),
       selectedLeaf: null,
       blockers: [],
       attempts: {},
       startedAt: '2026-08-17T00:00:00Z',
       updatedAt: '2026-08-17T00:00:00Z',
     };
-    persistRunState(state);
-    armRun(state.runId);
+    persistRunState(state, cwd);
+    armRun(state.runId, cwd);
 
     try {
       const resp = parse(handleRequest(req(5, 'tools/call', {
         name: 'beanflow',
-        arguments: { request: 'start epic other-epic with base branch main' },
+        arguments: { request: `start epic other-epic with base branch main in worktree ${cwd}` },
       })))!;
       expect((resp.result as { content: { text: string }[] }).content[0].text).toMatch(
-        /another run is already active/,
+        /already active in/,
       );
-      expect(activeRunId()).toBe(state.runId);
+      expect(activeRunId(cwd)).toBe(state.runId);
     } finally {
-      disarmRun();
+      disarmRun(cwd);
     }
   });
 
@@ -144,28 +147,6 @@ describe('Codex MCP server', () => {
     execFileSync('git', ['commit', '-m', 'base'], { cwd });
     execFileSync('git', ['switch', '-c', 'f/test-run'], { cwd });
 
-    const missingWorktree = join(tmpdir(), `retired-beanflow-worktree-${Date.now()}`);
-    persistRunState({
-      schemaVersion: 1,
-      runId: 'replaced-stale-run',
-      parentBean: { id: 'old-epic', path: join(missingWorktree, '.beans', 'old-epic.md'), title: 'Old epic' },
-      manifest: {
-        parentBean: { id: 'old-epic', path: join(missingWorktree, '.beans', 'old-epic.md'), title: 'Old epic' },
-        frozenAt: '2026-08-17T00:00:00Z',
-        executableLeaves: [],
-      },
-      phase: 'running',
-      baseBranch: 'main',
-      baseCommit: 'abc123',
-      worktreePath: missingWorktree,
-      selectedLeaf: null,
-      blockers: [],
-      attempts: {},
-      startedAt: '2026-08-17T00:00:00Z',
-      updatedAt: '2026-08-17T00:00:00Z',
-    });
-    armRun('replaced-stale-run');
-
     const originalCwd = process.cwd();
     process.chdir(cwd);
     try {
@@ -174,15 +155,71 @@ describe('Codex MCP server', () => {
         arguments: { request: 'start epic test-epic with base branch main' },
       })))!;
       const text = (resp.result as { content: { text: string }[] }).content[0].text;
-      expect(text).toMatch(/Retired stale Beanflow run replaced-stale-run/);
       expect(text).toMatch(/Started Beanflow run/);
       expect(text).toMatch(/selected test-leaf/);
-      const runId = activeRunId();
+      const runId = activeRunId(cwd);
       expect(runId).not.toBeNull();
-      expect(loadRunState(runId!).worktreePath).toBe(realpathSync(cwd));
+      expect(loadRunState(runId!, cwd).worktreePath).toBe(realpathSync(cwd));
     } finally {
       process.chdir(originalCwd);
-      disarmRun();
+      disarmRun(cwd);
+    }
+  });
+
+  it('starts and resolves concurrent runs in separate worktrees', () => {
+    const repo = mkdtempSync(join(tmpdir(), 'beanflow-concurrent-repo-'));
+    const worktreeA = mkdtempSync(join(tmpdir(), 'beanflow-concurrent-a-'));
+    const worktreeB = mkdtempSync(join(tmpdir(), 'beanflow-concurrent-b-'));
+    mkdirSync(join(repo, '.beans'));
+
+    for (const suffix of ['a', 'b']) {
+      writeFileSync(
+        join(repo, '.beans', `epic-${suffix}.md`),
+        `---\n# epic-${suffix}\ntitle: Epic ${suffix.toUpperCase()}\nstatus: in-progress\ntype: epic\ncreated_at: 2026-08-17T00:00:00Z\nupdated_at: 2026-08-17T00:00:00Z\n---\n`,
+      );
+      writeFileSync(
+        join(repo, '.beans', `leaf-${suffix}.md`),
+        `---\n# leaf-${suffix}\ntitle: Leaf ${suffix.toUpperCase()}\nstatus: todo\ntype: task\nparent: epic-${suffix}\ncreated_at: 2026-08-17T00:00:00Z\nupdated_at: 2026-08-17T00:00:00Z\n---\n\n## What to build\n\nImplement one bounded behavior with enough context for autonomous work.\n\n## Acceptance criteria\n\n- [ ] The behavior works.\n\n## Verification\n\nRun the focused test.\n\n## Out of scope\n\nDo not change unrelated behavior.\n`,
+      );
+    }
+
+    execFileSync('git', ['init', '-b', 'main'], { cwd: repo });
+    execFileSync('git', ['config', 'user.email', 'dave@rapin.com'], { cwd: repo });
+    execFileSync('git', ['config', 'user.name', 'Dave Rapin'], { cwd: repo });
+    execFileSync('git', ['add', '.'], { cwd: repo });
+    execFileSync('git', ['commit', '-m', 'base'], { cwd: repo });
+    execFileSync('git', ['worktree', 'add', '-b', 'f/run-a', worktreeA, 'main'], { cwd: repo });
+    execFileSync('git', ['worktree', 'add', '-b', 'f/run-b', worktreeB, 'main'], { cwd: repo });
+
+    try {
+      const startA = parse(handleRequest(req(39, 'tools/call', {
+        name: 'beanflow',
+        arguments: { request: `start epic epic-a with base branch main in worktree ${worktreeA}` },
+      })))!;
+      expect((startA.result as { content: { text: string }[] }).content[0].text).toMatch(/Started Beanflow run/);
+
+      const startB = parse(handleRequest(req(40, 'tools/call', {
+        name: 'beanflow',
+        arguments: { request: `start epic epic-b with base branch main in worktree ${worktreeB}` },
+      })))!;
+      expect((startB.result as { content: { text: string }[] }).content[0].text).toMatch(/Started Beanflow run/);
+
+      const statusA = parse(handleRequest(req(41, 'tools/call', {
+        name: 'beanflow',
+        arguments: { request: `show status in worktree ${worktreeA}` },
+      })))!;
+      expect((statusA.result as { content: { text: string }[] }).content[0].text).toMatch(/selected=leaf-a/);
+
+      const statusB = parse(handleRequest(req(42, 'tools/call', {
+        name: 'beanflow',
+        arguments: { request: `show status in worktree ${worktreeB}` },
+      })))!;
+      expect((statusB.result as { content: { text: string }[] }).content[0].text).toMatch(/selected=leaf-b/);
+      expect(execFileSync('git', ['status', '--porcelain'], { cwd: worktreeA, encoding: 'utf8' })).toBe('');
+      expect(execFileSync('git', ['status', '--porcelain'], { cwd: worktreeB, encoding: 'utf8' })).toBe('');
+    } finally {
+      disarmRun(worktreeA);
+      disarmRun(worktreeB);
     }
   });
 
@@ -242,9 +279,9 @@ describe('Codex MCP server', () => {
       })))!;
       const text = (resp.result as { content: { text: string }[] }).content[0].text;
       expect(text).toMatch(/Started Beanflow run/);
-      expect(loadRunState(activeRunId()!).worktreePath).toBe(realpathSync(worktree));
+      expect(loadRunState(activeRunId(worktree)!, worktree).worktreePath).toBe(realpathSync(worktree));
 
-      disarmRun();
+      disarmRun(worktree);
       writeFileSync(join(repo, 'tracked'), 'clean\n');
       writeFileSync(join(worktree, 'tracked'), 'dirty feature\n');
       const dirtyResp = parse(handleRequest(req(33, 'tools/call', {
@@ -257,7 +294,7 @@ describe('Codex MCP server', () => {
       expect(dirtyText).toMatch(/named worktree is dirty/);
     } finally {
       process.chdir(originalCwd);
-      disarmRun();
+      disarmRun(worktree);
     }
   });
 
@@ -290,9 +327,9 @@ describe('Codex MCP server', () => {
       })))!;
       const text = (resp.result as { content: { text: string }[] }).content[0].text;
       expect(text).toMatch(/Started Beanflow run/);
-      expect(loadRunState(activeRunId()!).worktreePath).toBe(realpathSync(worktree));
+      expect(loadRunState(activeRunId(worktree)!, worktree).worktreePath).toBe(realpathSync(worktree));
     } finally {
-      disarmRun();
+      disarmRun(worktree);
     }
   });
 
@@ -326,13 +363,13 @@ describe('Codex MCP server', () => {
       startedAt: '2026-08-17T00:00:00Z',
       updatedAt: '2026-08-17T00:00:00Z',
     };
-    persistRunState(state);
-    armRun(state.runId);
+    persistRunState(state, cwd);
+    armRun(state.runId, cwd);
 
     try {
       const resp = parse(handleRequest(req(35, 'tools/call', {
         name: 'beanflow',
-        arguments: { request: 'show status' },
+        arguments: { request: `show status in worktree ${cwd}` },
       })))!;
       const text = (resp.result as { content: { text: string }[] }).content[0].text;
       expect(text).toMatch(/selected=next/);
@@ -342,9 +379,9 @@ describe('Codex MCP server', () => {
         arguments: { request: `resume in worktree ${cwd}` },
       })))!;
       expect((resume.result as { content: { text: string }[] }).content[0].text).toMatch(/Resuming/);
-      expect(loadRunState(state.runId).selectedLeaf?.id).toBe('next');
+      expect(loadRunState(state.runId, cwd).selectedLeaf?.id).toBe('next');
     } finally {
-      disarmRun();
+      disarmRun(cwd);
     }
   });
 
@@ -391,6 +428,7 @@ describe('Codex MCP server', () => {
 
   it('refuses to resume when every remaining leaf has a recorded blocker', () => {
     const cwd = mkdtempSync(join(tmpdir(), 'beanflow-mcp-project-'));
+    execFileSync('git', ['init', '-q', '-b', 'f/blocked'], { cwd });
     const beansDir = join(cwd, '.beans');
     mkdirSync(beansDir);
     const leaf: BeanRef = { id: 'beanflow-leaf', path: '.beans/beanflow-leaf.md', title: 'Blocked leaf' };
@@ -416,8 +454,8 @@ describe('Codex MCP server', () => {
       startedAt: '2026-08-17T00:00:00Z',
       updatedAt: '2026-08-17T01:00:00Z',
     };
-    persistRunState(state);
-    armRun(state.runId);
+    persistRunState(state, cwd);
+    armRun(state.runId, cwd);
 
     const originalCwd = process.cwd();
     process.chdir(cwd);
@@ -425,10 +463,10 @@ describe('Codex MCP server', () => {
       const resp = parse(handleRequest(req(4, 'tools/call', { name: 'beanflow', arguments: { request: 'resume' } })))!;
       const text = (resp.result as { content: { text: string }[] }).content[0].text;
       expect(text).toBe('Beanflow cannot resume: no eligible leaf exists while 1 recorded blocker remains unresolved.');
-      expect(loadRunState(state.runId).phase).toBe('paused');
+      expect(loadRunState(state.runId, cwd).phase).toBe('paused');
     } finally {
       process.chdir(originalCwd);
-      disarmRun();
+      disarmRun(cwd);
     }
   });
 

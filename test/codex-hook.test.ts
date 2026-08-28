@@ -1,3 +1,4 @@
+import { execFileSync } from 'node:child_process';
 import { mkdirSync, mkdtempSync, unlinkSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
@@ -111,6 +112,27 @@ describe('Codex Stop hook', () => {
     armRun('r1');
 
     expect(decideStopHook({ hook_event_name: 'Stop', cwd: otherCheckout }).block).toBe(false);
+  });
+
+  it('continues concurrent worktree runs independently', () => {
+    const worktreeA = makeRepo();
+    const worktreeB = makeRepo();
+    execFileSync('git', ['init', '-q', '-b', 'f/run-a'], { cwd: worktreeA });
+    execFileSync('git', ['init', '-q', '-b', 'f/run-b'], { cwd: worktreeB });
+    const stateA = runState({ runId: 'run-a', worktreePath: worktreeA });
+    const stateB = runState({ runId: 'run-b', worktreePath: worktreeB });
+    persistRunState(stateA, worktreeA);
+    persistRunState(stateB, worktreeB);
+    armRun(stateA.runId, worktreeA);
+    armRun(stateB.runId, worktreeB);
+
+    expect(decideStopHook({ hook_event_name: 'Stop', cwd: worktreeA }).block).toBe(true);
+    expect(decideStopHook({ hook_event_name: 'Stop', cwd: worktreeB }).block).toBe(true);
+    expect(loadRunState(stateA.runId, worktreeA).phase).toBe('running');
+    expect(loadRunState(stateB.runId, worktreeB).phase).toBe('running');
+
+    disarmRun(worktreeA);
+    disarmRun(worktreeB);
   });
 
   it('pauses the run when every remaining leaf is blocked', () => {

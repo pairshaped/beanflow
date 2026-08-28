@@ -16,11 +16,10 @@ import {
   type SessionEntry,
 } from "../dist/core/continuation.js";
 import { discoverBeans } from "../dist/core/discovery.js";
-import { activeRunId, loadRunState, persistRunState, runWorktreeExists } from "../dist/core/runstate.js";
+import { activeRunId, loadRunState, persistRunState, runWorktreeExists, worktreeStateDir } from "../dist/core/runstate.js";
 import { statusOf } from "../dist/core/runstate.js";
 import { parseOperation } from "../dist/core/tool.js";
 import { checkBounds, shouldStop } from "../dist/core/safety.js";
-import { stateDir } from "../dist/core/runstate.js";
 
 function runWorktreePath(
   state: { worktreePath?: string | null; parentBean: { path: string } },
@@ -40,29 +39,29 @@ function isRunWorktree(
 
 export default function (pi: ExtensionAPI) {
   pi.on("agent_settled", async (_event, ctx) => {
-    const runId = activeRunId();
+    const runId = activeRunId(ctx.cwd);
     if (!runId) return;
 
-    const state = loadRunState(runId);
+    const state = loadRunState(runId, ctx.cwd);
     if (!isRunWorktree(state, ctx.cwd)) return;
 
     const entries = ctx.sessionManager.getBranch() as SessionEntry[];
     const lastStopReason = lastAssistantStopReason(entries);
 
-    if (shouldStop(checkBounds(state, stateDir(), new Date().toISOString()))) {
-      persistRunState({ ...state, phase: "paused", updatedAt: new Date().toISOString() });
+    if (shouldStop(checkBounds(state, worktreeStateDir(ctx.cwd), new Date().toISOString()))) {
+      persistRunState({ ...state, phase: "paused", updatedAt: new Date().toISOString() }, ctx.cwd);
       return;
     }
 
     if (isAbortedStopReason(lastStopReason) && state.phase !== "paused") {
-      persistRunState({ ...state, phase: "paused", updatedAt: new Date().toISOString() });
+      persistRunState({ ...state, phase: "paused", updatedAt: new Date().toISOString() }, ctx.cwd);
       return;
     }
 
     const tree = discoverBeans(join(ctx.cwd, ".beans"));
     const eligible = eligibleWorkRemains(tree, state.manifest, state);
     if (!eligible && state.phase === "running") {
-      persistRunState({ ...state, phase: "paused", updatedAt: new Date().toISOString() });
+      persistRunState({ ...state, phase: "paused", updatedAt: new Date().toISOString() }, ctx.cwd);
       return;
     }
     const decision = decideContinuation({
@@ -90,14 +89,14 @@ export default function (pi: ExtensionAPI) {
     }),
     async execute(_toolCallId, params, _signal, _onUpdate, _ctx) {
       const op = parseOperation(params.request);
-      const runId = activeRunId();
+      const runId = activeRunId(_ctx.cwd);
 
       switch (op) {
         case "status": {
           if (!runId) {
             return { content: [{ type: "text", text: "No active beanflow run." }], details: {} };
           }
-          const state = loadRunState(runId);
+          const state = loadRunState(runId, _ctx.cwd);
           if (!runWorktreeExists(state, _ctx.cwd)) {
             return {
               content: [{ type: "text", text: `Run ${runId} is stale: its recorded worktree ${runWorktreePath(state, _ctx.cwd)} no longer exists. Start a new run explicitly to retire it.` }],
@@ -112,7 +111,7 @@ export default function (pi: ExtensionAPI) {
           if (!runId) {
             return { content: [{ type: "text", text: "No active beanflow run to resume." }], details: {} };
           }
-          const state = loadRunState(runId);
+          const state = loadRunState(runId, _ctx.cwd);
           if (!runWorktreeExists(state, _ctx.cwd)) {
             return {
               content: [{ type: "text", text: `Beanflow cannot resume run ${runId}: its recorded worktree ${runWorktreePath(state, _ctx.cwd)} no longer exists. Start a new run explicitly to retire it.` }],
@@ -128,7 +127,7 @@ export default function (pi: ExtensionAPI) {
           const tree = discoverBeans(join(_ctx.cwd, ".beans"));
           if (!eligibleWorkRemains(tree, state.manifest, state)) {
             if (state.phase === "running") {
-              persistRunState({ ...state, phase: "paused", updatedAt: new Date().toISOString() });
+              persistRunState({ ...state, phase: "paused", updatedAt: new Date().toISOString() }, _ctx.cwd);
             }
             const blockerCount = state.blockers.length;
             const blockerDetail = blockerCount > 0
@@ -140,7 +139,7 @@ export default function (pi: ExtensionAPI) {
             };
           }
           if (state.phase === "paused") {
-            persistRunState({ ...state, phase: "running", updatedAt: new Date().toISOString() });
+            persistRunState({ ...state, phase: "running", updatedAt: new Date().toISOString() }, _ctx.cwd);
           }
           return { content: [{ type: "text", text: "Resuming the beanflow run." }], details: {} };
         }
