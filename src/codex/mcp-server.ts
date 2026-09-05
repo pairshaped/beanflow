@@ -172,6 +172,49 @@ function startFromCurrentWorktree(request: string): string {
   return `${staleNotice}Started Beanflow run ${runId} in ${worktreePath} on ${branchName}; frozen ${manifest.executableLeaves.length} leaves and selected ${state.selectedLeaf?.id ?? 'none'}.`;
 }
 
+function refreshActiveManifest(request: string): string {
+  const requested = requestWorktreeContext(request, 'refresh');
+  if (requested.error) return requested.error;
+  const cwd = requested.path!;
+  const runId = activeRunId(cwd);
+  if (!runId) return `No active beanflow run to refresh in ${cwd}.`;
+  const state = loadRunState(runId, cwd);
+  if (!runWorktreeExists(state, cwd)) {
+    return `Beanflow cannot refresh run ${runId}: its recorded worktree ${runWorktreePath(state, cwd)} no longer exists.`;
+  }
+  if (!isRunWorktree(state, cwd)) {
+    return `Beanflow cannot refresh from this directory; the active run belongs to ${runWorktreePath(state, cwd)}.`;
+  }
+
+  const now = new Date().toISOString();
+  const tree = discoverBeans(join(cwd, '.beans'));
+  let currentManifest;
+  try {
+    currentManifest = freezeManifest(tree, state.parentBean.id, now);
+  } catch (err) {
+    return `Beanflow cannot refresh: ${(err as Error).message}`;
+  }
+  const failures = currentManifest.executableLeaves
+    .map((leaf) => auditLeaf(tree.byId.get(leaf.id)!, tree))
+    .filter((audit) => !audit.passed);
+  if (failures.length > 0) {
+    const detail = failures
+      .map((audit) => `${audit.leaf.id}: ${audit.findings.filter((finding) => !finding.pass).map((finding) => finding.check).join(', ')}`)
+      .join('; ');
+    return `Beanflow cannot refresh: the manifest audit failed (${detail}).`;
+  }
+
+  const completedHistory = state.manifest.executableLeaves.filter((leaf) => !tree.byId.has(leaf.id));
+  const manifest = {
+    ...currentManifest,
+    executableLeaves: [...completedHistory, ...currentManifest.executableLeaves],
+  };
+  const refreshed = { ...state, manifest, updatedAt: now };
+  const selectedLeaf = nextEligibleLeaf(tree, manifest, refreshed);
+  persistRunState({ ...refreshed, selectedLeaf }, cwd);
+  return `Refreshed Beanflow run ${runId}; frozen ${manifest.executableLeaves.length} leaves and selected ${selectedLeaf?.id ?? 'none'}.`;
+}
+
 function runBeanflow(request: string): string {
   const op = parseOperation(request);
   switch (op) {
@@ -210,7 +253,7 @@ function runBeanflow(request: string): string {
       return decision.message;
     }
     case 'refresh':
-      return 'Refresh is an explicit re-freeze: re-discover Beans, re-freeze the manifest from the audited parent, and persist the new state. The agent performs this per the beanflow skill.';
+      return refreshActiveManifest(request);
     case 'land':
       return 'Landing requires separate owner approval and follows repository merge policy. The agent performs this per the beanflow skill.';
     default:

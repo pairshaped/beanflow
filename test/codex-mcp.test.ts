@@ -470,9 +470,59 @@ describe('Codex MCP server', () => {
     }
   });
 
-  it('dispatches refresh and land as guidance', () => {
-    const refresh = parse(handleRequest(req(5, 'tools/call', { name: 'beanflow', arguments: { request: 'refresh the manifest' } })))!;
-    expect((refresh.result as { content: { text: string }[] }).content[0].text).toMatch(/re-freeze/);
+  it('refreshes and persists an audited manifest while preserving completed history', () => {
+    const cwd = mkdtempSync(join(tmpdir(), 'beanflow-mcp-refresh-'));
+    execFileSync('git', ['init', '-q', '-b', 'f/refresh'], { cwd });
+    const beansDir = join(cwd, '.beans');
+    mkdirSync(beansDir);
+    writeFileSync(
+      join(beansDir, 'epic.md'),
+      `---\n# epic\ntitle: Epic\nstatus: in-progress\ntype: epic\ncreated_at: 2026-08-17T00:00:00Z\nupdated_at: 2026-08-17T00:00:00Z\n---\n`,
+    );
+    const leaf = (id: string, title: string) =>
+      `---\n# ${id}\ntitle: ${title}\nstatus: todo\ntype: task\nparent: epic\ncreated_at: 2026-08-17T00:00:00Z\nupdated_at: 2026-08-17T00:00:00Z\n---\n\n## What to build\n\nImplement one bounded behavior with enough context for autonomous work.\n\n## Acceptance criteria\n\n- [ ] The behavior works.\n\n## Verification\n\nRun the focused test.\n\n## Out of scope\n\nDo not change unrelated behavior.\n`;
+    writeFileSync(join(beansDir, 'current.md'), leaf('current', 'Current'));
+    writeFileSync(join(beansDir, 'new.md'), leaf('new', 'New'));
+    const completed: BeanRef = { id: 'completed', path: join(beansDir, 'completed.md'), title: 'Completed' };
+    const state: RunState = {
+      schemaVersion: 1,
+      runId: 'refresh-run',
+      parentBean: { id: 'epic', path: join(beansDir, 'epic.md'), title: 'Epic' },
+      manifest: {
+        parentBean: { id: 'epic', path: join(beansDir, 'epic.md'), title: 'Epic' },
+        frozenAt: '2026-08-17T00:00:00Z',
+        executableLeaves: [completed, { id: 'current', path: join(beansDir, 'current.md'), title: 'Current' }],
+      },
+      phase: 'running',
+      baseBranch: 'main',
+      baseCommit: 'abc123',
+      worktreePath: realpathSync(cwd),
+      selectedLeaf: null,
+      blockers: [],
+      attempts: {},
+      startedAt: '2026-08-17T00:00:00Z',
+      updatedAt: '2026-08-17T00:00:00Z',
+    };
+    persistRunState(state, cwd);
+    armRun(state.runId, cwd);
+
+    try {
+      const refresh = parse(handleRequest(req(5, 'tools/call', {
+        name: 'beanflow',
+        arguments: { request: `refresh the manifest in worktree ${cwd}` },
+      })))!;
+      const text = (refresh.result as { content: { text: string }[] }).content[0].text;
+      expect(text).toMatch(/Refreshed Beanflow run refresh-run/);
+      const refreshed = loadRunState(state.runId, cwd);
+      expect(refreshed.manifest.frozenAt).not.toBe(state.manifest.frozenAt);
+      expect(refreshed.manifest.executableLeaves.map((item) => item.id)).toEqual(['completed', 'current', 'new']);
+      expect(refreshed.selectedLeaf?.id).toBe('current');
+    } finally {
+      disarmRun(cwd);
+    }
+  });
+
+  it('dispatches land as guidance', () => {
     const land = parse(handleRequest(req(6, 'tools/call', { name: 'beanflow', arguments: { request: 'land it' } })))!;
     expect((land.result as { content: { text: string }[] }).content[0].text).toMatch(/approval/);
   });
