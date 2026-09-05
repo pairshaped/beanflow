@@ -66,7 +66,16 @@ export function decideStopHook(input: StopHookInput): StopHookDecision {
     }
     const decision = decideContinuation({ phase: state.phase, lastStopReason: null, eligibleWorkRemains: eligible });
     if (decision.shouldContinue) {
-      return { block: true, reason: 'Continue the beanflow run: implement the next eligible leaf.' };
+      return {
+        block: true,
+        reason:
+          `Continue the beanflow run as the owner-facing orchestrator beginning with leaf ${selectedLeaf!.id}: ` +
+          'reuse its existing implementer thread, or create one only if this run has none. Form a bounded ordered ' +
+          'work set of related eligible leaves, send those Bean ids and the worktree path to the beanflow_implementer, ' +
+          'and wait for the work-set outcome. Do not require parent acknowledgement between routine leaf commits. ' +
+          'If it reports needs_guidance, resolve the question in this parent task and send the guidance back to ' +
+          'that same thread.',
+      };
     }
     return { block: false };
   } catch {

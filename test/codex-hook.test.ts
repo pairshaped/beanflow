@@ -100,6 +100,12 @@ describe('Codex Stop hook', () => {
     const decision = decideStopHook({ hook_event_name: 'Stop', cwd: repo });
     expect(decision.block).toBe(true);
     expect(decision.reason).toMatch(/Continue the beanflow run/);
+    expect(decision.reason).toContain('beanflow_implementer');
+    expect(decision.reason).toContain('leaf a');
+    expect(decision.reason).toContain('bounded ordered work set');
+    expect(decision.reason).toContain('Do not require parent acknowledgement');
+    expect(decision.reason).toContain('reuse its existing implementer thread');
+    expect(decision.reason).toContain('create one only if this run has none');
   });
 
   it('does not continue a run from a different working directory', () => {
