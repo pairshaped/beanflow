@@ -33,5 +33,7 @@ describe('Codex Beanflow agent profiles', () => {
     expect(contents).toContain('exact test file');
     expect(contents).toContain('would visibly fail if the prohibited behavior occurred');
     expect(contents).toContain('friendly conditions that mask');
+    expect(contents).toContain('prove every required event target exists before dispatch');
+    expect(contents).toContain('no-op path');
   });
 });

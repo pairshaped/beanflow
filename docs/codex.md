@@ -105,7 +105,9 @@ sets.
   not promoted to a completed criterion. The map names the exact test file and
   assertion or observed value. Isolation, cleanup, persistence, and idempotency tests
   use adversarial fixtures whose assertions fail when the forbidden behavior occurs;
-  convenient differences between instances are not valid isolation. If the gate
+  convenient differences between instances are not valid isolation. Interaction tests
+  assert that required event targets exist before dispatch. A missing target hidden by
+  optional chaining is a silent no-op, not passing evidence. If the gate
   fails, the parent sends the
   concrete failures back to the same implementer as a
   repair of the same work set and does not advance the run.
