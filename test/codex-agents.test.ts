@@ -35,5 +35,7 @@ describe('Codex Beanflow agent profiles', () => {
     expect(contents).toContain('friendly conditions that mask');
     expect(contents).toContain('prove every required event target exists before dispatch');
     expect(contents).toContain('no-op path');
+    expect(contents).toContain('scope that owns them');
+    expect(contents).toContain('subtree query cannot prove document-level identity');
   });
 });

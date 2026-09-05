@@ -84,6 +84,8 @@ Interpret the worker's `BEANFLOW_OUTCOME` as follows:
   fixtures that hide cross-instance effects, leaked handlers, lost state, or duplicate
   work. For interaction evidence, confirm every required event target exists before
   dispatch; optional chaining or another silent no-op is not proof that the event ran.
+  Check uniqueness and cross-element relationships at their owning scope. Subtree
+  queries cannot establish document-level identity or reference uniqueness.
   Reject these gaps along with unsupported criteria and partial evidence presented as complete.
   Rerun representative checks
   independently. If any gate fails, reject the outcome and send the concrete failures
