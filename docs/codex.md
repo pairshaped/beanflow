@@ -38,12 +38,16 @@ in start, status, and resume requests.
    ln -s /path/to/beanflow/skills/beanflow ~/.codex/skills/beanflow
    ```
 
-3. Agent: symlink the implementer profile into `~/.codex/agents/`:
+3. Agent: copy the implementer profile into `~/.codex/agents/`:
 
    ```bash
    mkdir -p ~/.codex/agents
-   ln -s /path/to/beanflow/codex/agents/beanflow-implementer.toml ~/.codex/agents/beanflow-implementer.toml
+   cp /path/to/beanflow/codex/agents/beanflow-implementer.toml ~/.codex/agents/beanflow-implementer.toml
    ```
+
+   Keep this as a regular file. Codex custom-agent loading does not currently
+   follow symlinked profile files reliably. Copy it again after changing the
+   repository-owned profile.
 
 4. Tool: add an MCP server to `~/.codex/config.toml`:
 
