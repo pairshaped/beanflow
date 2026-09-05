@@ -100,7 +100,10 @@ sets.
   formatter and automated static analysis once at the end of the work set. That
   includes Rust Clippy when Rust changed plus TypeScript lint and typecheck when
   TypeScript changed. A summary or a passing test name is not proof. If the gate
-  fails, the parent sends the concrete failures back to the same implementer as a
+  implementer cannot map every acceptance criterion to a concrete assertion or
+  observed behavior, the outcome is incomplete. Partial coverage must be called out,
+  not promoted to a completed criterion. If the gate fails, the parent sends the
+  concrete failures back to the same implementer as a
   repair of the same work set and does not advance the run.
 - `needs_guidance`: the current Bean needs stronger technical judgment. Earlier
   work-set Beans remain committed. The parent resolves the focused question and sends

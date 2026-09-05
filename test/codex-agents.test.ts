@@ -28,5 +28,7 @@ describe('Codex Beanflow agent profiles', () => {
     expect(contents).toContain('does not cancel an explicit verification item');
     expect(contents).toContain('must exercise the owning boundary named by the Bean');
     expect(contents).toContain('An ad hoc page or fixture');
+    expect(contents).toContain('For every acceptance criterion');
+    expect(contents).toContain('If the evidence only proves part of a criterion');
   });
 });

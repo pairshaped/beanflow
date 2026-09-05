@@ -77,7 +77,9 @@ Interpret the worker's `BEANFLOW_OUTCOME` as follows:
   formatter, Rust Clippy when Rust changed, TypeScript lint and typecheck when
   TypeScript changed, and any equivalent automated static analysis required by the
   repository. These work-set checks need not run after every leaf. Test names and a
-  worker summary are evidence leads, not proof. Rerun representative checks
+  worker summary are evidence leads, not proof. Require a criterion-by-criterion map
+  to the concrete assertions or observed behavior that prove it. Reject unsupported
+  criteria and partial evidence presented as complete. Rerun representative checks
   independently. If any gate fails, reject the outcome and send the concrete failures
   back to the same implementer as a repair of the same work set. Do not select or
   delegate new Beans until the repair passes. Full verification still belongs at the
