@@ -75,7 +75,8 @@ export function decideStopHook(input: StopHookInput): StopHookDecision {
           'Send those Bean ids and the worktree path to the beanflow-implementer, ' +
           'and wait for the work-set outcome. Do not require parent acknowledgement between routine leaf commits. ' +
           'Before accepting completed, verify the worktree is clean, Bean deletions are atomic, required checks ran, ' +
-          'the work-set formatter and static-analysis gate passed, and the code and tests prove the acceptance criteria. ' +
+          'the work-set formatter and static-analysis gate passed, the code and tests prove the acceptance criteria, ' +
+          'and replaced code was deleted or has an explicit cleanup Bean blocking final verification. ' +
           'Reject failures back to the same implementer without ' +
           'advancing the run. If it reports needs_guidance, resolve the question in this parent task and send the ' +
           'guidance back to that same thread.',

@@ -61,6 +61,11 @@ completed status, record them and then follow its instruction to delete complete
 Beans before the leaf commit. Generic CLI guidance does not override the owning
 repository's tracker convention. Likewise, general advice to prefer cheap test
 boundaries does not cancel an explicit verification item in an audited Bean.
+Delete an implementation in the leaf that replaces its last use. A staged migration
+may retain legacy code only when an audited Bean names the exact cleanup owner and
+dependency, and that cleanup blocks final integration or verification. Do not accept
+parallel writable implementations or sources of truth. If necessary compatibility
+code has no explicit removal Bean, pause and repair the Bean tree before implementation.
 Verification evidence must exercise the owning boundary named by the Bean. Reject
 an ad hoc fixture when it bypasses application runtime, production mounts, generated
 assets, styling, routing, persistence, or any other behavior the check claims to
@@ -90,6 +95,10 @@ Interpret the worker's `BEANFLOW_OUTCOME` as follows:
   post-creation repair or attachment helper cannot prove the invariant. Generated
   cross-language agreement needs executable parser fixtures, a round trip, or one
   generated source of truth rather than parallel handwritten declarations.
+  For replacement work, confirm obsolete code was deleted when its last consumer
+  moved. If legacy code remains, verify the reported cleanup Bean names the retained
+  path, depends on the remaining consumers, and blocks final integration or
+  verification.
   Reject these gaps along with unsupported criteria and partial evidence presented as complete.
   Rerun representative checks
   independently. If any gate fails, reject the outcome and send the concrete failures

@@ -40,5 +40,8 @@ describe('Codex Beanflow agent profiles', () => {
     expect(contents).toContain('real production creation path');
     expect(contents).toContain('post-creation repair or attachment helper');
     expect(contents).toContain('executable parser fixture');
+    expect(contents).toContain('Do not add parallel writable implementations or sources of truth');
+    expect(contents).toContain('cleanup blocks final integration or verification');
+    expect(contents).toContain("return `needs_guidance` before adding it");
   });
 });

@@ -99,6 +99,13 @@ boundary. A migration split across Beans also names a buildable transition seque
 including which leaf switches consumers and which removes the old storage or API.
 Do not delegate these decisions as implicit implementation details.
 
+Replacement work deletes the old implementation when its last consumer moves. If a
+buildable staged migration must retain legacy code, the audited tree names the exact
+cleanup Bean and dependencies, and that cleanup blocks final integration or
+verification. A parallel writable path or second source of truth is not an acceptable
+compatibility strategy. The implementer returns `needs_guidance` rather than leaving
+unowned cleanup behind.
+
 - `completed`: every Bean in the work set was separately verified, deleted, and
   committed, and the worktree is clean. The parent checks the commits, required
   verification, implementation, and test assertions before accepting the outcome.
@@ -119,6 +126,9 @@ Do not delegate these decisions as implicit implementation details.
   storage claims run through the production creation path, not a post-creation repair
   helper. Generated cross-language agreement uses an executable parser fixture, a
   round trip, or one generated source of truth instead of matching handwritten types.
+  Replacement claims also identify deleted obsolete paths. Any retained compatibility
+  path has an explicit cleanup Bean that depends on its remaining consumers and blocks
+  final integration or verification.
   If the gate
   fails, the parent sends the
   concrete failures back to the same implementer as a
