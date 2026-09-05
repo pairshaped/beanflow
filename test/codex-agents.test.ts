@@ -26,5 +26,7 @@ describe('Codex Beanflow agent profiles', () => {
     expect(contents).toContain('do not need to run after every leaf');
     expect(contents).toContain('complete-then-delete lifecycle as one sequence');
     expect(contents).toContain('does not cancel an explicit verification item');
+    expect(contents).toContain('must exercise the owning boundary named by the Bean');
+    expect(contents).toContain('An ad hoc page or fixture');
   });
 });

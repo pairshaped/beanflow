@@ -5,7 +5,7 @@ status: completed
 type: task
 priority: normal
 created_at: 2026-09-05T19:19:49Z
-updated_at: 2026-09-05T19:23:11Z
+updated_at: 2026-09-05T19:29:17Z
 ---
 
 ## What to change
@@ -31,3 +31,12 @@ Added a one-leaf calibration gate for new or changed profiles, strict parent acc
 ## Follow-up Summary
 
 Clarified instruction precedence after auditing the sports AGENTS.md stack: completion metadata and deletion are sequential, and explicit audited verification remains mandatory despite general advice to prefer smaller test boundaries.
+
+## Evidence fidelity follow-up
+
+- [x] Require verification to exercise the owning boundary named by the Bean.
+- [x] Reject ad hoc fixtures that bypass application runtime or styles when proving application layout.
+
+## Evidence Fidelity Summary
+
+Required verification to exercise the boundary it claims to prove and explicitly rejected ad hoc browser fixtures that bypass application runtime, production mounts, generated assets, styling, routing, or persistence.

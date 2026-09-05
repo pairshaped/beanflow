@@ -61,6 +61,10 @@ completed status, record them and then follow its instruction to delete complete
 Beans before the leaf commit. Generic CLI guidance does not override the owning
 repository's tracker convention. Likewise, general advice to prefer cheap test
 boundaries does not cancel an explicit verification item in an audited Bean.
+Verification evidence must exercise the owning boundary named by the Bean. Reject
+an ad hoc fixture when it bypasses application runtime, production mounts, generated
+assets, styling, routing, persistence, or any other behavior the check claims to
+prove.
 
 Interpret the worker's `BEANFLOW_OUTCOME` as follows:
 

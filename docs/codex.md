@@ -122,7 +122,10 @@ Repository instructions and Bean verification are read together. If the reposito
 requires completion metadata and deletion, the implementer records the metadata and
 then deletes the Bean before the same leaf commit. If general testing guidance says
 to prefer a smaller boundary but an audited Bean explicitly requires a browser,
-lifecycle, formatter, or linter check, the explicit verification still runs.
+lifecycle, formatter, or linter check, the explicit verification still runs. That
+check must exercise the owning boundary it claims to prove. An ad hoc fixture that
+bypasses the application's runtime, production mount, generated assets, styles,
+routing, or persistence cannot stand in for application-level evidence.
 
 The implementer thread belongs to one Beanflow run. Close it at completion and do
 not carry it into another epic. Replace it only if the thread is unavailable, closed,
