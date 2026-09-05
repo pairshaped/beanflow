@@ -26,7 +26,7 @@ requirements, architecture, planning, Bean creation and audit, owner communicati
 delegation, and the final report.
 
 Never implement an executable leaf in the parent task when the
-`beanflow_implementer` custom agent is available. When the first executable leaf is
+`beanflow-implementer` custom agent is available. When the first executable leaf is
 ready, create exactly one implementer thread for that Beanflow run. Use a bounded or
 context-free fork instead of copying the full planning conversation. Retain the
 returned agent identity and reuse that thread for every later leaf and guidance

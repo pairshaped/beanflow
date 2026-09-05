@@ -71,7 +71,7 @@ export function decideStopHook(input: StopHookInput): StopHookDecision {
         reason:
           `Continue the beanflow run as the owner-facing orchestrator beginning with leaf ${selectedLeaf!.id}: ` +
           'reuse its existing implementer thread, or create one only if this run has none. Form a bounded ordered ' +
-          'work set of related eligible leaves, send those Bean ids and the worktree path to the beanflow_implementer, ' +
+          'work set of related eligible leaves, send those Bean ids and the worktree path to the beanflow-implementer, ' +
           'and wait for the work-set outcome. Do not require parent acknowledgement between routine leaf commits. ' +
           'If it reports needs_guidance, resolve the question in this parent task and send the guidance back to ' +
           'that same thread.',

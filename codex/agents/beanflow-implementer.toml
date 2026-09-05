@@ -1,4 +1,4 @@
-name = "beanflow_implementer"
+name = "beanflow-implementer"
 description = "Remain available as the implementation worker for one Beanflow run, completing bounded ordered work sets of audited leaves."
 model = "gpt-5.6-luna"
 model_reasoning_effort = "medium"

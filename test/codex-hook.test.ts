@@ -100,7 +100,7 @@ describe('Codex Stop hook', () => {
     const decision = decideStopHook({ hook_event_name: 'Stop', cwd: repo });
     expect(decision.block).toBe(true);
     expect(decision.reason).toMatch(/Continue the beanflow run/);
-    expect(decision.reason).toContain('beanflow_implementer');
+    expect(decision.reason).toContain('beanflow-implementer');
     expect(decision.reason).toContain('leaf a');
     expect(decision.reason).toContain('bounded ordered work set');
     expect(decision.reason).toContain('Do not require parent acknowledgement');
