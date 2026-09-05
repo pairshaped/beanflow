@@ -88,8 +88,20 @@ planning conversation is not copied into implementation turns. Later work sets a
 follow-up instructions to the same thread. The implementer returns one of three
 stable outcomes:
 
+The first work set after installing or materially changing the implementer profile
+contains one leaf. This is a calibration gate, not permanent micromanagement. The
+parent checks that leaf strictly before trusting the profile with multi-leaf work
+sets.
+
 - `completed`: every Bean in the work set was separately verified, deleted, and
-  committed. The parent reviews the work-set summary and sends the next work set.
+  committed, and the worktree is clean. The parent checks the commits, required
+  verification, implementation, and test assertions before accepting the outcome.
+  The implementer runs leaf-specific checks at each leaf, then runs the owning
+  formatter and automated static analysis once at the end of the work set. That
+  includes Rust Clippy when Rust changed plus TypeScript lint and typecheck when
+  TypeScript changed. A summary or a passing test name is not proof. If the gate
+  fails, the parent sends the concrete failures back to the same implementer as a
+  repair of the same work set and does not advance the run.
 - `needs_guidance`: the current Bean needs stronger technical judgment. Earlier
   work-set Beans remain committed. The parent resolves the focused question and sends
   guidance back so the worker can finish the remaining work set.

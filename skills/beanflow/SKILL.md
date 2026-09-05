@@ -41,6 +41,11 @@ nearest container or one short dependency chain. Do not hand over the whole epic
 unrelated leaves, unresolved product choices, or work whose dependency can change
 outside the work set.
 
+Treat a new or materially changed implementer profile as unproven. Its first work
+set is one leaf. Audit that calibration leaf at the completion gate below before
+delegating multiple leaves. Expand later work sets only after the implementer has
+shown that it follows the Bean, verification, commit, and reporting contracts.
+
 Give the implementer every Bean id in order plus the absolute worktree path. Beans
 must carry the accepted scope and decisions. Include extra handoff context only when
 it cannot be discovered safely from the Beans, repository, or run state. The
@@ -53,8 +58,18 @@ another agent.
 Interpret the worker's `BEANFLOW_OUTCOME` as follows:
 
 - `completed`: inspect the reported Bean-to-commit list and verification summary at
-  the end of the delegated work set. Spot-check where risk warrants it, then send the
-  next bounded work set to the same implementer thread. Full verification still belongs at the
+  the end of the delegated work set. Before accepting it, confirm the worktree is
+  clean; every Bean and its dependency cleanup were deleted in that leaf's reported
+  implementation commit; every required verification item ran rather than being
+  replaced by a cheaper compile or test; and the implementation and tests actually
+  prove the acceptance criteria. At the end of the work set, require one owning-scope
+  formatter, Rust Clippy when Rust changed, TypeScript lint and typecheck when
+  TypeScript changed, and any equivalent automated static analysis required by the
+  repository. These work-set checks need not run after every leaf. Test names and a
+  worker summary are evidence leads, not proof. Rerun representative checks
+  independently. If any gate fails, reject the outcome and send the concrete failures
+  back to the same implementer as a repair of the same work set. Do not select or
+  delegate new Beans until the repair passes. Full verification still belongs at the
   parent completion gate.
 - `needs_guidance`: resolve the implementer's focused question in the parent task,
   then send the decision and rationale back to the same implementer so it can finish

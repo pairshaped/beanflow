@@ -18,5 +18,11 @@ describe('Codex Beanflow agent profiles', () => {
     expect(contents).toContain('bounded ordered work set');
     expect(contents).toContain('continue through the delegated work set');
     expect(contents).toContain('ordered Bean-to-commit list');
+    expect(contents).toContain('Never batch Bean deletions');
+    expect(contents).toContain('exact verification commands');
+    expect(contents).toContain('git status --short');
+    expect(contents).toContain('Rust Clippy when Rust changed');
+    expect(contents).toContain('TypeScript lint and typecheck');
+    expect(contents).toContain('do not need to run after every leaf');
   });
 });

@@ -106,6 +106,10 @@ describe('Codex Stop hook', () => {
     expect(decision.reason).toContain('Do not require parent acknowledgement');
     expect(decision.reason).toContain('reuse its existing implementer thread');
     expect(decision.reason).toContain('create one only if this run has none');
+    expect(decision.reason).toContain('one leaf when the implementer profile is new');
+    expect(decision.reason).toContain('verify the worktree is clean');
+    expect(decision.reason).toContain('work-set formatter and static-analysis gate passed');
+    expect(decision.reason).toContain('Reject failures back to the same implementer');
   });
 
   it('does not continue a run from a different working directory', () => {
