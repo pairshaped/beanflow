@@ -115,7 +115,11 @@ Do not delegate these decisions as implicit implementation details.
   assert that required event targets exist before dispatch. A missing target hidden by
   optional chaining is a silent no-op, not passing evidence. Uniqueness and
   cross-element relationships are checked at their owning scope; subtree queries do
-  not prove document-level identity or reference uniqueness. If the gate
+  not prove document-level identity or reference uniqueness. Atomic and immutable
+  storage claims run through the production creation path, not a post-creation repair
+  helper. Generated cross-language agreement uses an executable parser fixture, a
+  round trip, or one generated source of truth instead of matching handwritten types.
+  If the gate
   fails, the parent sends the
   concrete failures back to the same implementer as a
   repair of the same work set and does not advance the run.

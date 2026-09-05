@@ -37,5 +37,8 @@ describe('Codex Beanflow agent profiles', () => {
     expect(contents).toContain('no-op path');
     expect(contents).toContain('scope that owns them');
     expect(contents).toContain('subtree query cannot prove document-level identity');
+    expect(contents).toContain('real production creation path');
+    expect(contents).toContain('post-creation repair or attachment helper');
+    expect(contents).toContain('executable parser fixture');
   });
 });

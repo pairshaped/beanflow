@@ -86,6 +86,10 @@ Interpret the worker's `BEANFLOW_OUTCOME` as follows:
   dispatch; optional chaining or another silent no-op is not proof that the event ran.
   Check uniqueness and cross-element relationships at their owning scope. Subtree
   queries cannot establish document-level identity or reference uniqueness.
+  For atomic or immutable storage, inspect the real production creation path; a
+  post-creation repair or attachment helper cannot prove the invariant. Generated
+  cross-language agreement needs executable parser fixtures, a round trip, or one
+  generated source of truth rather than parallel handwritten declarations.
   Reject these gaps along with unsupported criteria and partial evidence presented as complete.
   Rerun representative checks
   independently. If any gate fails, reject the outcome and send the concrete failures
