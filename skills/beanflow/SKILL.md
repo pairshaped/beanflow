@@ -126,7 +126,12 @@ rest of the run. Pass the same compact handoff explicitly.
    Execute leaves only; keep unrelated Beans out of scope.
 4. **Audit** - Audit every executable leaf for focused scope, context, acceptance
    criteria, verification, dependencies, and safe autonomy. Reject vague,
-   duplicate, oversized, or judgment-dependent leaves. Mark ready-for-agent only
+   duplicate, oversized, or judgment-dependent leaves. A leaf that introduces a
+   canonical schema or protocol must state its fields, variants, validation owners,
+   and consumer boundary instead of asking the implementer to invent them. When a
+   migration spans leaves, every intermediate leaf must leave the repository
+   buildable and the Beans must name which leaf switches consumers and removes the
+   old boundary. Mark ready-for-agent only
    after the audit passes. Each leaf must use the exact `## What to build`,
    `## Acceptance criteria`, `## Verification`, and `## Out of scope` headings;
    acceptance criteria must be checkboxes. Present the tree and order to the owner.

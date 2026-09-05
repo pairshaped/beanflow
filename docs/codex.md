@@ -93,6 +93,12 @@ contains one leaf. This is a calibration gate, not permanent micromanagement. Th
 parent checks that leaf strictly before trusting the profile with multi-leaf work
 sets.
 
+The parent audit resolves canonical contracts before delegation. A Bean that creates
+a schema or protocol names its fields, variants, validation ownership, and consumer
+boundary. A migration split across Beans also names a buildable transition sequence,
+including which leaf switches consumers and which removes the old storage or API.
+Do not delegate these decisions as implicit implementation details.
+
 - `completed`: every Bean in the work set was separately verified, deleted, and
   committed, and the worktree is clean. The parent checks the commits, required
   verification, implementation, and test assertions before accepting the outcome.
