@@ -30,5 +30,8 @@ describe('Codex Beanflow agent profiles', () => {
     expect(contents).toContain('An ad hoc page or fixture');
     expect(contents).toContain('For every acceptance criterion');
     expect(contents).toContain('If the evidence only proves part of a criterion');
+    expect(contents).toContain('exact test file');
+    expect(contents).toContain('would visibly fail if the prohibited behavior occurred');
+    expect(contents).toContain('friendly conditions that mask');
   });
 });

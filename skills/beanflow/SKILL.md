@@ -78,8 +78,12 @@ Interpret the worker's `BEANFLOW_OUTCOME` as follows:
   TypeScript changed, and any equivalent automated static analysis required by the
   repository. These work-set checks need not run after every leaf. Test names and a
   worker summary are evidence leads, not proof. Require a criterion-by-criterion map
-  to the concrete assertions or observed behavior that prove it. Reject unsupported
-  criteria and partial evidence presented as complete. Rerun representative checks
+  to the exact test files and concrete assertions or observed values that prove it.
+  For isolation, cleanup, persistence, and idempotency claims, check that the fixture
+  and assertion would visibly fail when the prohibited behavior occurs. Reject friendly
+  fixtures that hide cross-instance effects, leaked handlers, lost state, or duplicate
+  work, along with unsupported criteria and partial evidence presented as complete.
+  Rerun representative checks
   independently. If any gate fails, reject the outcome and send the concrete failures
   back to the same implementer as a repair of the same work set. Do not select or
   delegate new Beans until the repair passes. Full verification still belongs at the

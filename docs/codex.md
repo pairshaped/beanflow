@@ -102,7 +102,11 @@ sets.
   TypeScript changed. A summary or a passing test name is not proof. If the gate
   implementer cannot map every acceptance criterion to a concrete assertion or
   observed behavior, the outcome is incomplete. Partial coverage must be called out,
-  not promoted to a completed criterion. If the gate fails, the parent sends the
+  not promoted to a completed criterion. The map names the exact test file and
+  assertion or observed value. Isolation, cleanup, persistence, and idempotency tests
+  use adversarial fixtures whose assertions fail when the forbidden behavior occurs;
+  convenient differences between instances are not valid isolation. If the gate
+  fails, the parent sends the
   concrete failures back to the same implementer as a
   repair of the same work set and does not advance the run.
 - `needs_guidance`: the current Bean needs stronger technical judgment. Earlier
