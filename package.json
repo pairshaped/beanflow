@@ -4,6 +4,7 @@
   "private": true,
   "type": "module",
   "description": "Beans-driven autonomous feature delivery workflow",
+  "license": "MIT",
   "keywords": ["pi-package"],
   "engines": {
     "node": ">=20"
