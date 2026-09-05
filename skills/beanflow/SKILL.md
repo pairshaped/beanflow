@@ -55,6 +55,13 @@ for the work-set outcome instead of reviewing every routine leaf transition. Sen
 work sets as follow-up instructions to the existing thread rather than spawning
 another agent.
 
+Repository completion metadata and deletion are one lifecycle, not competing
+choices. When the repository requires checked acceptance items, a summary, or a
+completed status, record them and then follow its instruction to delete completed
+Beans before the leaf commit. Generic CLI guidance does not override the owning
+repository's tracker convention. Likewise, general advice to prefer cheap test
+boundaries does not cancel an explicit verification item in an audited Bean.
+
 Interpret the worker's `BEANFLOW_OUTCOME` as follows:
 
 - `completed`: inspect the reported Bean-to-commit list and verification summary at

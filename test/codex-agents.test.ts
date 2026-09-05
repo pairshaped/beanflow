@@ -24,5 +24,7 @@ describe('Codex Beanflow agent profiles', () => {
     expect(contents).toContain('Rust Clippy when Rust changed');
     expect(contents).toContain('TypeScript lint and typecheck');
     expect(contents).toContain('do not need to run after every leaf');
+    expect(contents).toContain('complete-then-delete lifecycle as one sequence');
+    expect(contents).toContain('does not cancel an explicit verification item');
   });
 });

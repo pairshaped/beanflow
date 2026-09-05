@@ -5,7 +5,7 @@ status: completed
 type: task
 priority: normal
 created_at: 2026-09-05T19:19:49Z
-updated_at: 2026-09-05T19:21:33Z
+updated_at: 2026-09-05T19:23:11Z
 ---
 
 ## What to change
@@ -22,3 +22,12 @@ Turn the first managed SPA run findings into explicit Codex calibration and work
 ## Summary of Changes
 
 Added a one-leaf calibration gate for new or changed profiles, strict parent acceptance checks, atomic deletion requirements, and one end-of-work-set formatter, Clippy, lint, and typecheck gate. Updated the Codex profile, skill, continuation prompt, documentation, and regression tests.
+
+## Follow-up acceptance
+
+- [x] Clarify repository completion metadata plus Bean deletion as one lifecycle.
+- [x] Clarify that explicit Bean verification overrides general advice to prefer cheaper test boundaries.
+
+## Follow-up Summary
+
+Clarified instruction precedence after auditing the sports AGENTS.md stack: completion metadata and deletion are sequential, and explicit audited verification remains mandatory despite general advice to prefer smaller test boundaries.

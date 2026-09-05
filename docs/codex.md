@@ -118,6 +118,12 @@ guidance, work-set review, and final verification. It does not require a turn
 merely to acknowledge each routine Luna commit. Work sets must still be bounded; never
 hand the implementer an unresolved epic or unrelated work just to reduce messages.
 
+Repository instructions and Bean verification are read together. If the repository
+requires completion metadata and deletion, the implementer records the metadata and
+then deletes the Bean before the same leaf commit. If general testing guidance says
+to prefer a smaller boundary but an audited Bean explicitly requires a browser,
+lifecycle, formatter, or linter check, the explicit verification still runs.
+
 The implementer thread belongs to one Beanflow run. Close it at completion and do
 not carry it into another epic. Replace it only if the thread is unavailable, closed,
 attached to the wrong worktree, or accumulated context is clearly reducing
