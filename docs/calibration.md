@@ -20,6 +20,7 @@ the parent has to tell it to resume already-decided work.
 | `sports-l5f1-1788624375436` | `sports-88qy` | GPT-5.6 Sol | high | GPT-5.6 Sol | low | about 93 min | 0 | 0 | 1 | 3 | no |
 | `sports-l5f1-1788624375436` | `sports-uqed` | GPT-5.6 Sol | high | GPT-5.6 Sol | low | about 78 min | 1 | 0 | 0 | 2 | no |
 | `sports-l5f1-1788624375436` | `sports-kgug` | GPT-5.6 Sol | high | GPT-5.6 Sol | low | about 74 min | 3 | 0 | 0 | 1 | no |
+| `sports-l5f1-1788624375436` | `sports-3qe6` | GPT-5.6 Sol | high | GPT-5.6 Sol | low | about 113 min | 2 | 0 | 0 | 3 | no |
 
 For each row, also record the useful parent-review findings and important caveats.
 
@@ -248,3 +249,32 @@ of partial completion reports, but it is not evidence that the newer model famil
 eliminated babysitting. More importantly, the rejected completion shows that automated
 language and browser gates do not replace a skeptical review of fallback, nested-island
 lifecycle, and response-header parity when a server boundary moves into Hypertea.
+
+## sports-3qe6 notes
+
+The parent intervened twice before the first completion. It stopped the draft from
+serializing ineligible Participant choices and private rejection details, then required
+a stale-command and duplicate-submission guard for creation. Those checkpoints improved
+the first submitted implementation, but they are not counted as rejected completions.
+
+The first completion still allowed a newly created underage or overage Participant to
+be persisted and assigned because only existing-Participant selection enforced Product
+eligibility. It also duplicated the account Participant insertion workflow inside the
+cart registration path and omitted non-input field errors from the Rust fallback. The
+first repair added the eligibility cases and fallback errors, but still calculated the
+authoritative age decision before its write transaction and put a shared creation module
+above account-route persistence helpers. The second repair moved the persistence source
+of truth and SQL to the shared boundary and recomputed eligibility from current Product,
+Order, and Organization cutoff data in the creation transaction.
+
+The second repair's router test did not prove that transaction rule. It changed the
+Organization before the POST, so the handler's earlier pre-transaction check could make
+the test pass even if the transaction recheck were removed. The final repair replaced it
+with a direct transaction-boundary test whose persistence and assignment assertions fail
+without the in-transaction decision. It also deleted the superseded partial-guard SQL.
+
+This leaf is strong evidence for independent skeptical review. Sol low produced a large,
+working vertical slice and responded well to bounded repairs, but a green build, Clippy,
+lint, typecheck, island suite, focused tests, and browser check did not expose the forged
+creation path or the false-positive atomicity test. It needed two continuation nudges,
+both after a precise repair request rather than during uncertain design work.
