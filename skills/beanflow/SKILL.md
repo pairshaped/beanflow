@@ -146,7 +146,7 @@ Do not reuse it for another epic. Replace it only when the thread is unavailable
 closed, attached to the wrong worktree, or its accumulated context is demonstrably
 hurting reliability; ensure the old thread is no longer active before replacing it.
 If the custom implementer is unavailable, create one model-specific agent with the
-same role instructions using GPT-5.6 Luna at medium reasoning and reuse it for the
+same role instructions using GPT-5.6 Luna at extra-high reasoning and reuse it for the
 rest of the run. Pass the same compact handoff explicitly.
 
 ## Workflow
