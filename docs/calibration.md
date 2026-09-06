@@ -6,11 +6,13 @@ Bean quality, parent strictness, and policy changes can dominate small differenc
 
 Record one row only after the parent accepts the leaf. Count an implementer turn when
 the worker returns an outcome. Count a rejected completion when the parent finds a
-required behavior or proof gap after `BEANFLOW_OUTCOME: completed`.
+required behavior or proof gap after `BEANFLOW_OUTCOME: completed`. Count a continuation
+nudge when the worker remains active without filesystem or verification progress and
+the parent has to tell it to resume already-decided work.
 
-| Run | Leaf | Orchestrator | Orchestrator effort | Implementer | Implementer effort | Approx. wall time | Invalid guidance bounces | Valid guidance questions | Rejected completions | First completion accepted |
-| --- | --- | --- | --- | --- | --- | ---: | ---: | ---: | ---: | --- |
-| `sports-l5f1-1788624375436` | `sports-6xr3` | GPT-5.6 Sol | high | GPT-5.6 Luna | medium | 56 min | 3 | 2 | 5 | no |
+| Run | Leaf | Orchestrator | Orchestrator effort | Implementer | Implementer effort | Approx. wall time | Continuation nudges | Invalid guidance bounces | Valid guidance questions | Rejected completions | First completion accepted |
+| --- | --- | --- | --- | --- | --- | ---: | ---: | ---: | ---: | ---: | --- |
+| `sports-l5f1-1788624375436` | `sports-6xr3` | GPT-5.6 Sol | high | GPT-5.6 Luna | medium | 56 min | not recorded | 3 | 2 | 5 | no |
 
 For each row, also record the useful parent-review findings and important caveats.
 
@@ -36,6 +38,8 @@ implementation reduces handoff friction despite the separate agent contexts.
 
 Do not infer a model conclusion from wall time alone. A slower accepted first completion
 can still beat a fast sequence of incomplete claims, while a polished report without
-the required behavior is still a failure. After the Terra-medium cohort, use the observed
-failure mode to choose the next test. Terra medium remains a useful daily-driver
-comparison; Luna low remains the cheaper continuation-bounce comparison.
+the required behavior is still a failure. If Sol low needs materially less babysitting,
+keep it despite a higher nominal per-token price. If its continuation nudges and rejected
+completion rate are similar to Luna medium, test Luna at extra-high reasoning next.
+Benchmark intelligence and cost charts make Luna extra-high a plausible value point,
+but this workflow must measure its slower wall time and long-horizon compliance directly.
