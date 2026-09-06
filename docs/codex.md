@@ -9,7 +9,7 @@ default for demanding planning, but Sol at medium or high, and even Luna at high
 simple work, use the same routing. The parent gathers requirements, agrees the plan
 with the owner, creates and audits the Bean tree, and coordinates the run.
 When implementation begins, the parent creates one `beanflow-implementer` thread,
-which currently pins GPT-5.6 Terra at medium reasoning. The parent sends bounded ordered work sets
+which currently pins GPT-5.6 Sol at low reasoning. The parent sends bounded ordered work sets
 of related leaves. The worker verifies, deletes, and commits each Bean separately and
 continues through the work set without routine parent round trips. While the worker
 runs, the parent keeps its turn active and waits in bounded intervals for an outcome,
