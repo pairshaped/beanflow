@@ -28,8 +28,16 @@ This was the first deliberately strict calibration run. The Bean boundary and se
 Beanflow policies changed during the leaf, so its 56-minute duration and rejection
 count are a useful medium-effort baseline but not a clean model-only comparison.
 
+The persistent Luna-medium worker then carried the same task context into later
+leaves. It prematurely completed the Carousel leaf several times and claimed the
+provider-boundary leaf complete after adding only one test. Beginning with the next
+new leaf, Beanflow creates a fresh implementer per leaf and reuses it only for that
+leaf's repair loop. Treat this as a process change when comparing later rows: it gives
+up cross-leaf conversational context to limit accumulated correction history and
+compaction loss.
+
 The next newly spawned implementer uses GPT-5.6 Sol at low reasoning. This replaces
-the unrun Terra-medium and Luna-extra-high trials. Compare its first one-leaf work set
+the unrun Terra-medium and Luna-extra-high trials. Compare its first leaf
 using the same columns. The useful signal is whether Sol's newer-generation continuity
 reduces stalls and correction turns while low effort keeps accepted-leaf time and usage
 competitive. Keep the orchestrator at GPT-5.6 Sol high so the implementer is the main

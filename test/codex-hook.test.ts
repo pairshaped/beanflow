@@ -102,15 +102,14 @@ describe('Codex Stop hook', () => {
     expect(decision.reason).toMatch(/Continue the beanflow run/);
     expect(decision.reason).toContain('beanflow-implementer');
     expect(decision.reason).toContain('leaf a');
-    expect(decision.reason).toContain('bounded ordered work set');
-    expect(decision.reason).toContain('Do not require parent acknowledgement');
-    expect(decision.reason).toContain('reuse its existing implementer thread');
-    expect(decision.reason).toContain('create one only if this run has none');
-    expect(decision.reason).toContain('one leaf when the implementer profile is new');
+    expect(decision.reason).toContain('fresh beanflow-implementer thread');
+    expect(decision.reason).toContain('Reuse that thread only for guidance and repairs');
+    expect(decision.reason).toContain('retire it after acceptance');
     expect(decision.reason).toContain('verify the worktree is clean');
-    expect(decision.reason).toContain('work-set formatter and static-analysis gate passed');
+    expect(decision.reason).toContain('leaf formatter and static-analysis gate passed');
     expect(decision.reason).toContain('explicit cleanup Bean blocking final verification');
     expect(decision.reason).toContain('Reject failures back to the same implementer');
+    expect(decision.reason).toContain('build-cache status');
   });
 
   it('does not continue a run from a different working directory', () => {

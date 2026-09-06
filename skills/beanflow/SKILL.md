@@ -26,37 +26,21 @@ requirements, architecture, planning, Bean creation and audit, owner communicati
 delegation, and the final report.
 
 Never implement an executable leaf in the parent task when the
-`beanflow-implementer` custom agent is available. When the first executable leaf is
-ready, create exactly one implementer thread for that Beanflow run. Use a bounded or
-context-free fork instead of copying the full planning conversation. Retain the
-returned agent identity and reuse that thread for every later leaf and guidance
-exchange in the run. Before creating an implementer after compaction or resumption,
-inspect the existing agent threads and reuse the run's worker if it is still
-available.
+`beanflow-implementer` custom agent is available. Create a fresh implementer thread
+for each executable leaf. Use a bounded or context-free fork instead of copying the
+full planning conversation. Retain that identity only for guidance and repairs on its
+assigned leaf. After the parent accepts the leaf, do not reuse its implementer for the
+next leaf. Confirm the old implementer is no longer running, then create a fresh one
+for the newly selected leaf. This keeps accumulated repair history and compaction loss
+from leaking across otherwise self-contained Beans.
 
-Delegate a bounded ordered work set of related leaves beginning with the selected
-leaf. A later leaf may join the work set only when it is already eligible or becomes
-eligible solely by completing earlier leaves in that same work set. Prefer siblings under one
-nearest container or one short dependency chain. Do not hand over the whole epic,
-unrelated leaves, unresolved product choices, or work whose dependency can change
-outside the work set.
-
-Treat a new or materially changed implementer profile as unproven. Its first work
-set is one leaf. Audit that calibration leaf at the completion gate below before
-delegating multiple leaves. Expand later work sets only after the implementer has
-shown that it follows the Bean, verification, commit, and reporting contracts.
-
-Give the implementer every Bean id in order plus the absolute worktree path. Beans
+Give the implementer one Bean id plus the absolute worktree path. Beans
 must carry the accepted scope and decisions. Include extra handoff context only when
 it cannot be discovered safely from the Beans, repository, or run state. The
-implementer verifies, deletes, and commits each leaf separately, then continues to
-the next delegated leaf without waiting for parent acknowledgement. The parent waits
-for the work-set outcome instead of reviewing every routine leaf transition. Keep the
-parent turn active while the implementer runs and wait in bounded intervals for its
+implementer verifies, deletes, and commits that leaf. The parent waits for the leaf
+outcome. Keep the parent turn active while the implementer runs and wait in bounded intervals for its
 outcome, focused question, or blocker. Do not end the parent turn and assume a later
-notification will resume monitoring. Send later
-work sets as follow-up instructions to the existing thread rather than spawning
-another agent.
+notification will resume monitoring.
 
 Repository completion metadata and deletion are one lifecycle, not competing
 choices. When the repository requires checked acceptance items, a summary, or a
@@ -76,16 +60,16 @@ prove.
 
 Interpret the worker's `BEANFLOW_OUTCOME` as follows:
 
-- `completed`: inspect the reported Bean-to-commit list and verification summary at
-  the end of the delegated work set. Before accepting it, confirm the worktree is
-  clean; every Bean and its dependency cleanup were deleted in that leaf's reported
+- `completed`: inspect the reported Bean-to-commit result and verification summary.
+  Before accepting it, confirm the worktree is
+  clean; the Bean and its dependency cleanup were deleted in that leaf's reported
   implementation commit; every required verification item ran rather than being
   replaced by a cheaper compile or test; and the implementation and tests actually
-  prove the acceptance criteria. At the end of the work set, require one owning-scope
+  prove the acceptance criteria. For every leaf, require one owning-scope
   formatter, Rust Clippy when Rust changed, TypeScript lint and typecheck when
   TypeScript changed, and any equivalent automated static analysis required by the
-  repository. These work-set checks need not run after every leaf. Never launch the
-  same or overlapping formatter, build, test, linter, typecheck, or static-analysis
+  repository. Never launch the same or overlapping formatter, build, test, linter,
+  typecheck, or static-analysis
   command concurrently in one worktree. Wait for the running command and use its
   result, especially for Cargo and Clippy processes sharing one target directory.
   When this is a
@@ -120,11 +104,17 @@ Interpret the worker's `BEANFLOW_OUTCOME` as follows:
   Reject these gaps along with unsupported criteria and partial evidence presented as complete.
   Rerun representative checks
   independently. If any gate fails, reject the outcome and send the concrete failures
-  back to the same implementer as a repair of the same work set. Keep each repair
+  back to the same implementer as a repair of the same leaf. Keep each repair
   follow-up to at most three independently checkable gaps. When an audit finds more,
   send ordered repair batches to the same implementer and re-audit between them. This
   bound applies to repair instructions, not to the size of the accepted Bean. Do not select or
-  delegate new Beans until the repair passes. Full verification still belongs at the
+  delegate new Beans until the repair passes. After accepting the leaf, inspect the
+  worktree's build-cache disk use with the repository-owned status command when one
+  exists. Unless the repository defines another threshold, use its cleanup command
+  when the cache is at least 10 GiB or the filesystem has less than 20 percent free.
+  Never clean while a formatter, build, test, linter, typecheck, or static-analysis
+  command is running. Do not manually delete build or generated directories when the
+  repository owns a safe cleanup command. Full verification still belongs at the
   parent completion gate.
 - `needs_guidance`: first check for exactly one `GUIDANCE_QUESTION:` line. Do not
   inspect the code or spend parent reasoning on the report before this mechanical
@@ -139,8 +129,7 @@ Interpret the worker's `BEANFLOW_OUTCOME` as follows:
   use the same immediate reply.
   Otherwise resolve the implementer's focused question in the parent task, then send
   the decision and rationale back to the same implementer so it can finish
-  the current leaf and continue its remaining delegated work set. Treat any earlier
-  Bean-to-commit results in the report as completed. The parent may inspect the
+  the current leaf. The parent may inspect the
   repository and tests before answering. Do not make code changes in the parent
   merely because the implementer asked for help.
   If answering would change accepted scope, pause, revise and re-audit the affected
@@ -150,13 +139,12 @@ Interpret the worker's `BEANFLOW_OUTCOME` as follows:
 
 Do not start a separate fixed-model escalation agent. The owner-facing parent is the
 orchestrator and resolves `needs_guidance` using its current model and reasoning
-setting. Keep only one implementer thread for a run. Close it when the Beanflow ends.
-Do not reuse it for another epic. Replace it only when the thread is unavailable,
-closed, attached to the wrong worktree, or its accumulated context is demonstrably
-hurting reliability; ensure the old thread is no longer active before replacing it.
+setting. Keep only one implementer thread active for a leaf and reuse it for that
+leaf's guidance and repair loops. Do not reuse it for the next leaf or another epic.
+Ensure the old thread is no longer active before creating the next leaf's implementer.
 If the custom implementer is unavailable, create one model-specific agent with the
 same model, reasoning effort, and role instructions as the repository-owned profile,
-and reuse it for the rest of the run. Pass the same compact handoff explicitly.
+and reuse it only for the assigned leaf. Pass the same compact handoff explicitly.
 
 ## Workflow
 
@@ -191,9 +179,9 @@ and reuse it for the rest of the run. Pass the same compact handoff explicitly.
    start, status, and resume requests so beanflow resolves the intended run.
    Stop on a dirty or ambiguous worktree.
 6. **Autonomous execution** - Select the next ready leaf (dependency order, then
-   priority, then creation order). On Codex, form a bounded related work set through the
-   model-routing contract above. Implement only the delegated leaves. Verify, delete,
-   and commit each Bean atomically. Never push. Stop the work set on guidance or an
+   priority, then creation order). On Codex, create a fresh implementer for that leaf
+   through the model-routing contract above. Implement only the delegated leaf. Verify,
+   delete, and commit the Bean atomically. Never push. Stop the leaf on guidance or an
    owner blocker instead of silently skipping the affected leaf. When no eligible
    leaf remains, pause instead of polling or auto-continuing; an explicit resume may
    restart the run after its state changes. Esc pauses; a hard stop, retry ceiling,

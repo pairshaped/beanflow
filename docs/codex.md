@@ -8,10 +8,10 @@ for the difficulty of the epic. GPT-6 Astra at medium reasoning is the recommend
 default for demanding planning, but Sol at medium or high, and even Luna at high for
 simple work, use the same routing. The parent gathers requirements, agrees the plan
 with the owner, creates and audits the Bean tree, and coordinates the run.
-When implementation begins, the parent creates one `beanflow-implementer` thread,
-which currently pins GPT-5.6 Sol at low reasoning. The parent sends bounded ordered work sets
-of related leaves. The worker verifies, deletes, and commits each Bean separately and
-continues through the work set without routine parent round trips. While the worker
+For each executable leaf, the parent creates a fresh `beanflow-implementer` thread,
+which currently pins GPT-5.6 Sol at low reasoning. The worker verifies, deletes, and
+commits that Bean. The same thread handles guidance and repair loops for its leaf, then
+is retired after the parent accepts the result. While the worker
 runs, the parent keeps its turn active and waits in bounded intervals for an outcome,
 question, or blocker. It does not end the turn and assume a background notification
 will restart monitoring. If the worker needs stronger judgment, it returns a focused
@@ -85,20 +85,14 @@ and architecture. Use Astra at medium for demanding epics, Sol at medium or high
 when that is sufficient, or Luna at high for simple work. The parent task performs
 planning directly instead of spawning another planner.
 
-After the owner approves the audited tree and starts the run, the parent creates one
-implementer thread when the first leaf is ready. It retains that thread for the
-entire implementation phase and delegates a bounded ordered work set with a compact
-handoff: the Bean ids and worktree path. A work set contains related siblings or a short
-dependency chain where each later Bean is already eligible or becomes eligible only
-through earlier work in the set. The Beans contain the accepted scope, so the full
-planning conversation is not copied into implementation turns. Later work sets are
-follow-up instructions to the same thread. The implementer returns one of three
-stable outcomes:
-
-The first work set after installing or materially changing the implementer profile
-contains one leaf. This is a calibration gate, not permanent micromanagement. The
-parent checks that leaf strictly before trusting the profile with multi-leaf work
-sets.
+After the owner approves the audited tree and starts the run, the parent creates a
+fresh implementer thread for the selected leaf with a compact handoff: the Bean id and
+worktree path. The Bean contains the accepted scope, so the full planning conversation
+is not copied into implementation turns. Guidance and rejected-completion repairs go
+back to that leaf's thread. After acceptance, the parent confirms it is no longer
+running and creates a fresh thread for the next leaf. This deliberately gives up
+cross-leaf conversational context so repair history and compaction loss do not leak
+between self-contained Beans. The implementer returns one of three stable outcomes:
 
 The parent audit resolves canonical contracts before delegation. A Bean that creates
 a schema or protocol names its fields, variants, validation ownership, and consumer
@@ -113,11 +107,10 @@ verification. A parallel writable path or second source of truth is not an accep
 compatibility strategy. The implementer returns `needs_guidance` rather than leaving
 unowned cleanup behind.
 
-- `completed`: every Bean in the work set was separately verified, deleted, and
-  committed, and the worktree is clean. The parent checks the commits, required
+- `completed`: the Bean was verified, deleted, and committed, and the worktree is
+  clean. The parent checks the commit, required
   verification, implementation, and test assertions before accepting the outcome.
-  The implementer runs leaf-specific checks at each leaf, then runs the owning
-  formatter and automated static analysis once at the end of the work set. That
+  The implementer runs the owning formatter and automated static analysis for the leaf. That
   includes Rust Clippy when Rust changed plus TypeScript lint and typecheck when
   TypeScript changed. It waits for an existing verification command instead of
   launching duplicate or overlapping formatters, builds, tests, linters, typechecks,
@@ -145,7 +138,7 @@ unowned cleanup behind.
   If the gate
   fails, the parent sends the
   concrete failures back to the same implementer as a
-  repair of the same work set and does not advance the run. A repair follow-up contains
+  repair of the same leaf and does not advance the run. A repair follow-up contains
   at most three independently checkable gaps. If the audit finds more, the parent sends
   ordered batches and re-audits between them so the implementer does not silently drop
   the tail of a long correction list. Record the rejected commit. On the next completion
@@ -155,8 +148,8 @@ unowned cleanup behind.
   satisfy this repair-delta gate.
 - `needs_guidance`: the current Bean needs a specific unresolved technical decision
   between materially different safe choices. The report ends with exactly one
-  `GUIDANCE_QUESTION:` line naming the choices and consequences. Earlier work-set
-  Beans remain committed. Unfinished criteria, ordinary failing tests, a large repair,
+  `GUIDANCE_QUESTION:` line naming the choices and consequences. Unfinished criteria,
+  ordinary failing tests, a large repair,
   or work that merely takes more time do not qualify. The parent checks for that line
   before inspecting code. A missing or invalid field gets the immediate response
   `Reassess the outcome. If the next safe action is clear, continue the assigned work.
@@ -164,20 +157,20 @@ unowned cleanup behind.
   This lets a poorly stated real blocker come back as a valid question instead of
   papering it over. Otherwise the parent
   resolves the focused question and sends guidance back so the worker can finish the
-  remaining work set.
+  current leaf.
 - `owner_blocker`: the workflow needs product input, new authority, credentials, or
   an external state change.
 
 The parent does not change model automatically. An Astra, Sol, or future model can
 therefore orchestrate the same workflow. The configured implementer remains responsible
-for implementation after receiving guidance, and the next ordinary leaf goes to that
-same persistent worker. Edit the implementer profile if its preferred model or reasoning
-level changes later.
+for its leaf after receiving guidance, and the next ordinary leaf gets a fresh worker
+from the current profile. Edit the implementer profile if its preferred model or
+reasoning level changes later.
 
 The parent spends its expensive reasoning on planning, decomposition, audits,
-guidance, work-set review, and final verification. It does not require a turn
-merely to acknowledge each routine implementer commit. Work sets must still be bounded; never
-hand the implementer an unresolved epic or unrelated work just to reduce messages.
+guidance, leaf review, and final verification. It does not require a turn
+merely to acknowledge each routine implementer commit. Never hand the implementer an
+unresolved epic or more than one leaf just to reduce messages.
 
 Repository instructions and Bean verification are read together. If the repository
 requires completion metadata and deletion, the implementer records the metadata and
@@ -188,10 +181,16 @@ check must exercise the owning boundary it claims to prove. An ad hoc fixture th
 bypasses the application's runtime, production mount, generated assets, styles,
 routing, or persistence cannot stand in for application-level evidence.
 
-The implementer thread belongs to one Beanflow run. Close it at completion and do
-not carry it into another epic. Replace it only if the thread is unavailable, closed,
-attached to the wrong worktree, or accumulated context is clearly reducing
-reliability. Never leave two implementation threads active in the same worktree.
+The implementer thread belongs to one leaf. Reuse it for that leaf's guidance and
+repair loops, then retire it after acceptance. Never carry it into another leaf or
+epic, and never leave two implementation threads active in the same worktree.
+
+Between accepted leaves, inspect build-cache disk use through the repository-owned
+status command when one exists. Unless the repository defines another threshold, run
+its safe cleanup command when the cache is at least 10 GiB or the filesystem has less
+than 20 percent free. Never clean while build, test, formatting, lint, typecheck, or
+static-analysis work is running. This avoids unbounded disk growth without paying for
+a full rebuild after every small leaf.
 
 ## Fidelity gap vs Pi
 

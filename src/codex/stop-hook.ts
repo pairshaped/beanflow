@@ -70,21 +70,20 @@ export function decideStopHook(input: StopHookInput): StopHookDecision {
         block: true,
         reason:
           `Continue the beanflow run as the owner-facing orchestrator beginning with leaf ${selectedLeaf!.id}: ` +
-          'reuse its existing implementer thread, or create one only if this run has none. Form a bounded ordered ' +
-          'work set of related eligible leaves, using one leaf when the implementer profile is new or materially changed. ' +
-          'Send those Bean ids and the worktree path to the beanflow-implementer, ' +
-          'keep the parent turn active, and wait in bounded intervals for the work-set outcome, focused question, ' +
+          'create a fresh beanflow-implementer thread for this leaf. Reuse that thread only for guidance and repairs ' +
+          'on the same leaf, then retire it after acceptance. Send the Bean id and worktree path to the implementer, ' +
+          'keep the parent turn active, and wait in bounded intervals for the leaf outcome, focused question, ' +
           'or blocker. Do not end the parent turn and assume a background notification will resume monitoring. ' +
-          'Do not require parent acknowledgement between routine leaf commits. ' +
           'Before accepting completed, verify the worktree is clean, Bean deletions are atomic, required checks ran, ' +
-          'the work-set formatter and static-analysis gate passed, the code and tests prove the acceptance criteria, ' +
+          'the leaf formatter and static-analysis gate passed, the code and tests prove the acceptance criteria, ' +
           'and replaced code was deleted or has an explicit cleanup Bean blocking final verification. ' +
           'Reject failures back to the same implementer in batches of at most three independently checkable gaps without ' +
           'advancing the run. Before inspecting code for needs_guidance, require exactly one GUIDANCE_QUESTION line ' +
           'with a focused unresolved decision, choices, and consequences. If it is absent or invalid, bounce it without ' +
           'code inspection: ask the implementer to continue when the next safe action is clear, or return one valid ' +
           'GUIDANCE_QUESTION with choices and consequences. Otherwise resolve the question and send the guidance ' +
-          'back to that same thread.',
+          'back to that same thread. After acceptance, inspect repository-owned build-cache status and clean safely ' +
+          'before the next leaf when the cache is at least 10 GiB or the filesystem has less than 20 percent free.',
       };
     }
     return { block: false };
