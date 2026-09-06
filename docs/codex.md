@@ -141,6 +141,14 @@ unowned cleanup behind.
   report. If an application framework composes the provider, the production parent
   mount, update, navigation, and unmount path is a separate required boundary. A direct
   component test does not prove that integration.
+  Reusable composition, projections, loaders, and renderers live at the shared or
+  domain boundary that owns them. A consumer route does not become that owner merely
+  because it shipped first, and one route should not import another route's shell,
+  loader, or renderer as a shared API.
+  Server-rendered markup tests distinguish literal elements from escaped markup text.
+  Substring matches inside `&lt;...&gt;` are false positives. Parse or isolate the element
+  boundary, reject escaped component markup, and use the repository's explicit reviewed
+  raw/trusted boundary when composing pre-rendered fragments.
   Replacement claims also identify deleted obsolete paths. Any retained compatibility
   path has an explicit cleanup Bean that depends on its remaining consumers and blocks
   final integration or verification.

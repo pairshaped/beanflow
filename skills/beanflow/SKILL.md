@@ -58,6 +58,12 @@ an ad hoc fixture when it bypasses application runtime, production mounts, gener
 assets, styling, routing, persistence, or any other behavior the check claims to
 prove.
 
+Audit ownership as well as behavior. Reusable composition, projections, loaders, and
+renderers belong at their shared or domain boundary, not under the first route that
+consumes them. Reject a route that imports another route module's shell, loader, or
+renderer to obtain shared behavior unless the audited design explicitly makes that
+route the owner.
+
 Interpret the worker's `BEANFLOW_OUTCOME` as follows:
 
 - `completed`: inspect the reported Bean-to-commit result and verification summary.
@@ -88,6 +94,10 @@ Interpret the worker's `BEANFLOW_OUTCOME` as follows:
   Apply the same fail-closed rule to every test path: an expected fixture, value,
   variant, or branch must be unwrapped with an explicit failure before assertions.
   Conditional assertions that can all be skipped do not prove the criterion.
+  Server-rendered markup checks must distinguish literal elements from escaped markup
+  text. A response substring can appear inside `&lt;...&gt;` and produce a false pass.
+  Inspect the element boundary or parsed DOM, reject escaped component markup, and
+  verify that pre-rendered fragments cross an explicit reviewed raw/trusted boundary.
   When a repair separates behaviors or ownership paths, confirm the old overlapping
   fixture condition was removed. An added case does not prove separation when the
   original friendly condition can still keep the test green.

@@ -43,6 +43,10 @@ describe('Codex Beanflow agent profiles', () => {
     expect(contents).toContain("provider's current first-party documentation");
     expect(contents).toContain('must not invent provider output or callbacks');
     expect(contents).toContain("host framework's production composition path");
+    expect(contents).toContain("must not become the owner of shared behavior");
+    expect(contents).toContain("starts importing another route module's loader");
+    expect(contents).toContain('must distinguish real elements from escaped markup text');
+    expect(contents).toContain('explicit reviewed raw/trusted boundary');
     expect(contents).toContain('Do not add parallel writable implementations or sources of truth');
     expect(contents).toContain('cleanup blocks final integration or verification');
     expect(contents).toContain("return `needs_guidance` before adding it");
