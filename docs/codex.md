@@ -137,10 +137,12 @@ unowned cleanup behind.
   concrete failures back to the same implementer as a
   repair of the same work set and does not advance the run.
 - `needs_guidance`: the current Bean needs a specific unresolved technical decision
-  between materially different safe choices. Earlier work-set Beans remain committed.
-  Unfinished criteria, ordinary failing tests, a large repair, or work that merely
-  takes more time do not qualify. A report without a focused question is invalid, and
-  the parent sends it back to the same worker to continue. Otherwise the parent
+  between materially different safe choices. The report ends with exactly one
+  `GUIDANCE_QUESTION:` line naming the choices and consequences. Earlier work-set
+  Beans remain committed. Unfinished criteria, ordinary failing tests, a large repair,
+  or work that merely takes more time do not qualify. The parent checks for that line
+  before inspecting code. A missing or invalid field gets the immediate response
+  `Invalid guidance outcome. Continue the assigned work.` Otherwise the parent
   resolves the focused question and sends guidance back so the worker can finish the
   remaining work set.
 - `owner_blocker`: the workflow needs product input, new authority, credentials, or

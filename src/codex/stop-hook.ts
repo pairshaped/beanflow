@@ -80,8 +80,9 @@ export function decideStopHook(input: StopHookInput): StopHookDecision {
           'the work-set formatter and static-analysis gate passed, the code and tests prove the acceptance criteria, ' +
           'and replaced code was deleted or has an explicit cleanup Bean blocking final verification. ' +
           'Reject failures back to the same implementer without ' +
-          'advancing the run. Treat needs_guidance without a focused unresolved decision as invalid and send the ' +
-          'implementer back to continue. Otherwise resolve the question in this parent task and send the guidance ' +
+          'advancing the run. Before inspecting code for needs_guidance, require exactly one GUIDANCE_QUESTION line ' +
+          'with a focused unresolved decision, choices, and consequences. If it is absent or invalid, immediately ' +
+          'reply Invalid guidance outcome. Continue the assigned work. Otherwise resolve the question and send the guidance ' +
           'back to that same thread.',
       };
     }

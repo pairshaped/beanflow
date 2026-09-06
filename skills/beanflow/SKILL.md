@@ -108,10 +108,14 @@ Interpret the worker's `BEANFLOW_OUTCOME` as follows:
   back to the same implementer as a repair of the same work set. Do not select or
   delegate new Beans until the repair passes. Full verification still belongs at the
   parent completion gate.
-- `needs_guidance`: first verify that the report contains a focused unresolved
-  decision with materially different choices. Unfinished criteria, ordinary failing
-  tests, a large repair, or work that merely takes more time do not qualify. If the
-  report has no concrete question, reject it and tell the same implementer to continue.
+- `needs_guidance`: first check for exactly one `GUIDANCE_QUESTION:` line. Do not
+  inspect the code or spend parent reasoning on the report before this mechanical
+  check. If the line is absent, immediately tell the same implementer
+  `Invalid guidance outcome. Continue the assigned work.` A valid question describes
+  a focused unresolved decision with materially different choices and consequences.
+  Unfinished criteria, ordinary failing tests, a large repair, or work that merely
+  takes more time do not qualify. If the field is present but does not meet that bar,
+  use the same immediate reply.
   Otherwise resolve the implementer's focused question in the parent task, then send
   the decision and rationale back to the same implementer so it can finish
   the current leaf and continue its remaining delegated work set. Treat any earlier

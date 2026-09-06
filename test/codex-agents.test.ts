@@ -44,6 +44,7 @@ describe('Codex Beanflow agent profiles', () => {
     expect(contents).toContain('cleanup blocks final integration or verification');
     expect(contents).toContain("return `needs_guidance` before adding it");
     expect(contents).toContain('Unfinished acceptance criteria');
-    expect(contents).toContain('A `needs_guidance` report without that question is invalid');
+    expect(contents).toContain('A `needs_guidance` report without that line is invalid');
+    expect(contents).toContain('GUIDANCE_QUESTION:');
   });
 });
