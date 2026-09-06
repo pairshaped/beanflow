@@ -92,6 +92,9 @@ Interpret the worker's `BEANFLOW_OUTCOME` as follows:
   fixtures that hide cross-instance effects, leaked handlers, lost state, or duplicate
   work. For interaction evidence, confirm every required event target exists before
   dispatch; optional chaining or another silent no-op is not proof that the event ran.
+  Apply the same fail-closed rule to every test path: an expected fixture, value,
+  variant, or branch must be unwrapped with an explicit failure before assertions.
+  Conditional assertions that can all be skipped do not prove the criterion.
   Check uniqueness and cross-element relationships at their owning scope. Subtree
   queries cannot establish document-level identity or reference uniqueness.
   For atomic or immutable storage, inspect the real production creation path; a

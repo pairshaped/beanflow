@@ -123,7 +123,9 @@ unowned cleanup behind.
   use adversarial fixtures whose assertions fail when the forbidden behavior occurs;
   convenient differences between instances are not valid isolation. Interaction tests
   assert that required event targets exist before dispatch. A missing target hidden by
-  optional chaining is a silent no-op, not passing evidence. Uniqueness and
+  optional chaining is a silent no-op, not passing evidence. Every expected fixture,
+  value, variant, or branch is unwrapped with an explicit failure before assertions;
+  conditional assertions that can all be skipped are not passing evidence. Uniqueness and
   cross-element relationships are checked at their owning scope; subtree queries do
   not prove document-level identity or reference uniqueness. Atomic and immutable
   storage claims run through the production creation path, not a post-creation repair
