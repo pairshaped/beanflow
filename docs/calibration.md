@@ -23,6 +23,7 @@ the parent has to tell it to resume already-decided work.
 | `sports-l5f1-1788624375436` | `sports-3qe6` | GPT-5.6 Sol | high | GPT-5.6 Sol | low | about 113 min | 2 | 0 | 0 | 3 | no |
 | `sports-l5f1-1788624375436` | `sports-erv1` | GPT-5.6 Sol | high | GPT-5.6 Sol | low | about 28 min | 0 | 0 | 0 | 1 | no |
 | `sports-l5f1-1788624375436` | `sports-6gq8` | GPT-5.6 Sol | high | GPT-5.6 Sol | low | about 49 min | 0 | 0 | 0 | 1 | no |
+| `sports-l5f1-1788624375436` | `sports-qy2r` | GPT-5.6 Sol | high | GPT-5.6 Sol | low | about 52 min | 0 | 0 | 0 | 1 | no |
 
 For each row, also record the useful parent-review findings and important caveats.
 
@@ -328,3 +329,25 @@ The repair passed every required gate. This is further evidence that Sol low mai
 good continuity and responds efficiently to bounded review findings, but green unit,
 type, lint, build, and browserless view tests do not prove cross-endpoint routing unless
 the test actually executes both sides of the boundary.
+
+## sports-qy2r notes
+
+Sol low again ran continuously without a nudge or guidance request while moving
+registration recommendations, required reading, and waiver workflows into PublicApp.
+The first completion passed the full automated gates and an authenticated Playwright
+walkthrough. Independent review still found a durable-state bypass: direct access or
+refresh could render recommendations while `recommendations_shown` was false, then a
+plain Continue link could leave without recording completion.
+
+The same worker repaired the route with a server-owned POST transition used by both
+the no-JavaScript fallback and PublicApp. The update is stale-safe and idempotent, and
+the regression test proves forged generation rejection, one durable update, replay,
+the authoritative destination, and a real rendered submit target. The parent reran the
+production-boundary test independently before acceptance.
+
+This leaf also exposed an orchestration failure in the parent: the parent sent a final
+owner response while the implementer was active, so completion was recorded without
+being reviewed until the next owner turn. Beanflow now explicitly prohibits final
+responses while a leaf implementer is active, requires interim owner answers to remain
+in commentary, and requires an agent-tree terminal-state check immediately before any
+final response.
