@@ -21,6 +21,7 @@ the parent has to tell it to resume already-decided work.
 | `sports-l5f1-1788624375436` | `sports-uqed` | GPT-5.6 Sol | high | GPT-5.6 Sol | low | about 78 min | 1 | 0 | 0 | 2 | no |
 | `sports-l5f1-1788624375436` | `sports-kgug` | GPT-5.6 Sol | high | GPT-5.6 Sol | low | about 74 min | 3 | 0 | 0 | 1 | no |
 | `sports-l5f1-1788624375436` | `sports-3qe6` | GPT-5.6 Sol | high | GPT-5.6 Sol | low | about 113 min | 2 | 0 | 0 | 3 | no |
+| `sports-l5f1-1788624375436` | `sports-erv1` | GPT-5.6 Sol | high | GPT-5.6 Sol | low | about 28 min | 0 | 0 | 0 | 1 | no |
 
 For each row, also record the useful parent-review findings and important caveats.
 
@@ -278,3 +279,27 @@ working vertical slice and responded well to bounded repairs, but a green build,
 lint, typecheck, island suite, focused tests, and browser check did not expose the forged
 creation path or the false-positive atomicity test. It needed two continuation nudges,
 both after a precise repair request rather than during uncertain design work.
+
+## sports-erv1 notes
+
+Sol low completed this broad but mechanical colocation leaf without a continuation
+nudge or guidance request. It moved the managed Landing, Contact, Product, Line Item,
+and Participant renderers and focused tests beside their Rust/Proute owners, removed
+the original implementations from PublicApp, and passed the full formatter, build,
+workspace Clippy, lint, typecheck, and island gates in about 22 minutes before review.
+
+The first completion also moved browser subscriptions, URL construction, form
+serialization, and generated-command dispatch into three route-owned `effects.ts`
+files. That was coherent code, but it crossed the Bean's explicit ownership boundary:
+route modules were supposed to own views and focused tests while PublicApp retained
+navigation, effects, subscriptions, and dispatch. The new files also required widening
+the lint effect allowlist. Independent review caught the scope expansion even though
+all automated gates passed.
+
+The worker accepted one narrow repair without argument or loss of momentum. It deleted
+the three route-owned effect modules, removed their lint exemptions, and consolidated
+the unchanged subscriptions under one PublicApp-owned adapter. The repair and its full
+verification took about seven minutes. This leaf is positive evidence for Sol-low
+continuity and speed on a structural refactor, but it also shows why Beanflow should
+review ownership and dependency direction separately from behavior and automated test
+results.
