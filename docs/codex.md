@@ -155,9 +155,15 @@ unowned cleanup behind.
   Substring matches inside `&lt;...&gt;` are false positives. Parse or isolate the element
   boundary, reject escaped component markup, and use the repository's explicit reviewed
   raw/trusted boundary when composing pre-rendered fragments.
-  Replacement claims also identify deleted obsolete paths. Any retained compatibility
-  path has an explicit cleanup Bean that depends on its remaining consumers and blocks
-  final integration or verification.
+  Replacement claims also identify deleted obsolete paths. Before accepting a replaced
+  route, renderer, shell, workflow, or shared boundary, the parent traces the outgoing
+  production path and inventories user-visible and cross-cutting behavior. Relevant
+  checks include authentication controls, alerts, metadata, accessibility, responsive
+  controls, scripts, and lifecycle effects. Every behavior is preserved with focused
+  evidence or explicitly removed by accepted scope. A later Bean with a related title
+  is not permission to remove it. Any retained compatibility path has an explicit
+  cleanup Bean that depends on its remaining consumers and blocks final integration or
+  verification.
   If the gate
   fails, the parent sends the
   concrete failures back to the same implementer as a

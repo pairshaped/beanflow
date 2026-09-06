@@ -48,6 +48,9 @@ describe('Codex Beanflow agent profiles', () => {
     expect(contents).toContain('must distinguish real elements from escaped markup text');
     expect(contents).toContain('explicit reviewed raw/trusted boundary');
     expect(contents).toContain('Do not add parallel writable implementations or sources of truth');
+    expect(contents).toContain('inventory its user-visible and cross-cutting behavior');
+    expect(contents).toContain('authentication controls, alerts, metadata, accessibility, responsive controls, scripts');
+    expect(contents).toContain('do not infer removal from a later Bean');
     expect(contents).toContain('cleanup blocks final integration or verification');
     expect(contents).toContain("return `needs_guidance` before adding it");
     expect(contents).toContain('Unfinished acceptance criteria');

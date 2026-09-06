@@ -126,7 +126,13 @@ Interpret the worker's `BEANFLOW_OUTCOME` as follows:
   unmount path. An isolated component handle does not prove that a parent SPA discovers
   the component or cleans it up.
   For replacement work, confirm obsolete code was deleted when its last consumer
-  moved. If legacy code remains, verify the reported cleanup Bean names the retained
+  moved. Before accepting a replaced route, renderer, shell, workflow, or shared
+  boundary, trace the outgoing production path and inventory its user-visible and
+  cross-cutting behavior. Check authentication controls, alerts, metadata,
+  accessibility, responsive controls, scripts, and lifecycle effects when relevant.
+  Every behavior must be preserved with focused evidence or explicitly removed by the
+  accepted scope; a later Bean with a related title is not evidence of removal. If
+  legacy code remains, verify the reported cleanup Bean names the retained
   path, depends on the remaining consumers, and blocks final integration or
   verification.
   Reject these gaps along with unsupported criteria and partial evidence presented as complete.
