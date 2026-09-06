@@ -157,7 +157,9 @@ unowned cleanup behind.
   This lets a poorly stated real blocker come back as a valid question instead of
   papering it over. Otherwise the parent
   resolves the focused question and sends guidance back so the worker can finish the
-  current leaf.
+  current leaf. The answer becomes accepted leaf context. A repeated version of the
+  same question needs new contradictory evidence; otherwise the parent restates the
+  decision, requires continuation, and records a redundant guidance bounce.
 - `owner_blocker`: the workflow needs product input, new authority, credentials, or
   an external state change.
 

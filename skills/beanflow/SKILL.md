@@ -129,7 +129,10 @@ Interpret the worker's `BEANFLOW_OUTCOME` as follows:
   use the same immediate reply.
   Otherwise resolve the implementer's focused question in the parent task, then send
   the decision and rationale back to the same implementer so it can finish
-  the current leaf. The parent may inspect the
+  the current leaf. That answer becomes accepted context for the leaf. If the
+  implementer repeats the resolved question without new contradictory evidence,
+  restate the decision and require it to continue instead of reconsidering the same
+  choice. Count that as a redundant guidance bounce during calibration. The parent may inspect the
   repository and tests before answering. Do not make code changes in the parent
   merely because the implementer asked for help.
   If answering would change accepted scope, pause, revise and re-audit the affected
