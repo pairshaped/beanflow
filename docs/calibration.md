@@ -374,3 +374,24 @@ cross-cutting behavior inherited from a replaced shell. It also exposed a second
 orchestration gap: after accepting the leaf, the parent stopped even though Beanflow
 had selected another eligible leaf. The policy now states that a terminal implementer
 is not a stopping condition while the run still has eligible work.
+
+## sports-rzhp notes
+
+Sol low completed the cart-ownership leaf and its repair in about 11 minutes without a
+continuation nudge or guidance request. The first commit covered anonymous claim and
+merge idempotency, authenticated selection, Multicart isolation, Login-as separation,
+stale history behavior, browser checks, and every required automated gate.
+
+The parent audit caught a direct-navigation regression that the focused verification
+missed. The new selected-only resolver prevented ordinary `/cart` navigation from
+advancing to the next pending cart after checkout. An existing production-boundary
+test failed immediately when rerun. Independent review confirmed the same defect and
+found no additional concrete bug.
+
+The worker repaired the policy split in a separate commit. Managed `/website/route`
+loads now carry an internal marker and remain observational, while direct `/cart`
+retains the established replacement selection and empty-cart recovery. Opposing tests
+prove both paths, and the parent reran them independently. This is strong evidence that
+the extra review is earning its cost: the build, Clippy, TypeScript checks, island suite,
+focused Rust tests, and browser walkthrough were all green while an existing Rust test
+outside the selected subset still exposed a real server behavior regression.
