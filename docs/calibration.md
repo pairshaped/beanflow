@@ -59,6 +59,13 @@ completion rate are similar to Luna medium, test Luna at extra-high reasoning ne
 Benchmark intelligence and cost charts make Luna extra-high a plausible value point,
 but this workflow must measure its slower wall time and long-horizon compliance directly.
 
+After the Sol-low calibration leaves, the next newly spawned implementer switches to
+GPT-5.6 Luna at extra-high reasoning. Keep the orchestrator at GPT-5.6 Sol high and
+retain the fresh-agent-per-leaf policy. Record the same wall-time, continuation,
+guidance, rejection, and first-pass acceptance measures. In particular, compare
+whether Luna extra-high needs fewer parent corrections or continuation nudges, not
+just whether its first response takes longer.
+
 ## Sol-low provider leaf notes
 
 Both Sol-low leaves ran continuously without a continuation nudge or invalid guidance
