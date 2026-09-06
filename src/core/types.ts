@@ -13,6 +13,8 @@ export interface ScopeManifest {
   parentBean: BeanRef;
   /** ISO 8601 timestamp of when the manifest was frozen. */
   frozenAt: string;
+  /** Grouping descendants retained so deleted children do not turn containers into work. */
+  groupingBeans?: BeanRef[];
   executableLeaves: BeanRef[];
 }
 

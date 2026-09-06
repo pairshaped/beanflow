@@ -23,6 +23,8 @@ function isScopeManifest(x: unknown): x is ScopeManifest {
     isRecord(x) &&
     isBeanRef(x.parentBean) &&
     isString(x.frozenAt) &&
+    (x.groupingBeans === undefined ||
+      (Array.isArray(x.groupingBeans) && x.groupingBeans.every(isBeanRef))) &&
     Array.isArray(x.executableLeaves) &&
     x.executableLeaves.every(isBeanRef)
   );

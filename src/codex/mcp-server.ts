@@ -190,7 +190,10 @@ function refreshActiveManifest(request: string): string {
   const tree = discoverBeans(join(cwd, '.beans'));
   let currentManifest;
   try {
-    currentManifest = freezeManifest(tree, state.parentBean.id, now);
+    const knownGroupingIds = new Set(
+      state.manifest.groupingBeans?.map((bean) => bean.id) ?? [],
+    );
+    currentManifest = freezeManifest(tree, state.parentBean.id, now, knownGroupingIds);
   } catch (err) {
     return `Beanflow cannot refresh: ${(err as Error).message}`;
   }

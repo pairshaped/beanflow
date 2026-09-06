@@ -10,9 +10,19 @@ export function toBeanRef(bean: Bean): BeanRef {
   return { id: bean.id, path: bean.path, title: bean.title };
 }
 
-/** Collect every executable leaf under `parentId`, traversing nested grouping beans. */
-function collectLeafDescendants(tree: BeanTree, parentId: string): Bean[] {
-  const result: Bean[] = [];
+interface ManifestDescendants {
+  groupingBeans: Bean[];
+  executableLeaves: Bean[];
+}
+
+/** Collect executable leaves and stable grouping identities under `parentId`. */
+function collectDescendants(
+  tree: BeanTree,
+  parentId: string,
+  knownGroupingIds: ReadonlySet<string>,
+): ManifestDescendants {
+  const groupingBeans: Bean[] = [];
+  const executableLeaves: Bean[] = [];
   const queue = [parentId];
   const seen = new Set<string>();
   while (queue.length > 0) {
@@ -20,11 +30,15 @@ function collectLeafDescendants(tree: BeanTree, parentId: string): Bean[] {
     if (seen.has(id)) continue;
     seen.add(id);
     for (const child of tree.childrenOf.get(id) ?? []) {
-      if (tree.kindOf.get(child.id) === 'leaf') result.push(child);
-      else queue.push(child.id);
+      if (tree.kindOf.get(child.id) === 'grouping' || knownGroupingIds.has(child.id)) {
+        groupingBeans.push(child);
+        queue.push(child.id);
+      } else {
+        executableLeaves.push(child);
+      }
     }
   }
-  return result;
+  return { groupingBeans, executableLeaves };
 }
 
 /** Topologically sort leaves by blocked-by. Rejects unknown or out-of-scope blockers and cycles. */
@@ -76,19 +90,26 @@ function topologicalSort(leaves: Bean[], tree: BeanTree): Bean[] {
 }
 
 /** Freeze a manifest for `parentId` at `frozenAt`. Deterministic; rejects ambiguity. */
-export function freezeManifest(tree: BeanTree, parentId: string, frozenAt: string): ScopeManifest {
+export function freezeManifest(
+  tree: BeanTree,
+  parentId: string,
+  frozenAt: string,
+  knownGroupingIds: ReadonlySet<string> = new Set(),
+): ScopeManifest {
   const parent = tree.byId.get(parentId);
   if (!parent) throw new FatalError(`unknown parent bean: ${parentId}`);
   if (tree.kindOf.get(parentId) !== 'grouping') {
     throw new FatalError(`parent ${parentId} is not a grouping bean`);
   }
-  const leaves = collectLeafDescendants(tree, parentId).filter(
+  const descendants = collectDescendants(tree, parentId, knownGroupingIds);
+  const leaves = descendants.executableLeaves.filter(
     (leaf) => leaf.status !== 'completed' && leaf.status !== 'scrapped',
   );
   if (leaves.length === 0) throw new FatalError(`parent ${parentId} has no executable descendants`);
   return {
     parentBean: toBeanRef(parent),
     frozenAt,
+    groupingBeans: descendants.groupingBeans.map(toBeanRef),
     executableLeaves: topologicalSort(leaves, tree).map(toBeanRef),
   };
 }

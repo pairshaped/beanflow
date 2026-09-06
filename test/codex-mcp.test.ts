@@ -522,13 +522,69 @@ describe('Codex MCP server', () => {
     }
   });
 
+  it('does not turn a completed leaf parent into executable work during refresh', () => {
+    const cwd = mkdtempSync(join(tmpdir(), 'beanflow-mcp-refresh-grouping-'));
+    execFileSync('git', ['init', '-q', '-b', 'f/refresh-grouping'], { cwd });
+    const beansDir = join(cwd, '.beans');
+    mkdirSync(beansDir);
+    writeFileSync(
+      join(beansDir, 'epic.md'),
+      `---\n# epic\ntitle: Epic\nstatus: in-progress\ntype: epic\ncreated_at: 2026-08-17T00:00:00Z\nupdated_at: 2026-08-17T00:00:00Z\n---\n`,
+    );
+    writeFileSync(
+      join(beansDir, 'group.md'),
+      `---\n# group\ntitle: Group\nstatus: todo\ntype: feature\nparent: epic\ncreated_at: 2026-08-17T00:00:00Z\nupdated_at: 2026-08-17T00:00:00Z\n---\n\nThis is a container Bean; execute its child tasks.\n`,
+    );
+    writeFileSync(
+      join(beansDir, 'new.md'),
+      `---\n# new\ntitle: New\nstatus: todo\ntype: task\nparent: epic\ncreated_at: 2026-08-17T00:00:00Z\nupdated_at: 2026-08-17T00:00:00Z\n---\n\n## What to build\n\nImplement one bounded behavior with enough context for autonomous work.\n\n## Acceptance criteria\n\n- [ ] The behavior works.\n\n## Verification\n\nRun the focused test.\n\n## Out of scope\n\nDo not change unrelated behavior.\n`,
+    );
+    const completed: BeanRef = { id: 'completed', path: join(beansDir, 'completed.md'), title: 'Completed' };
+    const group: BeanRef = { id: 'group', path: join(beansDir, 'group.md'), title: 'Group' };
+    const state = {
+      schemaVersion: 1,
+      runId: 'refresh-grouping-run',
+      parentBean: { id: 'epic', path: join(beansDir, 'epic.md'), title: 'Epic' },
+      manifest: {
+        parentBean: { id: 'epic', path: join(beansDir, 'epic.md'), title: 'Epic' },
+        frozenAt: '2026-08-17T00:00:00Z',
+        groupingBeans: [group],
+        executableLeaves: [completed],
+      },
+      phase: 'running',
+      baseBranch: 'main',
+      baseCommit: 'abc123',
+      worktreePath: realpathSync(cwd),
+      selectedLeaf: null,
+      blockers: [],
+      attempts: {},
+      startedAt: '2026-08-17T00:00:00Z',
+      updatedAt: '2026-08-17T00:00:00Z',
+    } as RunState;
+    persistRunState(state, cwd);
+    armRun(state.runId, cwd);
+
+    try {
+      const refresh = parse(handleRequest(req(6, 'tools/call', {
+        name: 'beanflow',
+        arguments: { request: `refresh the manifest in worktree ${cwd}` },
+      })))!;
+      const text = (refresh.result as { content: { text: string }[] }).content[0].text;
+      expect(text).toMatch(/Refreshed Beanflow run refresh-grouping-run/);
+      const refreshed = loadRunState(state.runId, cwd);
+      expect(refreshed.manifest.executableLeaves.map((item) => item.id)).toEqual(['completed', 'new']);
+    } finally {
+      disarmRun(cwd);
+    }
+  });
+
   it('dispatches land as guidance', () => {
-    const land = parse(handleRequest(req(6, 'tools/call', { name: 'beanflow', arguments: { request: 'land it' } })))!;
+    const land = parse(handleRequest(req(7, 'tools/call', { name: 'beanflow', arguments: { request: 'land it' } })))!;
     expect((land.result as { content: { text: string }[] }).content[0].text).toMatch(/approval/);
   });
 
   it('errors on an unknown tool', () => {
-    const resp = parse(handleRequest(req(7, 'tools/call', { name: 'nope', arguments: {} })))!;
+    const resp = parse(handleRequest(req(8, 'tools/call', { name: 'nope', arguments: {} })))!;
     expect(resp.error).toBeDefined();
   });
 });
