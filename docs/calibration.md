@@ -15,7 +15,7 @@ the parent has to tell it to resume already-decided work.
 | `sports-l5f1-1788624375436` | `sports-6xr3` | GPT-5.6 Sol | high | GPT-5.6 Luna | medium | 56 min | not recorded | 3 | 2 | 5 | no |
 | `sports-l5f1-1788624375436` | `sports-f2xi` | GPT-5.6 Sol | high | GPT-5.6 Sol | low | about 80 min | 0 | 0 | 1 | 2 | no |
 | `sports-l5f1-1788624375436` | `sports-tymd` | GPT-5.6 Sol | high | GPT-5.6 Sol | low | about 39 min | 0 | 0 | 0 | 2 | no |
-| `sports-l5f1-1788624375436` | `sports-j06d` | GPT-5.6 Sol | high | GPT-5.6 Sol | low | about 35 min | 0 | 0 | 0 | 1 | no |
+| `sports-l5f1-1788624375436` | `sports-j06d` | GPT-5.6 Sol | high | GPT-5.6 Sol | low | about 85 min | 2 | 0 | 0 | 3 | no |
 | `sports-l5f1-1788624375436` | `sports-1l7l` | GPT-5.6 Sol | high | GPT-5.6 Sol | low | about 39 min | 1 | 0 | 1 | 1 | no |
 | `sports-l5f1-1788624375436` | `sports-88qy` | GPT-5.6 Sol | high | GPT-5.6 Sol | low | about 93 min | 0 | 0 | 1 | 3 | no |
 | `sports-l5f1-1788624375436` | `sports-uqed` | GPT-5.6 Sol | high | GPT-5.6 Sol | low | about 78 min | 1 | 0 | 0 | 2 | no |
@@ -98,6 +98,24 @@ Organization-Theme assertions. Independent focused checks passed. This leaf stre
 the current conclusion: Sol low is persistent and responds well to concrete repair
 batches, but a green implementer suite is not yet a substitute for parent boundary
 review.
+
+A later shell-focused test sweep proved that this acceptance was wrong. The managed
+shell had also removed signed-in account navigation, signed-out login and language
+navigation, Google One Tap, impersonation state, the member Survey alert, the invalid
+payment-method alert, responsive navigation behavior, and Markdown rendering for public
+notices. The reopened worker needed two low-context continuation nudges. Parent review
+rejected its first repair because the tests asserted strings without proving the missing
+responsive and alert behavior, then rejected its second repair because the Hypertea
+renderer still omitted alert icons, flattened notice Markdown, and retained dead typed
+fields. The third repair passed independent shell, notice, and PublicApp interaction
+checks.
+
+This changes the lesson from the original row. Sol low repaired concrete batches well,
+but the worker's own tests repeatedly matched its implementation instead of the outgoing
+boundary. The extra Rust-to-Hypertea review caught defects that ordinary leaf review had
+missed, and it removed dead contract state rather than preserving a compatibility layer.
+Beanflow now requires an inventory of replaced boundary behavior and rejects unproven
+"baseline" failures for this reason.
 
 On `sports-1l7l`, the worker asked one valid question because the accepted Website
 configuration had only a landing component sequence while the Bean could have implied a
