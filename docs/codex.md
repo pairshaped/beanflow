@@ -11,8 +11,11 @@ with the owner, creates and audits the Bean tree, and coordinates the run.
 When implementation begins, the parent creates one `beanflow-implementer` thread,
 which pins GPT-5.6 Luna at medium reasoning. The parent sends bounded ordered work sets
 of related leaves. The worker verifies, deletes, and commits each Bean separately and
-continues through the work set without routine parent round trips. If the worker needs
-stronger judgment, it returns a focused question to the parent. The parent resolves
+continues through the work set without routine parent round trips. While the worker
+runs, the parent keeps its turn active and waits in bounded intervals for an outcome,
+question, or blocker. It does not end the turn and assume a background notification
+will restart monitoring. If the worker needs stronger judgment, it returns a focused
+question to the parent. The parent resolves
 it using its current model and sends guidance back to the same implementer. Only
 owner decisions return to the user.
 
@@ -133,9 +136,13 @@ unowned cleanup behind.
   fails, the parent sends the
   concrete failures back to the same implementer as a
   repair of the same work set and does not advance the run.
-- `needs_guidance`: the current Bean needs stronger technical judgment. Earlier
-  work-set Beans remain committed. The parent resolves the focused question and sends
-  guidance back so the worker can finish the remaining work set.
+- `needs_guidance`: the current Bean needs a specific unresolved technical decision
+  between materially different safe choices. Earlier work-set Beans remain committed.
+  Unfinished criteria, ordinary failing tests, a large repair, or work that merely
+  takes more time do not qualify. A report without a focused question is invalid, and
+  the parent sends it back to the same worker to continue. Otherwise the parent
+  resolves the focused question and sends guidance back so the worker can finish the
+  remaining work set.
 - `owner_blocker`: the workflow needs product input, new authority, credentials, or
   an external state change.
 

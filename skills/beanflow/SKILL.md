@@ -51,7 +51,10 @@ must carry the accepted scope and decisions. Include extra handoff context only 
 it cannot be discovered safely from the Beans, repository, or run state. The
 implementer verifies, deletes, and commits each leaf separately, then continues to
 the next delegated leaf without waiting for parent acknowledgement. The parent waits
-for the work-set outcome instead of reviewing every routine leaf transition. Send later
+for the work-set outcome instead of reviewing every routine leaf transition. Keep the
+parent turn active while the implementer runs and wait in bounded intervals for its
+outcome, focused question, or blocker. Do not end the parent turn and assume a later
+notification will resume monitoring. Send later
 work sets as follow-up instructions to the existing thread rather than spawning
 another agent.
 
@@ -105,8 +108,12 @@ Interpret the worker's `BEANFLOW_OUTCOME` as follows:
   back to the same implementer as a repair of the same work set. Do not select or
   delegate new Beans until the repair passes. Full verification still belongs at the
   parent completion gate.
-- `needs_guidance`: resolve the implementer's focused question in the parent task,
-  then send the decision and rationale back to the same implementer so it can finish
+- `needs_guidance`: first verify that the report contains a focused unresolved
+  decision with materially different choices. Unfinished criteria, ordinary failing
+  tests, a large repair, or work that merely takes more time do not qualify. If the
+  report has no concrete question, reject it and tell the same implementer to continue.
+  Otherwise resolve the implementer's focused question in the parent task, then send
+  the decision and rationale back to the same implementer so it can finish
   the current leaf and continue its remaining delegated work set. Treat any earlier
   Bean-to-commit results in the report as completed. The parent may inspect the
   repository and tests before answering. Do not make code changes in the parent

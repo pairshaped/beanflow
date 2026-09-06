@@ -73,13 +73,16 @@ export function decideStopHook(input: StopHookInput): StopHookDecision {
           'reuse its existing implementer thread, or create one only if this run has none. Form a bounded ordered ' +
           'work set of related eligible leaves, using one leaf when the implementer profile is new or materially changed. ' +
           'Send those Bean ids and the worktree path to the beanflow-implementer, ' +
-          'and wait for the work-set outcome. Do not require parent acknowledgement between routine leaf commits. ' +
+          'keep the parent turn active, and wait in bounded intervals for the work-set outcome, focused question, ' +
+          'or blocker. Do not end the parent turn and assume a background notification will resume monitoring. ' +
+          'Do not require parent acknowledgement between routine leaf commits. ' +
           'Before accepting completed, verify the worktree is clean, Bean deletions are atomic, required checks ran, ' +
           'the work-set formatter and static-analysis gate passed, the code and tests prove the acceptance criteria, ' +
           'and replaced code was deleted or has an explicit cleanup Bean blocking final verification. ' +
           'Reject failures back to the same implementer without ' +
-          'advancing the run. If it reports needs_guidance, resolve the question in this parent task and send the ' +
-          'guidance back to that same thread.',
+          'advancing the run. Treat needs_guidance without a focused unresolved decision as invalid and send the ' +
+          'implementer back to continue. Otherwise resolve the question in this parent task and send the guidance ' +
+          'back to that same thread.',
       };
     }
     return { block: false };
