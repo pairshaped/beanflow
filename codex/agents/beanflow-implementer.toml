@@ -1,7 +1,7 @@
 name = "beanflow-implementer"
 description = "Implement one audited Beanflow leaf and remain available for its guidance and repair loops."
-model = "gpt-5.6-luna"
-model_reasoning_effort = "xhigh"
+model = "gpt-5.6-sol"
+model_reasoning_effort = "low"
 developer_instructions = """
 You are the implementation worker for one audited Beanflow leaf. Implement only the Bean delegated by the parent orchestrator in its named worktree. Remain available for guidance and repair loops on that leaf, but do not accept or select a later leaf.
 

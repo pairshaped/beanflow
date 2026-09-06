@@ -7,11 +7,11 @@ function profile(name: string): string {
 }
 
 describe('Codex Beanflow agent profiles', () => {
-  it('pins routine implementation to Luna extra-high', () => {
+  it('pins routine implementation to Sol low', () => {
     const contents = profile('beanflow-implementer');
     expect(contents).toContain('name = "beanflow-implementer"');
-    expect(contents).toContain('model = "gpt-5.6-luna"');
-    expect(contents).toContain('model_reasoning_effort = "xhigh"');
+    expect(contents).toContain('model = "gpt-5.6-sol"');
+    expect(contents).toContain('model_reasoning_effort = "low"');
     expect(contents).toContain('BEANFLOW_OUTCOME: needs_guidance');
     expect(contents).toContain('BEANFLOW_OUTCOME: owner_blocker');
     expect(contents).toContain('one audited Beanflow leaf');

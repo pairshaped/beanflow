@@ -59,12 +59,13 @@ completion rate are similar to Luna medium, test Luna at extra-high reasoning ne
 Benchmark intelligence and cost charts make Luna extra-high a plausible value point,
 but this workflow must measure its slower wall time and long-horizon compliance directly.
 
-After the Sol-low calibration leaves, the next newly spawned implementer switches to
-GPT-5.6 Luna at extra-high reasoning. Keep the orchestrator at GPT-5.6 Sol high and
-retain the fresh-agent-per-leaf policy. Record the same wall-time, continuation,
-guidance, rejection, and first-pass acceptance measures. In particular, compare
-whether Luna extra-high needs fewer parent corrections or continuation nudges, not
-just whether its first response takes longer.
+The planned Luna-extra-high trial was cancelled before it ran. Keep GPT-5.6 Sol at low
+reasoning for newly spawned implementers while the parent remains GPT-5.6 Sol high.
+The current evidence does not show that another low-cost implementer will beat Sol
+low's continuity. More importantly, Beanflow's independent implementation, skeptical
+review, and repair loop appear to be producing useful quality gains even though they
+cost more elapsed time and orchestration than one agent working end to end. Measure
+that workflow-level tradeoff before changing the implementer again.
 
 ## Sol-low provider leaf notes
 
