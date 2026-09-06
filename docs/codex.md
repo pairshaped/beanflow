@@ -22,6 +22,10 @@ owner decisions return to the user.
 The custom profiles affect spawned agents only. They do not switch the model of the
 owner-facing task in place.
 
+Record calibration leaves in [`calibration.md`](calibration.md). Compare wall time,
+guidance quality, rejected completion claims, and first-pass acceptance before changing
+the implementer model or reasoning effort again.
+
 The MCP tool can bootstrap a run from the current clean feature worktree after
 the Bean tree is audited. A start request names the epic and base branch, for
 example: `start epic beanflow-1234 with base branch main`.
