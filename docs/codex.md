@@ -132,6 +132,15 @@ unowned cleanup behind.
   storage claims run through the production creation path, not a post-creation repair
   helper. Generated cross-language agreement uses an executable parser fixture, a
   round trip, or one generated source of truth instead of matching handwritten types.
+  External-provider work is checked against current first-party documentation or the
+  shipped provider contract. Tests assert exact URLs, DOM placement, required classes
+  and data attributes, callbacks, and remount behavior. Simulated script events may
+  prove the application's lifecycle, but invented provider DOM or callbacks are not
+  evidence that the integration works. Any live provider behavior that cannot be
+  checked without credentials or a real account stays explicit in the completion
+  report. If an application framework composes the provider, the production parent
+  mount, update, navigation, and unmount path is a separate required boundary. A direct
+  component test does not prove that integration.
   Replacement claims also identify deleted obsolete paths. Any retained compatibility
   path has an explicit cleanup Bean that depends on its remaining consumers and blocks
   final integration or verification.

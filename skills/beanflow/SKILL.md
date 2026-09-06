@@ -97,6 +97,17 @@ Interpret the worker's `BEANFLOW_OUTCOME` as follows:
   post-creation repair or attachment helper cannot prove the invariant. Generated
   cross-language agreement needs executable parser fixtures, a round trip, or one
   generated source of truth rather than parallel handwritten declarations.
+  For external-provider integrations, independently check the current first-party
+  documentation or shipped provider contract before accepting derived URLs, mount
+  placement, required classes or data attributes, callbacks, and SPA remount behavior.
+  A fake loader event can prove the application's effect transition. It cannot prove
+  provider compatibility when the test invents provider DOM or callback behavior.
+  Require separate assertions for the exact provider-owned mount contract, and report
+  any live provider behavior that remains unverified because credentials or a real
+  account are unavailable. When the provider is composed inside an application
+  framework, also verify the framework's production mount, update, navigation, and
+  unmount path. An isolated component handle does not prove that a parent SPA discovers
+  the component or cleans it up.
   For replacement work, confirm obsolete code was deleted when its last consumer
   moved. If legacy code remains, verify the reported cleanup Bean names the retained
   path, depends on the remaining consumers, and blocks final integration or

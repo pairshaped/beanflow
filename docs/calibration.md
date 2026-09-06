@@ -13,6 +13,8 @@ the parent has to tell it to resume already-decided work.
 | Run | Leaf | Orchestrator | Orchestrator effort | Implementer | Implementer effort | Approx. wall time | Continuation nudges | Invalid guidance bounces | Valid guidance questions | Rejected completions | First completion accepted |
 | --- | --- | --- | --- | --- | --- | ---: | ---: | ---: | ---: | ---: | --- |
 | `sports-l5f1-1788624375436` | `sports-6xr3` | GPT-5.6 Sol | high | GPT-5.6 Luna | medium | 56 min | not recorded | 3 | 2 | 5 | no |
+| `sports-l5f1-1788624375436` | `sports-f2xi` | GPT-5.6 Sol | high | GPT-5.6 Sol | low | about 80 min | 0 | 0 | 1 | 2 | no |
+| `sports-l5f1-1788624375436` | `sports-tymd` | GPT-5.6 Sol | high | GPT-5.6 Sol | low | about 39 min | 0 | 0 | 0 | 2 | no |
 
 For each row, also record the useful parent-review findings and important caveats.
 
@@ -51,3 +53,33 @@ keep it despite a higher nominal per-token price. If its continuation nudges and
 completion rate are similar to Luna medium, test Luna at extra-high reasoning next.
 Benchmark intelligence and cost charts make Luna extra-high a plausible value point,
 but this workflow must measure its slower wall time and long-horizon compliance directly.
+
+## Sol-low provider leaf notes
+
+Both Sol-low leaves ran continuously without a continuation nudge or invalid guidance
+bounce. The social-provider leaf asked one valid question when Instagram did not offer
+the requested profile-feed shape. The parent selected each provider's supported embed,
+and the worker continued in the same leaf thread.
+
+Continuity was better than the earlier Luna-medium run, but first-pass acceptance was
+not. Parent review rejected both leaves twice. On `sports-f2xi`, it caught flattened
+provider schemas, stale iframe naming, duplicate Rust serialization, and a generated
+browser parser that rejected Rust's own Google Docs and OneDrive sandbox values. On
+`sports-tymd`, it caught an EmailOctopus script mounted in the document head instead of
+at the inline form location, a hard-coded Mailchimp field name and unusable fallback,
+then a Gift Up test that invented an iframe and preserved detached checkout DOM instead
+of using the provider's `.gift-up-target` contract.
+
+A follow-up integration review found one more uncovered boundary: the provider tests
+mounted each Hypertea program directly, but that does not prove a provider inserted by
+the parent PublicApp during navigation is mounted, survives parent renders safely, and
+is stopped when removed. The owning landing-composition Bean now requires a production
+parent/child lifecycle test, and Beanflow now treats host-framework composition as a
+separate acceptance boundary for provider work.
+
+The approximate times use the prior accepted leaf commit and final accepted repair
+commit, so they include parent review, provider research, repair turns, and cold-build
+cost. They are useful end-to-end workflow measurements, not pure model runtime. Sol low
+looks much better for persistence and guidance discipline, but this sample does not yet
+support reducing parent review. The process now requires current first-party provider
+contracts as the oracle for external integrations.
