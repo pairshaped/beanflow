@@ -9,7 +9,7 @@ default for demanding planning, but Sol at medium or high, and even Luna at high
 simple work, use the same routing. The parent gathers requirements, agrees the plan
 with the owner, creates and audits the Bean tree, and coordinates the run.
 When implementation begins, the parent creates one `beanflow-implementer` thread,
-which pins GPT-5.6 Luna at extra-high reasoning. The parent sends bounded ordered work sets
+which currently pins GPT-5.6 Terra at medium reasoning. The parent sends bounded ordered work sets
 of related leaves. The worker verifies, deletes, and commits each Bean separately and
 continues through the work set without routine parent round trips. While the worker
 runs, the parent keeps its turn active and waits in bounded intervals for an outcome,
@@ -163,13 +163,14 @@ unowned cleanup behind.
   an external state change.
 
 The parent does not change model automatically. An Astra, Sol, or future model can
-therefore orchestrate the same workflow. Luna remains responsible for implementation
-after receiving guidance, and the next ordinary leaf also goes to Luna. Edit the
-implementer profile if its preferred model or reasoning level changes later.
+therefore orchestrate the same workflow. The configured implementer remains responsible
+for implementation after receiving guidance, and the next ordinary leaf goes to that
+same persistent worker. Edit the implementer profile if its preferred model or reasoning
+level changes later.
 
 The parent spends its expensive reasoning on planning, decomposition, audits,
 guidance, work-set review, and final verification. It does not require a turn
-merely to acknowledge each routine Luna commit. Work sets must still be bounded; never
+merely to acknowledge each routine implementer commit. Work sets must still be bounded; never
 hand the implementer an unresolved epic or unrelated work just to reduce messages.
 
 Repository instructions and Bean verification are read together. If the repository

@@ -26,13 +26,13 @@ This was the first deliberately strict calibration run. The Bean boundary and se
 Beanflow policies changed during the leaf, so its 56-minute duration and rejection
 count are a useful medium-effort baseline but not a clean model-only comparison.
 
-The next newly spawned implementer uses GPT-5.6 Luna at extra-high reasoning. Compare
-its first one-leaf work set using the same columns. The useful signal is whether extra
-reasoning reduces invalid bounces and rejected completion claims enough to offset any
-increase in turn latency.
+The next newly spawned implementer uses GPT-5.6 Terra at medium reasoning. This replaces
+the planned Luna extra-high trial. Compare its first one-leaf work set using the same
+columns. The useful signal is whether Terra's newer generation improves continuity,
+first-pass acceptance, and guidance quality enough to justify its higher usage cost.
 
-If extra high does not materially improve first-pass acceptance or parent-review
-findings, test Luna at low reasoning on a comparable one-leaf run. Low plus the
-mechanical guidance bounce may win when extra turns are cheap. Reject it if plausible
-but incomplete completion claims increase enough to consume more parent review or
-accepted-leaf wall time.
+Do not infer a model conclusion from wall time alone. A slower accepted first completion
+can still beat a fast sequence of incomplete claims, while a polished report without
+the required behavior is still a failure. After the Terra-medium cohort, use the observed
+failure mode to choose the next test. Sol low is the stronger continuity comparison;
+Luna low is the cheaper continuation-bounce comparison.
