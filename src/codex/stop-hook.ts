@@ -81,8 +81,9 @@ export function decideStopHook(input: StopHookInput): StopHookDecision {
           'and replaced code was deleted or has an explicit cleanup Bean blocking final verification. ' +
           'Reject failures back to the same implementer without ' +
           'advancing the run. Before inspecting code for needs_guidance, require exactly one GUIDANCE_QUESTION line ' +
-          'with a focused unresolved decision, choices, and consequences. If it is absent or invalid, immediately ' +
-          'reply Invalid guidance outcome. Continue the assigned work. Otherwise resolve the question and send the guidance ' +
+          'with a focused unresolved decision, choices, and consequences. If it is absent or invalid, bounce it without ' +
+          'code inspection: ask the implementer to continue when the next safe action is clear, or return one valid ' +
+          'GUIDANCE_QUESTION with choices and consequences. Otherwise resolve the question and send the guidance ' +
           'back to that same thread.',
       };
     }

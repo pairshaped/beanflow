@@ -111,7 +111,10 @@ Interpret the worker's `BEANFLOW_OUTCOME` as follows:
 - `needs_guidance`: first check for exactly one `GUIDANCE_QUESTION:` line. Do not
   inspect the code or spend parent reasoning on the report before this mechanical
   check. If the line is absent, immediately tell the same implementer
-  `Invalid guidance outcome. Continue the assigned work.` A valid question describes
+  `Reassess the outcome. If the next safe action is clear, continue the assigned work.
+  Otherwise return one valid GUIDANCE_QUESTION with the choices and consequences.`
+  This bounce asks the implementer to distinguish a progress stop from a poorly stated
+  real question instead of assuming either one. A valid question describes
   a focused unresolved decision with materially different choices and consequences.
   Unfinished criteria, ordinary failing tests, a large repair, or work that merely
   takes more time do not qualify. If the field is present but does not meet that bar,
