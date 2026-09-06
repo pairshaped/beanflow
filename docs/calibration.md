@@ -15,7 +15,7 @@ the parent has to tell it to resume already-decided work.
 | `sports-l5f1-1788624375436` | `sports-6xr3` | GPT-5.6 Sol | high | GPT-5.6 Luna | medium | 56 min | not recorded | 3 | 2 | 5 | no |
 | `sports-l5f1-1788624375436` | `sports-f2xi` | GPT-5.6 Sol | high | GPT-5.6 Sol | low | about 80 min | 0 | 0 | 1 | 2 | no |
 | `sports-l5f1-1788624375436` | `sports-tymd` | GPT-5.6 Sol | high | GPT-5.6 Sol | low | about 39 min | 0 | 0 | 0 | 2 | no |
-| `sports-l5f1-1788624375436` | `sports-j06d` | GPT-5.6 Sol | high | GPT-5.6 Sol | low | about 85 min | 2 | 0 | 0 | 3 | no |
+| `sports-l5f1-1788624375436` | `sports-j06d` | GPT-5.6 Sol | high | GPT-5.6 Sol | low | about 105 min | 3 | 0 | 0 | 4 | no |
 | `sports-l5f1-1788624375436` | `sports-1l7l` | GPT-5.6 Sol | high | GPT-5.6 Sol | low | about 39 min | 1 | 0 | 1 | 1 | no |
 | `sports-l5f1-1788624375436` | `sports-88qy` | GPT-5.6 Sol | high | GPT-5.6 Sol | low | about 93 min | 0 | 0 | 1 | 3 | no |
 | `sports-l5f1-1788624375436` | `sports-uqed` | GPT-5.6 Sol | high | GPT-5.6 Sol | low | about 78 min | 1 | 0 | 0 | 2 | no |
@@ -116,6 +116,14 @@ boundary. The extra Rust-to-Hypertea review caught defects that ordinary leaf re
 missed, and it removed dead contract state rather than preserving a compatibility layer.
 Beanflow now requires an inventory of replaced boundary behavior and rejects unproven
 "baseline" failures for this reason.
+
+The full Rust sweep then exposed one more missed shell behavior: the footer no longer
+carried the Organization YouTube destination and logo. The worker needed one continuation
+nudge, then restored the typed Rust and Hypertea behavior with direct, route, fallback,
+and mounted-client checks. Parent delta review still caught that both renderers omitted
+the existing visible separators between legal links and fixed that final parity detail
+directly. This fourth rejected completion is strong evidence that replacement work needs
+both focused boundary review and a broader affected-suite sweep before acceptance.
 
 On `sports-1l7l`, the worker asked one valid question because the accepted Website
 configuration had only a landing component sequence while the Bean could have implied a
