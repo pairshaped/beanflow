@@ -79,7 +79,7 @@ export function decideStopHook(input: StopHookInput): StopHookDecision {
           'Before accepting completed, verify the worktree is clean, Bean deletions are atomic, required checks ran, ' +
           'the work-set formatter and static-analysis gate passed, the code and tests prove the acceptance criteria, ' +
           'and replaced code was deleted or has an explicit cleanup Bean blocking final verification. ' +
-          'Reject failures back to the same implementer without ' +
+          'Reject failures back to the same implementer in batches of at most three independently checkable gaps without ' +
           'advancing the run. Before inspecting code for needs_guidance, require exactly one GUIDANCE_QUESTION line ' +
           'with a focused unresolved decision, choices, and consequences. If it is absent or invalid, bounce it without ' +
           'code inspection: ask the implementer to continue when the next safe action is clear, or return one valid ' +

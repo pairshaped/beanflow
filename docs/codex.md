@@ -135,7 +135,10 @@ unowned cleanup behind.
   If the gate
   fails, the parent sends the
   concrete failures back to the same implementer as a
-  repair of the same work set and does not advance the run.
+  repair of the same work set and does not advance the run. A repair follow-up contains
+  at most three independently checkable gaps. If the audit finds more, the parent sends
+  ordered batches and re-audits between them so the implementer does not silently drop
+  the tail of a long correction list.
 - `needs_guidance`: the current Bean needs a specific unresolved technical decision
   between materially different safe choices. The report ends with exactly one
   `GUIDANCE_QUESTION:` line naming the choices and consequences. Earlier work-set

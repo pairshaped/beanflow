@@ -105,7 +105,10 @@ Interpret the worker's `BEANFLOW_OUTCOME` as follows:
   Reject these gaps along with unsupported criteria and partial evidence presented as complete.
   Rerun representative checks
   independently. If any gate fails, reject the outcome and send the concrete failures
-  back to the same implementer as a repair of the same work set. Do not select or
+  back to the same implementer as a repair of the same work set. Keep each repair
+  follow-up to at most three independently checkable gaps. When an audit finds more,
+  send ordered repair batches to the same implementer and re-audit between them. This
+  bound applies to repair instructions, not to the size of the accepted Bean. Do not select or
   delegate new Beans until the repair passes. Full verification still belongs at the
   parent completion gate.
 - `needs_guidance`: first check for exactly one `GUIDANCE_QUESTION:` line. Do not
