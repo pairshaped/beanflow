@@ -19,6 +19,7 @@ the parent has to tell it to resume already-decided work.
 | `sports-l5f1-1788624375436` | `sports-1l7l` | GPT-5.6 Sol | high | GPT-5.6 Sol | low | about 39 min | 1 | 0 | 1 | 1 | no |
 | `sports-l5f1-1788624375436` | `sports-88qy` | GPT-5.6 Sol | high | GPT-5.6 Sol | low | about 93 min | 0 | 0 | 1 | 3 | no |
 | `sports-l5f1-1788624375436` | `sports-uqed` | GPT-5.6 Sol | high | GPT-5.6 Sol | low | about 78 min | 1 | 0 | 0 | 2 | no |
+| `sports-l5f1-1788624375436` | `sports-kgug` | GPT-5.6 Sol | high | GPT-5.6 Sol | low | about 74 min | 3 | 0 | 0 | 1 | no |
 
 For each row, also record the useful parent-review findings and important caveats.
 
@@ -206,3 +207,36 @@ baseline without checking failures that name a changed route or replaced boundar
 Beanflow now requires those failures to reproduce at the recorded base commit or be
 traced concretely to unchanged code. The earlier shared-shell leaf is being repaired
 before new feature work continues.
+
+## sports-kgug notes
+
+The worker initially started toward a generic HTML form wrapper whose client command
+derived authority from an arbitrary form action. The parent caught that before a
+completion and required explicit Product-add and Line Item-save commands, a typed
+registration document, multipart attachment support, and typed workflow transitions.
+The worker discarded the draft cleanly and built the narrower Rust-to-Hypertea boundary.
+
+The first completion removed the replaced legacy renderer, preserved the existing Rust
+workflows, and passed its formatter, build, Clippy, lint, typecheck, full island, focused
+Rust, and browser gates. Parent review still found three cross-boundary regressions. The
+typed Rust fallback reduced the ClubPicker to an empty mount point and lost its usable
+no-JavaScript controls. Importing the picker into PublicApp retained its module-level
+document scan, so the picker could be mounted twice and leak the first lifecycle. The
+Line Item JSON redirect adapter also discarded `Set-Cookie`, which removed stale-cart
+flash warnings even though the Product-add adapter preserved them.
+
+The first lifecycle repair fixed duplicate mounting but initially retained a stale
+picker model when a validation document changed values at the same canonical path. A
+parent checkpoint extended the same repair before completion. The accepted repair now
+replaces and settles the child picker from changed typed state, stops it on navigation,
+restores the semantic server fallback, and forwards every redirect cookie. Independent
+tests exercised changed same-path picker values, fallback form controls, multipart
+uploads, recoverable submitted values, anonymous cart ownership, generated command
+routes, and the stale-warning cookie.
+
+Sol low handled the concrete repair batch well, but it needed three lightweight
+continuation nudges across implementation and repair. This is better than a long chain
+of partial completion reports, but it is not evidence that the newer model family has
+eliminated babysitting. More importantly, the rejected completion shows that automated
+language and browser gates do not replace a skeptical review of fallback, nested-island
+lifecycle, and response-header parity when a server boundary moves into Hypertea.
