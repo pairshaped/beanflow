@@ -14,7 +14,10 @@ commits that Bean. The same thread handles guidance and repair loops for its lea
 is retired after the parent accepts the result. While the worker
 runs, the parent keeps its turn active and waits in bounded intervals for an outcome,
 question, or blocker. It does not end the turn and assume a background notification
-will restart monitoring. If the worker needs stronger judgment, it returns a focused
+will restart monitoring. Interim owner questions and design decisions are answered in
+commentary while the wait loop remains active. Before sending any final response, the
+parent inspects the agent tree, confirms the implementer is terminal, and reviews a
+completed outcome in that same turn. If the worker needs stronger judgment, it returns a focused
 question to the parent. The parent resolves
 it using its current model and sends guidance back to the same implementer. Only
 owner decisions return to the user.

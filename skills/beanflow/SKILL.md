@@ -40,7 +40,12 @@ it cannot be discovered safely from the Beans, repository, or run state. The
 implementer verifies, deletes, and commits that leaf. The parent waits for the leaf
 outcome. Keep the parent turn active while the implementer runs and wait in bounded intervals for its
 outcome, focused question, or blocker. Do not end the parent turn and assume a later
-notification will resume monitoring.
+notification will resume monitoring. Treat a user-facing final response while the
+implementer is active as a workflow violation, even when the response only answers a
+status question or records a design decision. Send those interim answers as commentary
+and resume the bounded wait loop. Immediately before any final response, inspect the
+agent tree and confirm the leaf implementer is in a terminal state. If it completed,
+review its outcome in the same parent turn before returning control to the owner.
 
 Repository completion metadata and deletion are one lifecycle, not competing
 choices. When the repository requires checked acceptance items, a summary, or a

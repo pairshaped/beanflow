@@ -105,6 +105,10 @@ describe('Codex Stop hook', () => {
     expect(decision.reason).toContain('fresh beanflow-implementer thread');
     expect(decision.reason).toContain('Reuse that thread only for guidance and repairs');
     expect(decision.reason).toContain('retire it after acceptance');
+    expect(decision.reason).toContain('interim owner questions in commentary only');
+    expect(decision.reason).toContain('Immediately before any user-facing final response');
+    expect(decision.reason).toContain('confirm the implementer is terminal');
+    expect(decision.reason).toContain('review a completed outcome in this same turn');
     expect(decision.reason).toContain('verify the worktree is clean');
     expect(decision.reason).toContain('leaf formatter and static-analysis gate passed');
     expect(decision.reason).toContain('explicit cleanup Bean blocking final verification');

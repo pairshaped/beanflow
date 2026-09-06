@@ -74,6 +74,9 @@ export function decideStopHook(input: StopHookInput): StopHookDecision {
           'on the same leaf, then retire it after acceptance. Send the Bean id and worktree path to the implementer, ' +
           'keep the parent turn active, and wait in bounded intervals for the leaf outcome, focused question, ' +
           'or blocker. Do not end the parent turn and assume a background notification will resume monitoring. ' +
+          'While the implementer is active, answer interim owner questions in commentary only and resume waiting. ' +
+          'Immediately before any user-facing final response, inspect the agent tree, confirm the implementer is ' +
+          'terminal, and review a completed outcome in this same turn. ' +
           'Before accepting completed, verify the worktree is clean, Bean deletions are atomic, required checks ran, ' +
           'the leaf formatter and static-analysis gate passed, the code and tests prove the acceptance criteria, ' +
           'and replaced code was deleted or has an explicit cleanup Bean blocking final verification. For a replaced ' +
