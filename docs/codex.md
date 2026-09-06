@@ -146,7 +146,11 @@ unowned cleanup behind.
   repair of the same work set and does not advance the run. A repair follow-up contains
   at most three independently checkable gaps. If the audit finds more, the parent sends
   ordered batches and re-audits between them so the implementer does not silently drop
-  the tail of a long correction list.
+  the tail of a long correction list. Record the rejected commit. On the next completion
+  claim, first inspect its delta to the amended commit and map every requested repair to
+  a meaningful code or test change. If a requested category has no relevant delta,
+  reject immediately instead of repeating the full review. Broad suite totals do not
+  satisfy this repair-delta gate.
 - `needs_guidance`: the current Bean needs a specific unresolved technical decision
   between materially different safe choices. The report ends with exactly one
   `GUIDANCE_QUESTION:` line naming the choices and consequences. Earlier work-set

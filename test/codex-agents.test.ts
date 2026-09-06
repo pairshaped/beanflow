@@ -48,5 +48,7 @@ describe('Codex Beanflow agent profiles', () => {
     expect(contents).toContain('GUIDANCE_QUESTION:');
     expect(contents).toContain('Do not place the only assertions inside conditional `if let`');
     expect(contents).toContain('remove the old overlapping fixture condition');
+    expect(contents).toContain("inspect the delta from the parent's rejected commit");
+    expect(contents).toContain('Broad suite totals do not prove');
   });
 });

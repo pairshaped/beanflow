@@ -84,7 +84,12 @@ Interpret the worker's `BEANFLOW_OUTCOME` as follows:
   prove the acceptance criteria. At the end of the work set, require one owning-scope
   formatter, Rust Clippy when Rust changed, TypeScript lint and typecheck when
   TypeScript changed, and any equivalent automated static analysis required by the
-  repository. These work-set checks need not run after every leaf. Test names and a
+  repository. These work-set checks need not run after every leaf. When this is a
+  repair of a rejected completion, record the rejected commit and first inspect the
+  delta from that commit to the amended commit. Map every requested repair item to a
+  meaningful implementation or test change. If a requested category has no relevant
+  delta, reject immediately instead of spending a full parent review on unchanged
+  evidence. Broad suite totals do not satisfy this repair-delta gate. Test names and a
   worker summary are evidence leads, not proof. Require a criterion-by-criterion map
   to the exact test files and concrete assertions or observed values that prove it.
   For isolation, cleanup, persistence, and idempotency claims, check that the fixture
@@ -146,8 +151,8 @@ Do not reuse it for another epic. Replace it only when the thread is unavailable
 closed, attached to the wrong worktree, or its accumulated context is demonstrably
 hurting reliability; ensure the old thread is no longer active before replacing it.
 If the custom implementer is unavailable, create one model-specific agent with the
-same role instructions using GPT-5.6 Luna at extra-high reasoning and reuse it for the
-rest of the run. Pass the same compact handoff explicitly.
+same model, reasoning effort, and role instructions as the repository-owned profile,
+and reuse it for the rest of the run. Pass the same compact handoff explicitly.
 
 ## Workflow
 
