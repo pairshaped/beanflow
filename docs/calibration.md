@@ -15,6 +15,7 @@ the parent has to tell it to resume already-decided work.
 | `sports-l5f1-1788624375436` | `sports-6xr3` | GPT-5.6 Sol | high | GPT-5.6 Luna | medium | 56 min | not recorded | 3 | 2 | 5 | no |
 | `sports-l5f1-1788624375436` | `sports-f2xi` | GPT-5.6 Sol | high | GPT-5.6 Sol | low | about 80 min | 0 | 0 | 1 | 2 | no |
 | `sports-l5f1-1788624375436` | `sports-tymd` | GPT-5.6 Sol | high | GPT-5.6 Sol | low | about 39 min | 0 | 0 | 0 | 2 | no |
+| `sports-l5f1-1788624375436` | `sports-j06d` | GPT-5.6 Sol | high | GPT-5.6 Sol | low | about 35 min | 0 | 0 | 0 | 1 | no |
 
 For each row, also record the useful parent-review findings and important caveats.
 
@@ -83,3 +84,14 @@ cost. They are useful end-to-end workflow measurements, not pure model runtime. 
 looks much better for persistence and guidance discipline, but this sample does not yet
 support reducing parent review. The process now requires current first-party provider
 contracts as the oracle for external integrations.
+
+On `sports-j06d`, the worker completed continuously and ran the full formatter, build,
+island, lint, typecheck, and Clippy gate without prompting. Parent review still found a
+canonical link emitted in the body instead of the head, a stale `<html lang>` after
+French SPA navigation, and a theme-order assertion that proved only the base stylesheet
+rather than the configuration-selected Theme. One bounded repair fixed all three and
+added hostile canonical-duplication, locale-transition, platform-Theme, and
+Organization-Theme assertions. Independent focused checks passed. This leaf strengthens
+the current conclusion: Sol low is persistent and responds well to concrete repair
+batches, but a green implementer suite is not yet a substitute for parent boundary
+review.
