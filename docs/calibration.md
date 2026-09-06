@@ -18,6 +18,7 @@ the parent has to tell it to resume already-decided work.
 | `sports-l5f1-1788624375436` | `sports-j06d` | GPT-5.6 Sol | high | GPT-5.6 Sol | low | about 35 min | 0 | 0 | 0 | 1 | no |
 | `sports-l5f1-1788624375436` | `sports-1l7l` | GPT-5.6 Sol | high | GPT-5.6 Sol | low | about 39 min | 1 | 0 | 1 | 1 | no |
 | `sports-l5f1-1788624375436` | `sports-88qy` | GPT-5.6 Sol | high | GPT-5.6 Sol | low | about 93 min | 0 | 0 | 1 | 3 | no |
+| `sports-l5f1-1788624375436` | `sports-uqed` | GPT-5.6 Sol | high | GPT-5.6 Sol | low | about 78 min | 1 | 0 | 0 | 2 | no |
 
 For each row, also record the useful parent-review findings and important caveats.
 
@@ -154,3 +155,28 @@ completions is expensive in wall time even without continuation nudges. The usef
 is that each repair was narrow and the final code removed the route coupling instead of
 adding a compatibility path. Beanflow now explicitly rejects route-owned shared
 composition and server-markup tests that can pass on escaped HTML text.
+
+## sports-uqed notes
+
+The worker needed one lightweight status nudge but no design guidance. It caught and
+fixed a real Hypertea reconciliation failure during its own 1440 by 1000 browser check,
+then completed the Product list and detail migration with the required formatter,
+build, Clippy, lint, typecheck, island, focused Rust, and full Rust gates.
+
+Parent review rejected the first completion for three migration-parity gaps: the
+available-credit alert disappeared, French Product navigation could never be active
+because localized links were compared with an unlocalized route path, and Product cards
+dropped the established Details action and semantic structure. The first repair fixed
+all three. Parent review then rejected a second completion because the worker classified
+the Product cart-count failure as future cart scope even though the current migration
+had removed that existing shell behavior. The second repair projected the already
+loaded count through the shared typed document and rendered it in both Rust and
+Hypertea without adding a fetch or nested island.
+
+The same narrow shell test group exposed four regressions from an earlier accepted leaf:
+account navigation, signed-out login and language navigation, Google One Tap, and the
+impersonation warning. This is evidence against accepting a full-suite failure count as
+baseline without checking failures that name a changed route or replaced boundary.
+Beanflow now requires those failures to reproduce at the recorded base commit or be
+traced concretely to unchanged code. The earlier shared-shell leaf is being repaired
+before new feature work continues.
