@@ -22,6 +22,7 @@ the parent has to tell it to resume already-decided work.
 | `sports-l5f1-1788624375436` | `sports-kgug` | GPT-5.6 Sol | high | GPT-5.6 Sol | low | about 74 min | 3 | 0 | 0 | 1 | no |
 | `sports-l5f1-1788624375436` | `sports-3qe6` | GPT-5.6 Sol | high | GPT-5.6 Sol | low | about 113 min | 2 | 0 | 0 | 3 | no |
 | `sports-l5f1-1788624375436` | `sports-erv1` | GPT-5.6 Sol | high | GPT-5.6 Sol | low | about 28 min | 0 | 0 | 0 | 1 | no |
+| `sports-l5f1-1788624375436` | `sports-6gq8` | GPT-5.6 Sol | high | GPT-5.6 Sol | low | about 49 min | 0 | 0 | 0 | 1 | no |
 
 For each row, also record the useful parent-review findings and important caveats.
 
@@ -303,3 +304,27 @@ verification took about seven minutes. This leaf is positive evidence for Sol-lo
 continuity and speed on a structural refactor, but it also shows why Beanflow should
 review ownership and dependency direction separately from behavior and automated test
 results.
+
+## sports-6gq8 notes
+
+Sol low ran continuously without a nudge or guidance request while moving public Pages
+across authorization, Markdown and Website component validation, media resolution,
+typed contracts, Rust fallback rendering, Hypertea rendering, nested gallery lifecycle,
+and route notices. The first completion passed the formatter, platform build, strict
+workspace Clippy, lint, typecheck, the full island suite, and focused Rust tests.
+
+Independent review still found that Page push-state navigation was broken. The generated
+client matcher intercepted `/pages/{id}`, but the shared `/website/route` endpoint sent
+that path to the Product route loader. The initial client test asserted only that a
+route-load effect was queued, so it could not expose the incorrect server dispatch. A
+second review claim that `/pages` was missing was rejected because Proute has no public
+Page-index route and creating one would have expanded the leaf.
+
+The worker repaired the accepted finding in the same leaf thread. It added localized
+friendly-ID Page dispatch before the Product fallback, a route-endpoint test that proves
+the typed authorized projection and restricted-content non-leak behavior, and a client
+test that executes the production route effect through rendering and history updates.
+The repair passed every required gate. This is further evidence that Sol low maintains
+good continuity and responds efficiently to bounded review findings, but green unit,
+type, lint, build, and browserless view tests do not prove cross-endpoint routing unless
+the test actually executes both sides of the boundary.
