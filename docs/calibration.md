@@ -16,6 +16,7 @@ the parent has to tell it to resume already-decided work.
 | `sports-l5f1-1788624375436` | `sports-f2xi` | GPT-5.6 Sol | high | GPT-5.6 Sol | low | about 80 min | 0 | 0 | 1 | 2 | no |
 | `sports-l5f1-1788624375436` | `sports-tymd` | GPT-5.6 Sol | high | GPT-5.6 Sol | low | about 39 min | 0 | 0 | 0 | 2 | no |
 | `sports-l5f1-1788624375436` | `sports-j06d` | GPT-5.6 Sol | high | GPT-5.6 Sol | low | about 35 min | 0 | 0 | 0 | 1 | no |
+| `sports-l5f1-1788624375436` | `sports-1l7l` | GPT-5.6 Sol | high | GPT-5.6 Sol | low | about 39 min | 1 | 0 | 1 | 1 | no |
 
 For each row, also record the useful parent-review findings and important caveats.
 
@@ -95,3 +96,27 @@ Organization-Theme assertions. Independent focused checks passed. This leaf stre
 the current conclusion: Sol low is persistent and responds well to concrete repair
 batches, but a green implementer suite is not yet a substitute for parent boundary
 review.
+
+On `sports-1l7l`, the worker asked one valid question because the accepted Website
+configuration had only a landing component sequence while the Bean could have implied a
+new generic shell-slot schema. The parent chose reference-only landing variants and a
+fixed Contact route. After substantial implementation and an initial focused test, the
+worker stayed marked active for several minutes without filesystem or verification
+progress and did not answer a lightweight checkpoint. One explicit continuation nudge
+resumed work. This is the first observed Sol-low continuation lapse in the run.
+
+Parent review rejected the first completion because the reusable Contact component was
+only a marker whose Rust and Hypertea renderers read the current route's Contact page.
+That passed isolated tests but could not work when embedded in a future Landing page.
+The same implementation also projected landing-only component data into every Contact
+response and copied the canonical public-notice path-matching SQL into the Contact
+module. The repair made each component payload self-contained, removed landing data and
+Sponsor queries from Contact, moved the bounded Sponsor projection to a shared module,
+and reused the existing path-aware notice loader. It removed more code than it added.
+Independent focused Rust and Hypertea checks passed.
+
+This leaf is another strong argument for keeping the parent boundary review. Sol low
+handled a precise repair batch well and ran all required gates, but its green tests were
+written around a route-coupled shape that would have forced the next leaf to refactor or
+duplicate the work. The useful process signal is not only defect detection: review
+prevented premature code from becoming an accepted dependency.
