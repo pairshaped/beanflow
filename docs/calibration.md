@@ -8,9 +8,9 @@ Record one row only after the parent accepts the leaf. Count an implementer turn
 the worker returns an outcome. Count a rejected completion when the parent finds a
 required behavior or proof gap after `BEANFLOW_OUTCOME: completed`.
 
-| Run | Leaf | Model | Effort | Approx. wall time | Invalid guidance bounces | Valid guidance questions | Rejected completions | First completion accepted |
-| --- | --- | --- | --- | ---: | ---: | ---: | ---: | --- |
-| `sports-l5f1-1788624375436` | `sports-6xr3` | GPT-5.6 Luna | medium | 56 min | 3 | 2 | 5 | no |
+| Run | Leaf | Orchestrator | Orchestrator effort | Implementer | Implementer effort | Approx. wall time | Invalid guidance bounces | Valid guidance questions | Rejected completions | First completion accepted |
+| --- | --- | --- | --- | --- | --- | ---: | ---: | ---: | ---: | --- |
+| `sports-l5f1-1788624375436` | `sports-6xr3` | GPT-5.6 Sol | high | GPT-5.6 Luna | medium | 56 min | 3 | 2 | 5 | no |
 
 For each row, also record the useful parent-review findings and important caveats.
 
@@ -30,7 +30,9 @@ The next newly spawned implementer uses GPT-5.6 Sol at low reasoning. This repla
 the unrun Terra-medium and Luna-extra-high trials. Compare its first one-leaf work set
 using the same columns. The useful signal is whether Sol's newer-generation continuity
 reduces stalls and correction turns while low effort keeps accepted-leaf time and usage
-competitive.
+competitive. Keep the orchestrator at GPT-5.6 Sol high so the implementer is the main
+changed variable. This also tests whether using one model family for planning and
+implementation reduces handoff friction despite the separate agent contexts.
 
 Do not infer a model conclusion from wall time alone. A slower accepted first completion
 can still beat a fast sequence of incomplete claims, while a polished report without
