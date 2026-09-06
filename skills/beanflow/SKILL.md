@@ -107,6 +107,13 @@ Interpret the worker's `BEANFLOW_OUTCOME` as follows:
   post-creation repair or attachment helper cannot prove the invariant. Generated
   cross-language agreement needs executable parser fixtures, a round trip, or one
   generated source of truth rather than parallel handwritten declarations.
+  Do not accept a worker's claim that suite failures are baseline based only on the
+  failure count, test age, or a broad scope label. Independently rerun every failure
+  that names a changed route, replaced renderer, migrated workflow, shared shell, or
+  other touched boundary. Treat it as a leaf regression unless the same failure is
+  reproduced at the run's recorded base commit or traced to unchanged code with
+  concrete evidence. A later Bean that owns new behavior does not excuse behavior the
+  current leaf removed while migrating an existing boundary.
   For external-provider integrations, independently check the current first-party
   documentation or shipped provider contract before accepting derived URLs, mount
   placement, required classes or data attributes, callbacks, and SPA remount behavior.

@@ -58,5 +58,8 @@ describe('Codex Beanflow agent profiles', () => {
     expect(contents).toContain('remove the old overlapping fixture condition');
     expect(contents).toContain("inspect the delta from the parent's rejected commit");
     expect(contents).toContain('Broad suite totals do not prove');
+    expect(contents).toContain('do not dismiss them as baseline');
+    expect(contents).toContain('reproduce the same failure at the recorded base commit');
+    expect(contents).toContain('does not excuse behavior this leaf removed');
   });
 });

@@ -108,6 +108,9 @@ describe('Codex Stop hook', () => {
     expect(decision.reason).toContain('verify the worktree is clean');
     expect(decision.reason).toContain('leaf formatter and static-analysis gate passed');
     expect(decision.reason).toContain('explicit cleanup Bean blocking final verification');
+    expect(decision.reason).toContain('Treat a failing test that names a changed route');
+    expect(decision.reason).toContain('reproduces at the recorded base commit');
+    expect(decision.reason).toContain('A later Bean does not excuse behavior removed');
     expect(decision.reason).toContain('Reject failures back to the same implementer');
     expect(decision.reason).toContain('build-cache status');
   });

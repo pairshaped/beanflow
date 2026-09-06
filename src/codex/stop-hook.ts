@@ -76,7 +76,10 @@ export function decideStopHook(input: StopHookInput): StopHookDecision {
           'or blocker. Do not end the parent turn and assume a background notification will resume monitoring. ' +
           'Before accepting completed, verify the worktree is clean, Bean deletions are atomic, required checks ran, ' +
           'the leaf formatter and static-analysis gate passed, the code and tests prove the acceptance criteria, ' +
-          'and replaced code was deleted or has an explicit cleanup Bean blocking final verification. ' +
+          'and replaced code was deleted or has an explicit cleanup Bean blocking final verification. Treat a failing ' +
+          'test that names a changed route, replaced renderer, migrated workflow, shared shell, or other touched boundary ' +
+          'as a leaf regression unless it reproduces at the recorded base commit or concrete evidence traces it to ' +
+          'unchanged code. A later Bean does not excuse behavior removed by the current migration. ' +
           'Reject failures back to the same implementer in batches of at most three independently checkable gaps without ' +
           'advancing the run. Before inspecting code for needs_guidance, require exactly one GUIDANCE_QUESTION line ' +
           'with a focused unresolved decision, choices, and consequences. If it is absent or invalid, bounce it without ' +

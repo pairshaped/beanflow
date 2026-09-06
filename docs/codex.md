@@ -132,6 +132,12 @@ unowned cleanup behind.
   storage claims run through the production creation path, not a post-creation repair
   helper. Generated cross-language agreement uses an executable parser fixture, a
   round trip, or one generated source of truth instead of matching handwritten types.
+  Suite failures are not baseline merely because the count looks familiar or the test
+  appears old. The parent independently reruns every failure that names a changed
+  route, replaced renderer, migrated workflow, shared shell, or other touched
+  boundary. The failure remains a leaf regression unless it reproduces at the run's
+  recorded base commit or concrete evidence traces it to unchanged code. A later Bean
+  that owns new behavior does not excuse behavior removed by the current migration.
   External-provider work is checked against current first-party documentation or the
   shipped provider contract. Tests assert exact URLs, DOM placement, required classes
   and data attributes, callbacks, and remount behavior. Simulated script events may
