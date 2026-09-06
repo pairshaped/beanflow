@@ -95,6 +95,9 @@ Interpret the worker's `BEANFLOW_OUTCOME` as follows:
   Apply the same fail-closed rule to every test path: an expected fixture, value,
   variant, or branch must be unwrapped with an explicit failure before assertions.
   Conditional assertions that can all be skipped do not prove the criterion.
+  When a repair separates behaviors or ownership paths, confirm the old overlapping
+  fixture condition was removed. An added case does not prove separation when the
+  original friendly condition can still keep the test green.
   Check uniqueness and cross-element relationships at their owning scope. Subtree
   queries cannot establish document-level identity or reference uniqueness.
   For atomic or immutable storage, inspect the real production creation path; a

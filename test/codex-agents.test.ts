@@ -47,5 +47,6 @@ describe('Codex Beanflow agent profiles', () => {
     expect(contents).toContain('A `needs_guidance` report without that line is invalid');
     expect(contents).toContain('GUIDANCE_QUESTION:');
     expect(contents).toContain('Do not place the only assertions inside conditional `if let`');
+    expect(contents).toContain('remove the old overlapping fixture condition');
   });
 });

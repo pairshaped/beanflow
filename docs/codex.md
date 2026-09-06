@@ -125,7 +125,9 @@ unowned cleanup behind.
   assert that required event targets exist before dispatch. A missing target hidden by
   optional chaining is a silent no-op, not passing evidence. Every expected fixture,
   value, variant, or branch is unwrapped with an explicit failure before assertions;
-  conditional assertions that can all be skipped are not passing evidence. Uniqueness and
+  conditional assertions that can all be skipped are not passing evidence. Repairs
+  that separate behaviors also remove old overlapping fixture conditions instead of
+  merely adding another case that the overlap can keep green. Uniqueness and
   cross-element relationships are checked at their owning scope; subtree queries do
   not prove document-level identity or reference uniqueness. Atomic and immutable
   storage claims run through the production creation path, not a post-creation repair
