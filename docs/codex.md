@@ -119,7 +119,9 @@ unowned cleanup behind.
   The implementer runs leaf-specific checks at each leaf, then runs the owning
   formatter and automated static analysis once at the end of the work set. That
   includes Rust Clippy when Rust changed plus TypeScript lint and typecheck when
-  TypeScript changed. A summary or a passing test name is not proof. If the gate
+  TypeScript changed. It waits for an existing verification command instead of
+  launching duplicate or overlapping formatters, builds, tests, linters, typechecks,
+  Cargo, or Clippy processes in the same worktree. A summary or a passing test name is not proof. If the gate
   implementer cannot map every acceptance criterion to a concrete assertion or
   observed behavior, the outcome is incomplete. Partial coverage must be called out,
   not promoted to a completed criterion. The map names the exact test file and

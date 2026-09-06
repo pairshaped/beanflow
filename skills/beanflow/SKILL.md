@@ -84,7 +84,11 @@ Interpret the worker's `BEANFLOW_OUTCOME` as follows:
   prove the acceptance criteria. At the end of the work set, require one owning-scope
   formatter, Rust Clippy when Rust changed, TypeScript lint and typecheck when
   TypeScript changed, and any equivalent automated static analysis required by the
-  repository. These work-set checks need not run after every leaf. When this is a
+  repository. These work-set checks need not run after every leaf. Never launch the
+  same or overlapping formatter, build, test, linter, typecheck, or static-analysis
+  command concurrently in one worktree. Wait for the running command and use its
+  result, especially for Cargo and Clippy processes sharing one target directory.
+  When this is a
   repair of a rejected completion, record the rejected commit and first inspect the
   delta from that commit to the amended commit. Map every requested repair item to a
   meaningful implementation or test change. If a requested category has no relevant
