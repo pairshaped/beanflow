@@ -46,6 +46,11 @@ status question or records a design decision. Send those interim answers as comm
 and resume the bounded wait loop. Immediately before any final response, inspect the
 agent tree and confirm the leaf implementer is in a terminal state. If it completed,
 review its outcome in the same parent turn before returning control to the owner.
+A terminal implementer is not a stopping condition while the Beanflow run still has
+eligible work. After accepting the leaf, perform any required cache cleanup, start
+the next selected leaf, and resume the bounded wait loop. Return control only when
+the run is complete, genuinely blocked, explicitly paused or stopped by the owner,
+or waiting for an owner-only decision.
 
 Repository completion metadata and deletion are one lifecycle, not competing
 choices. When the repository requires checked acceptance items, a summary, or a

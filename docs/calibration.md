@@ -351,3 +351,26 @@ being reviewed until the next owner turn. Beanflow now explicitly prohibits fina
 responses while a leaf implementer is active, requires interim owner answers to remain
 in commentary, and requires an agent-tree terminal-state check immediately before any
 final response.
+
+## sports-89we notes
+
+Sol low completed the cart-review migration and its repair in about 12 minutes without
+a continuation nudge or guidance request. It preserved Rust-owned cart markup and
+mutations, moved the interaction into PublicApp, and passed the formatter, platform
+build, strict workspace Clippy, lint, typecheck, island suite, focused Rust tests, and
+an authenticated browser check.
+
+Independent review still caught a definite missing lifecycle dependency: the managed
+cart rendered confirmation markup whose real submit button depended on ConfirmActions,
+but the new shell did not mount that behavior. The worker repaired it with a delegated
+PublicApp subscription, lifecycle tests, and a no-JavaScript submit fallback. Review
+also questioned whether processing-payment redirects survived managed route loading.
+Production-boundary tests showed the existing browser fallback already preserved the
+authoritative Stripe and SportsPay destinations, so no speculative protocol was added.
+
+The worker handled the bounded repair cleanly. This leaf is good evidence that Sol low
+is fast and cooperative, but it reinforces that broad green suites do not prove every
+cross-cutting behavior inherited from a replaced shell. It also exposed a second parent
+orchestration gap: after accepting the leaf, the parent stopped even though Beanflow
+had selected another eligible leaf. The policy now states that a terminal implementer
+is not a stopping condition while the run still has eligible work.

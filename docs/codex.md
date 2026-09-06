@@ -17,7 +17,11 @@ question, or blocker. It does not end the turn and assume a background notificat
 will restart monitoring. Interim owner questions and design decisions are answered in
 commentary while the wait loop remains active. Before sending any final response, the
 parent inspects the agent tree, confirms the implementer is terminal, and reviews a
-completed outcome in that same turn. If the worker needs stronger judgment, it returns a focused
+completed outcome in that same turn. A terminal implementer alone is not a reason to
+stop while the run has eligible work. The parent accepts the leaf, performs required
+cache cleanup, starts the next selected leaf, and resumes waiting. It returns control
+only when the run is complete, genuinely blocked, explicitly paused or stopped, or
+needs an owner-only decision. If the worker needs stronger judgment, it returns a focused
 question to the parent. The parent resolves
 it using its current model and sends guidance back to the same implementer. Only
 owner decisions return to the user.
