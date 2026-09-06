@@ -395,3 +395,27 @@ prove both paths, and the parent reran them independently. This is strong eviden
 the extra review is earning its cost: the build, Clippy, TypeScript checks, island suite,
 focused Rust tests, and browser walkthrough were all green while an existing Rust test
 outside the selected subset still exposed a real server behavior regression.
+
+## sports-6mox notes
+
+Sol low completed the provider-independent checkout and Payment Attempt migration plus
+one repair in about nine minutes without a continuation nudge or guidance request. The
+first commit reused the Rust checkout handlers for managed documents, added checkout,
+failure, and processing page variants, preserved fixed completion redirects, nested the
+existing payment-waiting program, and passed every requested automated gate.
+
+The first implementation's provider failure lifecycle was not actually reliable under
+SPA navigation. Hypertea reconciles subscriptions before patching the new route DOM,
+but the new subscription queried for a provider slot only once. Navigation from another
+page therefore subscribed against the old DOM and could render a scriptless checkout
+with an enabled Pay button. The isolated lifecycle test installed checkout markup before
+subscribing, which hid the production ordering. The extra fast review also missed this;
+the parent caught it by tracing Hypertea's real subscription and render sequence.
+
+The repair made managed checkout fail closed in the Rust-rendered markup before any
+JavaScript runs, retained enabled controls and provider scripts for direct checkout, and
+used a DOM observer for insertion, same-path replacement, and teardown. A PublicApp-level
+test now executes the real route-load transition and proves disabled submission causes
+no request. This leaf is evidence that an inexpensive independent reviewer is useful but
+not sufficient by itself. The parent still needs to inspect framework lifecycle ordering
+when a leaf claims mount, replacement, or cleanup behavior.
