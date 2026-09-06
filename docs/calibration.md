@@ -17,6 +17,7 @@ the parent has to tell it to resume already-decided work.
 | `sports-l5f1-1788624375436` | `sports-tymd` | GPT-5.6 Sol | high | GPT-5.6 Sol | low | about 39 min | 0 | 0 | 0 | 2 | no |
 | `sports-l5f1-1788624375436` | `sports-j06d` | GPT-5.6 Sol | high | GPT-5.6 Sol | low | about 35 min | 0 | 0 | 0 | 1 | no |
 | `sports-l5f1-1788624375436` | `sports-1l7l` | GPT-5.6 Sol | high | GPT-5.6 Sol | low | about 39 min | 1 | 0 | 1 | 1 | no |
+| `sports-l5f1-1788624375436` | `sports-88qy` | GPT-5.6 Sol | high | GPT-5.6 Sol | low | about 93 min | 0 | 0 | 1 | 3 | no |
 
 For each row, also record the useful parent-review findings and important caveats.
 
@@ -120,3 +121,36 @@ handled a precise repair batch well and ran all required gates, but its green te
 written around a route-coupled shape that would have forced the next leaf to refactor or
 duplicate the work. The useful process signal is not only defect detection: review
 prevented premature code from becoming an accepted dependency.
+
+## sports-88qy notes
+
+The worker asked one valid design question because the accepted configuration did not
+yet define the requested landing variants. The parent bounded the new schema, clarified
+which components were reference-only, and fixed the server-owned limits. The worker then
+continued without a continuation nudge and consistently ran the full formatter, build,
+Clippy, lint, typecheck, island, focused Rust, and browser gates.
+
+The first completion was much larger than the prior leaves and its green tests concealed
+a real server fallback failure. The Rust renderer converted each component to a String
+and interpolated it through Hypertext's ordinary escaped-text path. Assertions passed
+because they searched for attribute names inside escaped markup, while the browser looked
+correct only after Hypertea mounted. The same completion gave identical Website
+components duplicate VDOM keys, did not force the parent-render lifecycle boundary with
+a script-backed provider, and placed shared public document and landing rendering under
+the Contact route module. The first repair moved that ownership to a shared module,
+removed the duplicate keys, and added two identical Gift Up children through PublicApp.
+
+Two further reviews found friendly fallback fixtures. The first repair tested only one
+Tab and one initially open Accordion item, so it omitted the hidden content Hypertea
+retained. The second used an English Carousel with no link and a provider paragraph with
+no safe destination, so it missed French alt selection, linked media, and provider
+fallback links. The final tests use secondary and closed panels, French and English alt
+values, a non-null Carousel link, and both script-backed and iframe provider links through
+the composed public document boundary.
+
+This leaf is strong evidence that Sol low is persistent but still needs skeptical parent
+review for boundary ownership and adversarial fixture selection. Three rejected
+completions is expensive in wall time even without continuation nudges. The useful result
+is that each repair was narrow and the final code removed the route coupling instead of
+adding a compatibility path. Beanflow now explicitly rejects route-owned shared
+composition and server-markup tests that can pass on escaped HTML text.
