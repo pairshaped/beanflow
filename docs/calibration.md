@@ -1,8 +1,15 @@
 # Implementer calibration
 
-Use this log to compare implementer model and reasoning settings on real Beanflow
-leaves. It is directional evidence, not a controlled benchmark. Repository difficulty,
-Bean quality, parent strictness, and policy changes can dominate small differences.
+GPT-5.6 Sol at low reasoning is the chosen Beanflow implementer. The earlier model
+comparison notes remain below as historical evidence, but this is no longer a running
+model bake-off.
+
+Use this log to improve the delivery process. Record false completion claims, invalid
+or valid guidance requests, missing verification, review findings, repair quality, and
+wall time when it helps explain a workflow problem. Do not add routine commentary about
+model quality, token cost, or hypothetical alternatives while the implementer policy is
+unchanged. Repository difficulty, Bean quality, parent strictness, and policy changes
+can dominate small differences.
 
 Record one row only after the parent accepts the leaf. Count an implementer turn when
 the worker returns an outcome. Count a rejected completion when the parent finds a
@@ -25,7 +32,8 @@ the parent has to tell it to resume already-decided work.
 | `sports-l5f1-1788624375436` | `sports-6gq8` | GPT-5.6 Sol | high | GPT-5.6 Sol | low | about 49 min | 0 | 0 | 0 | 1 | no |
 | `sports-l5f1-1788624375436` | `sports-qy2r` | GPT-5.6 Sol | high | GPT-5.6 Sol | low | about 52 min | 0 | 0 | 0 | 1 | no |
 
-For each row, also record the useful parent-review findings and important caveats.
+For each row, also record useful parent-review findings and important caveats. Keep the
+model columns for reproducibility, not ongoing comparison.
 
 ## sports-6xr3 notes
 

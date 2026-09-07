@@ -9,7 +9,8 @@ default for demanding planning, but Sol at medium or high, and even Luna at high
 simple work, use the same routing. The parent gathers requirements, agrees the plan
 with the owner, creates and audits the Bean tree, and coordinates the run.
 For each executable leaf, the parent creates a fresh `beanflow-implementer` thread,
-which currently pins GPT-5.6 Sol at low reasoning. The worker verifies, deletes, and
+which pins GPT-5.6 Sol at low reasoning as the standard implementation policy. This is
+the chosen default, not an active model comparison. The worker verifies, deletes, and
 commits that Bean. The same thread handles guidance and repair loops for its leaf, then
 is retired after the parent accepts the result. While the worker
 runs, the parent keeps its turn active and waits in bounded intervals for an outcome,
@@ -29,9 +30,10 @@ owner decisions return to the user.
 The custom profiles affect spawned agents only. They do not switch the model of the
 owner-facing task in place.
 
-Record calibration leaves in [`calibration.md`](calibration.md). Compare wall time,
-guidance quality, rejected completion claims, and first-pass acceptance before changing
-the implementer model or reasoning effort again.
+Record process calibration in [`calibration.md`](calibration.md). Capture false
+completion claims, guidance quality, missed verification, review findings, repair
+quality, and wall time when it helps diagnose the workflow. Do not add routine model
+comparisons while Sol low remains the chosen implementer.
 
 The MCP tool can bootstrap a run from the current clean feature worktree after
 the Bean tree is audited. A start request names the epic and base branch, for
@@ -200,10 +202,11 @@ unowned cleanup behind.
   an external state change.
 
 The parent does not change model automatically. An Astra, Sol, or future model can
-therefore orchestrate the same workflow. The configured implementer remains responsible
-for its leaf after receiving guidance, and the next ordinary leaf gets a fresh worker
-from the current profile. Edit the implementer profile if its preferred model or
-reasoning level changes later.
+therefore orchestrate the same workflow. The configured Sol-low implementer remains
+responsible for its leaf after receiving guidance, and the next ordinary leaf gets a
+fresh worker from the current profile. Change the repository-owned implementer profile
+only after an explicit policy decision, then reinstall that profile. Do not spread the
+model choice through orchestration code.
 
 The parent spends its expensive reasoning on planning, decomposition, audits,
 guidance, leaf review, and final verification. It does not require a turn

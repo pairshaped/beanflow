@@ -25,6 +25,11 @@ default for demanding planning, not an architectural dependency. The parent owns
 requirements, architecture, planning, Bean creation and audit, owner communication,
 delegation, and the final report.
 
+The standard `beanflow-implementer` profile uses GPT-5.6 Sol at low reasoning. Treat
+that as the settled implementation policy, not a model experiment. Keep the model
+choice configurable in the repository-owned profile so availability, pricing, or a
+deliberate future policy change does not require changing the orchestration design.
+
 Never implement an executable leaf in the parent task when the
 `beanflow-implementer` custom agent is available. Create a fresh implementer thread
 for each executable leaf. Use a bounded or context-free fork instead of copying the
