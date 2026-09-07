@@ -110,8 +110,11 @@ describe('Codex Stop hook', () => {
     expect(decision.reason).toContain('confirm the implementer is terminal');
     expect(decision.reason).toContain('review a completed outcome in this same turn');
     expect(decision.reason).toContain('terminal implementer is not a stopping condition');
+    expect(decision.reason).toContain('delete the accepted Bean');
+    expect(decision.reason).toContain('commit only its tracker and dependency cleanup');
     expect(decision.reason).toContain('start the next selected leaf');
     expect(decision.reason).toContain('verify the worktree is clean');
+    expect(decision.reason).toContain('the Bean remains intact');
     expect(decision.reason).toContain('leaf formatter and static-analysis gate passed');
     expect(decision.reason).toContain('explicit cleanup Bean blocking final verification');
     expect(decision.reason).toContain('inventory the outgoing production path');

@@ -42,7 +42,7 @@ from leaking across otherwise self-contained Beans.
 Give the implementer one Bean id plus the absolute worktree path. Beans
 must carry the accepted scope and decisions. Include extra handoff context only when
 it cannot be discovered safely from the Beans, repository, or run state. The
-implementer verifies, deletes, and commits that leaf. The parent waits for the leaf
+implementer verifies and commits that leaf while leaving its Bean intact. The parent waits for the leaf
 outcome. Keep the parent turn active while the implementer runs and wait in bounded intervals for its
 outcome, focused question, or blocker. Do not end the parent turn and assume a later
 notification will resume monitoring. Treat a user-facing final response while the
@@ -52,16 +52,18 @@ and resume the bounded wait loop. Immediately before any final response, inspect
 agent tree and confirm the leaf implementer is in a terminal state. If it completed,
 review its outcome in the same parent turn before returning control to the owner.
 A terminal implementer is not a stopping condition while the Beanflow run still has
-eligible work. After accepting the leaf, perform any required cache cleanup, start
+eligible work. After accepting the leaf, delete its Bean and commit only the resulting
+tracker and dependency cleanup. Then perform any required cache cleanup and start
 the next selected leaf, and resume the bounded wait loop. Return control only when
 the run is complete, genuinely blocked, explicitly paused or stopped by the owner,
 or waiting for an owner-only decision.
 
-Repository completion metadata and deletion are one lifecycle, not competing
-choices. When the repository requires checked acceptance items, a summary, or a
-completed status, record them and then follow its instruction to delete completed
-Beans before the leaf commit. Generic CLI guidance does not override the owning
-repository's tracker convention. Likewise, general advice to prefer cheap test
+Bean deletion is the parent's acceptance marker. The implementer must leave the Bean
+intact in implementation and repair commits. After the parent accepts the code and
+verification evidence, the parent records any required completion metadata, deletes
+the Bean and dependency cleanup, and commits that tracker-only change. If review
+fails, the Bean remains open while the same implementer repairs the leaf. Generic CLI
+guidance does not override this review boundary. Likewise, general advice to prefer cheap test
 boundaries does not cancel an explicit verification item in an audited Bean.
 Delete an implementation in the leaf that replaces its last use. A staged migration
 may retain legacy code only when an audited Bean names the exact cleanup owner and
@@ -83,8 +85,7 @@ Interpret the worker's `BEANFLOW_OUTCOME` as follows:
 
 - `completed`: inspect the reported Bean-to-commit result and verification summary.
   Before accepting it, confirm the worktree is
-  clean; the Bean and its dependency cleanup were deleted in that leaf's reported
-  implementation commit; every required verification item ran rather than being
+  clean; the Bean remains intact; every required verification item ran rather than being
   replaced by a cheaper compile or test; and the implementation and tests actually
   prove the acceptance criteria. For every leaf, require one owning-scope
   formatter, Rust Clippy when Rust changed, TypeScript lint and typecheck when
@@ -157,7 +158,9 @@ Interpret the worker's `BEANFLOW_OUTCOME` as follows:
   follow-up to at most three independently checkable gaps. When an audit finds more,
   send ordered repair batches to the same implementer and re-audit between them. This
   bound applies to repair instructions, not to the size of the accepted Bean. Do not select or
-  delegate new Beans until the repair passes. After accepting the leaf, inspect the
+  delegate new Beans until the repair passes. After accepting the leaf, delete its Bean
+  and dependency cleanup, commit that tracker-only finalization, and confirm it contains
+  no implementation changes before advancing. Then inspect the
   worktree's build-cache disk use with the repository-owned status command when one
   exists. Unless the repository defines another threshold, use its cleanup command
   when the cache is at least 10 GiB or the filesystem has less than 20 percent free.
@@ -232,8 +235,9 @@ and reuse it only for the assigned leaf. Pass the same compact handoff explicitl
    Stop on a dirty or ambiguous worktree.
 6. **Autonomous execution** - Select the next ready leaf (dependency order, then
    priority, then creation order). On Codex, create a fresh implementer for that leaf
-   through the model-routing contract above. Implement only the delegated leaf. Verify,
-   delete, and commit the Bean atomically. Never push. Stop the leaf on guidance or an
+   through the model-routing contract above. Implement only the delegated leaf. Verify
+   and commit the implementation while keeping the Bean intact. Never push. The parent
+   deletes the Bean and commits tracker cleanup only after accepting the leaf. Stop the leaf on guidance or an
    owner blocker instead of silently skipping the affected leaf. When no eligible
    leaf remains, pause instead of polling or auto-continuing; an explicit resume may
    restart the run after its state changes. Esc pauses; a hard stop, retry ceiling,

@@ -6,4 +6,4 @@ Run `beans prime` before tracker work to load the current command guidance. Use 
 
 Do not create a separate checklist, todo file, or competing task list. Put durable work state, requirements, acceptance criteria, dependencies, and blockers in Beans.
 
-Completed implementation Beans are deleted with `beans delete <bean-id> --force` as part of the same commit as their implementation. Do not archive completed porting Beans.
+Implementation Beans remain intact while their code is under review. After the parent accepts the implementation and verification evidence, it deletes the Bean with `beans delete <bean-id> --force` and commits the resulting tracker and dependency cleanup separately. Do not archive completed porting Beans.

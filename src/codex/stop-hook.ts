@@ -78,8 +78,9 @@ export function decideStopHook(input: StopHookInput): StopHookDecision {
           'Immediately before any user-facing final response, inspect the agent tree, confirm the implementer is ' +
           'terminal, and review a completed outcome in this same turn. ' +
           'A terminal implementer is not a stopping condition while this run has eligible work: after acceptance, ' +
-          'perform required cache cleanup, start the next selected leaf, and resume bounded waiting. ' +
-          'Before accepting completed, verify the worktree is clean, Bean deletions are atomic, required checks ran, ' +
+          'delete the accepted Bean, commit only its tracker and dependency cleanup, perform required cache cleanup, ' +
+          'start the next selected leaf, and resume bounded waiting. ' +
+          'Before accepting completed, verify the worktree is clean, the Bean remains intact, required checks ran, ' +
           'the leaf formatter and static-analysis gate passed, the code and tests prove the acceptance criteria, ' +
           'and replaced code was deleted or has an explicit cleanup Bean blocking final verification. For a replaced ' +
           'route, renderer, shell, workflow, or shared boundary, inventory the outgoing production path including ' +

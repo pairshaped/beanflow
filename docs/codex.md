@@ -10,8 +10,8 @@ simple work, use the same routing. The parent gathers requirements, agrees the p
 with the owner, creates and audits the Bean tree, and coordinates the run.
 For each executable leaf, the parent creates a fresh `beanflow-implementer` thread,
 which pins GPT-5.6 Sol at low reasoning as the standard implementation policy. This is
-the chosen default, not an active model comparison. The worker verifies, deletes, and
-commits that Bean. The same thread handles guidance and repair loops for its leaf, then
+the chosen default, not an active model comparison. The worker verifies and commits
+the implementation while leaving its Bean intact. The same thread handles guidance and repair loops for its leaf, then
 is retired after the parent accepts the result. While the worker
 runs, the parent keeps its turn active and waits in bounded intervals for an outcome,
 question, or blocker. It does not end the turn and assume a background notification
@@ -19,8 +19,9 @@ will restart monitoring. Interim owner questions and design decisions are answer
 commentary while the wait loop remains active. Before sending any final response, the
 parent inspects the agent tree, confirms the implementer is terminal, and reviews a
 completed outcome in that same turn. A terminal implementer alone is not a reason to
-stop while the run has eligible work. The parent accepts the leaf, performs required
-cache cleanup, starts the next selected leaf, and resumes waiting. It returns control
+stop while the run has eligible work. The parent accepts the leaf, deletes its Bean,
+commits only the resulting tracker and dependency cleanup, performs required cache
+cleanup, starts the next selected leaf, and resumes waiting. It returns control
 only when the run is complete, genuinely blocked, explicitly paused or stopped, or
 needs an owner-only decision. If the worker needs stronger judgment, it returns a focused
 question to the parent. The parent resolves
@@ -116,7 +117,8 @@ verification. A parallel writable path or second source of truth is not an accep
 compatibility strategy. The implementer returns `needs_guidance` rather than leaving
 unowned cleanup behind.
 
-- `completed`: the Bean was verified, deleted, and committed, and the worktree is
+- `completed`: the implementation was verified and committed, the Bean remains intact,
+  and the worktree is
   clean. The parent checks the commit, required
   verification, implementation, and test assertions before accepting the outcome.
   The implementer runs the owning formatter and automated static analysis for the leaf. That
@@ -214,8 +216,9 @@ merely to acknowledge each routine implementer commit. Never hand the implemente
 unresolved epic or more than one leaf just to reduce messages.
 
 Repository instructions and Bean verification are read together. If the repository
-requires completion metadata and deletion, the implementer records the metadata and
-then deletes the Bean before the same leaf commit. If general testing guidance says
+requires completion metadata and deletion, the parent records the metadata and deletes
+the Bean in a tracker-only commit after accepting the implementation. The implementer
+keeps the Bean intact through every implementation and repair commit. If general testing guidance says
 to prefer a smaller boundary but an audited Bean explicitly requires a browser,
 lifecycle, formatter, or linter check, the explicit verification still runs. That
 check must exercise the owning boundary it claims to prove. An ad hoc fixture that

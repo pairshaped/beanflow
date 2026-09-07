@@ -18,13 +18,13 @@ describe('Codex Beanflow agent profiles', () => {
     expect(contents).toContain('guidance and repair loops on that leaf');
     expect(contents).toContain('do not accept or select a later leaf');
     expect(contents).toContain('Bean-to-commit result');
-    expect(contents).toContain('Never batch Bean deletions');
+    expect(contents).toContain("Bean deletion is the parent orchestrator's acceptance marker");
     expect(contents).toContain('exact verification commands');
     expect(contents).toContain('git status --short');
     expect(contents).toContain('Rust Clippy when Rust changed');
     expect(contents).toContain('TypeScript lint and typecheck');
     expect(contents).toContain('never launch duplicate Cargo or Clippy processes');
-    expect(contents).toContain('complete-then-delete lifecycle as one sequence');
+    expect(contents).toContain('Leave the assigned Bean intact');
     expect(contents).toContain('does not cancel an explicit verification item');
     expect(contents).toContain('must exercise the owning boundary named by the Bean');
     expect(contents).toContain('An ad hoc page or fixture');
