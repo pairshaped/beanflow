@@ -31,16 +31,21 @@ choice configurable in the repository-owned profile so availability, pricing, or
 deliberate future policy change does not require changing the orchestration design.
 
 Delegate executable leaves to the `beanflow-implementer` by default, but evaluate the
-work before paying the handoff cost. The parent may implement a micro-leaf or a tiny
-review repair directly when the change is mechanically clear, local to one owning
-boundary, needs no design decision or meaningful exploration, and has a fast focused
-verification. Consider blast radius and proof cost, especially for authorization,
-money, migration, concurrency, external providers, security, build infrastructure,
-generated contracts, and public schemas. Those risks raise the bar for direct work and
-may justify delegation or an independent review, but they are not automatic
-disqualifiers when the change is already fully specified and genuinely mechanical.
-Never use the micro-change path to skip required verification or review. If the scope
-or risk is uncertain, delegate. Never race or silently take over work from an active
+expected total cost before paying the handoff cost. The parent may implement a small
+leaf or review repair directly when reconstructing context, explaining the work, and
+reviewing a separate implementation would likely cost more than doing it. Line count,
+file count, owning boundaries, and risk categories are signals, not hard exclusions.
+The design still needs to be settled, and the parent must be able to verify the affected
+behavior without losing focus on orchestration and review.
+
+Consider blast radius and proof cost, especially for authorization, money, migration,
+concurrency, external providers, security, build infrastructure, generated contracts,
+and public schemas. Those risks increase the required evidence and may justify an
+independent review, but they do not decide who implements the change. Delegate when
+independent implementation is valuable, the work needs meaningful exploration, the
+implementation is broad enough to crowd out parent review, or the expected savings
+justify the handoff. Never use direct parent implementation to skip required
+verification or review. Never race or silently take over work from an active
 implementer.
 
 For every delegated executable leaf, create a fresh implementer thread. Use a context-free fork by default. Never copy the full
