@@ -206,7 +206,7 @@ Interpret the worker's `BEANFLOW_OUTCOME` as follows:
   no implementation changes before advancing. Then inspect the
   worktree's build-cache disk use with the repository-owned status command when one
   exists. Unless the repository defines another threshold, use its cleanup command
-  only when the current worktree's cache is at least 8 GiB and the filesystem has less
+  only when the current worktree's cache is at least 10 GiB and the filesystem has less
   than 20 GiB free. Preserve the incremental cache unless both conditions are met.
   Leaf completion by itself is not a reason to clean and pay for a cold rebuild.
   Never clean while a formatter, build, test, linter, typecheck, or static-analysis
