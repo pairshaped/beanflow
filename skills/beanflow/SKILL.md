@@ -34,10 +34,14 @@ Delegate executable leaves to the `beanflow-implementer` by default, but evaluat
 work before paying the handoff cost. The parent may implement a micro-leaf or a tiny
 review repair directly when the change is mechanically clear, local to one owning
 boundary, needs no design decision or meaningful exploration, and has a fast focused
-verification. Do not use this exception for authorization, money, migration,
-concurrency, external-provider, security, build-system, generated cross-language
-contract, or public schema changes, regardless of line count. If the scope or risk is
-uncertain, delegate. Never race or silently take over work from an active implementer.
+verification. Consider blast radius and proof cost, especially for authorization,
+money, migration, concurrency, external providers, security, build infrastructure,
+generated contracts, and public schemas. Those risks raise the bar for direct work and
+may justify delegation or an independent review, but they are not automatic
+disqualifiers when the change is already fully specified and genuinely mechanical.
+Never use the micro-change path to skip required verification or review. If the scope
+or risk is uncertain, delegate. Never race or silently take over work from an active
+implementer.
 
 For every delegated executable leaf, create a fresh implementer thread. Use a context-free fork by default. Never copy the full
 owner-task history into an implementer. A bounded fork is justified only when a recent

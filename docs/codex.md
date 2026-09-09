@@ -109,9 +109,11 @@ between self-contained Beans. The implementer returns one of three stable outcom
 Before spawning, compare the task with the handoff cost. The parent may implement a
 micro-leaf or tiny review repair directly when the exact change is mechanically clear,
 local to one owning boundary, needs no design exploration, and has a fast focused
-check. Never use that exception for authorization, money, migration, concurrency,
-external providers, security, build infrastructure, generated cross-language
-contracts, or public schemas. Small diffs can still be high risk. If uncertain,
+check. Consider blast radius and proof cost, especially for authorization, money,
+migration, concurrency, external providers, security, build infrastructure, generated
+contracts, and public schemas. Those risks raise the bar and may justify delegation or
+an independent review, but do not automatically disqualify a fully specified,
+mechanical micro-change. Required verification and review still apply. If uncertain,
 delegate, and never race an active implementer.
 
 The parent audit resolves canonical contracts before delegation. A Bean that creates

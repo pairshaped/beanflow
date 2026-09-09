@@ -53,7 +53,9 @@ boundaries, and preserves build caches below the cleanup threshold.
 The original policy also delegated every executable leaf without considering whether
 the implementation was smaller than the handoff. Beanflow now applies a size-and-risk
 gate: the parent may handle a mechanically clear, local micro-change with a fast
-focused check, while even a one-line high-risk change still goes through delegation.
+focused check. Higher-risk changes require stronger proof and may still warrant
+delegation or independent review, but risk categories do not force a handoff when the
+change is already fully specified and genuinely mechanical.
 
 Do not treat discovered required scope as inefficiency. A missing behavior, defect,
 cleanup, or safety requirement needed for the accepted outcome belongs in the run as a
