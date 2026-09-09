@@ -96,7 +96,7 @@ when that is sufficient, or Luna at high for simple work. The parent task perfor
 planning directly instead of spawning another planner.
 
 After the owner approves the audited tree and starts the run, the parent creates a
-fresh implementer thread for the selected leaf with a compact handoff: the Bean id and
+fresh implementer thread for a selected delegated leaf with a compact handoff: the Bean id and
 worktree path. Use a context-free fork by default and never select a full-history fork.
 The Bean contains the accepted scope, so neither its body nor the planning conversation
 is copied into implementation turns. A bounded fork is reserved for a recent decision
@@ -105,6 +105,14 @@ back to that leaf's thread. After acceptance, the parent confirms it is no longe
 running and creates a fresh thread for the next leaf. This deliberately gives up
 cross-leaf conversational context so repair history and compaction loss do not leak
 between self-contained Beans. The implementer returns one of three stable outcomes:
+
+Before spawning, compare the task with the handoff cost. The parent may implement a
+micro-leaf or tiny review repair directly when the exact change is mechanically clear,
+local to one owning boundary, needs no design exploration, and has a fast focused
+check. Never use that exception for authorization, money, migration, concurrency,
+external providers, security, build infrastructure, generated cross-language
+contracts, or public schemas. Small diffs can still be high risk. If uncertain,
+delegate, and never race an active implementer.
 
 The parent audit resolves canonical contracts before delegation. A Bean that creates
 a schema or protocol names its fields, variants, validation ownership, and consumer

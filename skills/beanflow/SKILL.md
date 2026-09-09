@@ -30,9 +30,16 @@ that as the settled implementation policy, not a model experiment. Keep the mode
 choice configurable in the repository-owned profile so availability, pricing, or a
 deliberate future policy change does not require changing the orchestration design.
 
-Never implement an executable leaf in the parent task when the
-`beanflow-implementer` custom agent is available. Create a fresh implementer thread
-for each executable leaf. Use a context-free fork by default. Never copy the full
+Delegate executable leaves to the `beanflow-implementer` by default, but evaluate the
+work before paying the handoff cost. The parent may implement a micro-leaf or a tiny
+review repair directly when the change is mechanically clear, local to one owning
+boundary, needs no design decision or meaningful exploration, and has a fast focused
+verification. Do not use this exception for authorization, money, migration,
+concurrency, external-provider, security, build-system, generated cross-language
+contract, or public schema changes, regardless of line count. If the scope or risk is
+uncertain, delegate. Never race or silently take over work from an active implementer.
+
+For every delegated executable leaf, create a fresh implementer thread. Use a context-free fork by default. Never copy the full
 owner-task history into an implementer. A bounded fork is justified only when a recent
 decision cannot yet be discovered from the Bean, repository, or run state. Record an
 accepted decision in the Bean before delegation whenever practical. Retain that
@@ -77,6 +84,13 @@ the Bean and dependency cleanup, and commits that tracker-only change. If review
 fails, the Bean remains open while the same implementer repairs the leaf. Generic CLI
 guidance does not override this review boundary. Likewise, general advice to prefer cheap test
 boundaries does not cancel an explicit verification item in an audited Bean.
+Treat externally mutating rollout as a separate acceptance boundary whenever it can
+be separated from implementation. Normally, one leaf implements and proves the
+change without mutating production or a provider, the parent accepts that leaf, and a
+later rollout or integration leaf performs the authorized mutation. If a mutation is
+genuinely required to prove the implementation leaf, the Bean must name the exact
+target, authorization, evidence, and recovery boundary before delegation. Completion
+of code is not implied permission to deploy, send, publish, or alter external state.
 Delete an implementation in the leaf that replaces its last use. A staged migration
 may retain legacy code only when an audited Bean names the exact cleanup owner and
 dependency, and that cleanup blocks final integration or verification. Do not accept
@@ -233,7 +247,11 @@ and reuse it only for the assigned leaf. Pass the same compact handoff explicitl
    file paths. Get owner agreement before publishing the tree.
 3. **Bean tree** - Create one epic Bean as the hard scope boundary. Break the plan
    into independently committable leaves. Parent = hierarchy, blocked-by = order.
-   Execute leaves only; keep unrelated Beans out of scope.
+   Execute leaves only; keep unrelated Beans out of scope. During audit, identify
+   leaves whose cost is dominated by repeated full builds, deployments, external
+   calls, model or corpus processing, or broad review. Split one when the work has a
+   real independently provable boundary that avoids repeating that cost. Do not split
+   a cohesive workflow merely to make its Beans smaller.
 4. **Audit** - Audit every executable leaf for focused scope, context, acceptance
    criteria, verification, dependencies, and safe autonomy. Reject vague,
    duplicate, oversized, or judgment-dependent leaves. A leaf that introduces a
@@ -262,8 +280,9 @@ and reuse it only for the assigned leaf. Pass the same compact handoff explicitl
    start, status, and resume requests so beanflow resolves the intended run.
    Stop on a dirty or ambiguous worktree.
 6. **Autonomous execution** - Select the next ready leaf (dependency order, then
-   priority, then creation order). On Codex, create a fresh implementer for that leaf
-   through the model-routing contract above. Implement only the delegated leaf. Verify
+   priority, then creation order). Apply the size-and-risk gate above. On Codex, create
+   a fresh implementer for a delegated leaf through the model-routing contract above.
+   Implement only the selected leaf. Verify
    and commit the implementation while keeping the Bean intact. Never push. The parent
    deletes the Bean and commits tracker cleanup only after accepting the leaf. Stop the leaf on guidance or an
    owner blocker instead of silently skipping the affected leaf. When no eligible
@@ -271,10 +290,13 @@ and reuse it only for the assigned leaf. Pass the same compact handoff explicitl
    restart the run after its state changes. Esc pauses; a hard stop, retry ceiling,
    or deadline bounds the run.
    If implementation or review discovers a missing behavior, defect, cleanup, or
-   safety requirement needed for the accepted outcome, the parent may add and audit a
-   Bean, connect it to final verification, and refresh the manifest. That is legitimate
-   discovered scope. Optional polish and speculative future design should become
-   follow-up work instead of delaying the active outcome.
+   safety requirement, admit it into the frozen run only when concrete evidence shows
+   that an existing acceptance criterion cannot be met without it, or that shipping
+   the accepted outcome would create a correctness or safety defect. The parent may
+   then add and audit a Bean, connect it to final verification, and refresh the
+   manifest. Record optional polish, speculative future design, generalized cleanup,
+   and merely useful improvements as follow-up work instead of delaying the active
+   outcome.
 7. **Completion** - Run parent-level verification and produce a report of
    completed Beans and commits, verification evidence, remaining blockers, and
    owner questions. Delete the parent only when every child is complete and

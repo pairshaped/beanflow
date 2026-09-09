@@ -50,6 +50,11 @@ repairs. The policy now makes context-free forks explicit, keeps monitoring outp
 terse, uses risk-based specialist review, places broad builds at real integration
 boundaries, and preserves build caches below the cleanup threshold.
 
+The original policy also delegated every executable leaf without considering whether
+the implementation was smaller than the handoff. Beanflow now applies a size-and-risk
+gate: the parent may handle a mechanically clear, local micro-change with a fast
+focused check, while even a one-line high-risk change still goes through delegation.
+
 Do not treat discovered required scope as inefficiency. A missing behavior, defect,
 cleanup, or safety requirement needed for the accepted outcome belongs in the run as a
 new audited Bean. Optional polish and speculative future design belong in follow-up
