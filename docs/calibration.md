@@ -32,6 +32,29 @@ the parent has to tell it to resume already-decided work.
 | `sports-l5f1-1788624375436` | `sports-6gq8` | GPT-5.6 Sol | high | GPT-5.6 Sol | low | about 49 min | 0 | 0 | 0 | 1 | no |
 | `sports-l5f1-1788624375436` | `sports-qy2r` | GPT-5.6 Sol | high | GPT-5.6 Sol | low | about 52 min | 0 | 0 | 0 | 1 | no |
 
+## Run-level efficiency checkpoint, 2026-09-09
+
+The managed-public-SPA branch had reached 229 commits across 477 files, with 49,083
+lines added and 29,273 deleted. That scale explains most of the elapsed time: the run
+became a subsystem rewrite, not one ordinary feature. Review also earned part of its
+cost by catching semantic defects after green automated gates, including navigation
+eligibility, canonical Product paths, and Product Results using a Product Type ID
+instead of a Product ID.
+
+The audit also found avoidable overhead. One implementer was started with the full
+owner-task history despite the existing compact-handoff policy. Broad builds were
+repeated at too many leaf boundaries, and cleaning an 8.7 GiB target immediately before
+another full build forced a cold rebuild below Beanflow's 10 GiB default threshold.
+Multiple specialist reviewers and broad re-reviews were also used on some low-risk
+repairs. The policy now makes context-free forks explicit, keeps monitoring output
+terse, uses risk-based specialist review, places broad builds at real integration
+boundaries, and preserves build caches below the cleanup threshold.
+
+Do not treat discovered required scope as inefficiency. A missing behavior, defect,
+cleanup, or safety requirement needed for the accepted outcome belongs in the run as a
+new audited Bean. Optional polish and speculative future design belong in follow-up
+work.
+
 For each row, also record useful parent-review findings and important caveats. Keep the
 model columns for reproducibility, not ongoing comparison.
 

@@ -32,16 +32,20 @@ deliberate future policy change does not require changing the orchestration desi
 
 Never implement an executable leaf in the parent task when the
 `beanflow-implementer` custom agent is available. Create a fresh implementer thread
-for each executable leaf. Use a bounded or context-free fork instead of copying the
-full planning conversation. Retain that identity only for guidance and repairs on its
+for each executable leaf. Use a context-free fork by default. Never copy the full
+owner-task history into an implementer. A bounded fork is justified only when a recent
+decision cannot yet be discovered from the Bean, repository, or run state. Record an
+accepted decision in the Bean before delegation whenever practical. Retain that
+identity only for guidance and repairs on its
 assigned leaf. After the parent accepts the leaf, do not reuse its implementer for the
 next leaf. Confirm the old implementer is no longer running, then create a fresh one
 for the newly selected leaf. This keeps accumulated repair history and compaction loss
 from leaking across otherwise self-contained Beans.
 
 Give the implementer one Bean id plus the absolute worktree path. Beans
-must carry the accepted scope and decisions. Include extra handoff context only when
-it cannot be discovered safely from the Beans, repository, or run state. The
+must carry the accepted scope and decisions. Do not paste the Bean body or summarize
+the planning conversation into the handoff. Include extra context only when it cannot
+be discovered safely from the Beans, repository, or run state. The
 implementer verifies and commits that leaf while leaving its Bean intact. The parent waits for the leaf
 outcome. Keep the parent turn active while the implementer runs and wait in bounded intervals for its
 outcome, focused question, or blocker. Do not end the parent turn and assume a later
@@ -57,6 +61,14 @@ tracker and dependency cleanup. Then perform any required cache cleanup and star
 the next selected leaf, and resume the bounded wait loop. Return control only when
 the run is complete, genuinely blocked, explicitly paused or stopped by the owner,
 or waiting for an owner-only decision.
+
+Prefer the agent wait and status interfaces for monitoring. A wait timeout is not
+evidence that the implementer stalled. Inspect filesystem or process state only after
+repeated timeouts without an agent event, and keep that inspection terse: changed-file
+count, short diff statistics, and the verification command name are enough. Do not put
+full compiler command lines, broad diffs, or repeated unchanged snapshots into the
+parent context. Send a continuation nudge only when there is evidence of inactivity
+and no verification command is running.
 
 Bean deletion is the parent's acceptance marker. The implementer must leave the Bean
 intact in implementation and repair commits. After the parent accepts the code and
@@ -80,6 +92,14 @@ renderers belong at their shared or domain boundary, not under the first route t
 consumes them. Reject a route that imports another route module's shell, loader, or
 renderer to obtain shared behavior unless the audited design explicitly makes that
 route the owner.
+
+The parent always performs a skeptical code review. Independent specialist review is
+risk-based, not a default second review of every leaf. Add a specialist when the leaf
+crosses authorization, money, migration, concurrency, external-provider, security, or
+cross-language contract boundaries, or when one parent review cannot cover distinct
+high-risk areas. Re-review a rejected leaf from the rejected commit's delta and the
+affected owning boundary. Do not restart broad independent reviews when the repair is
+narrow and the parent can verify it directly.
 
 Interpret the worker's `BEANFLOW_OUTCOME` as follows:
 
@@ -164,6 +184,8 @@ Interpret the worker's `BEANFLOW_OUTCOME` as follows:
   worktree's build-cache disk use with the repository-owned status command when one
   exists. Unless the repository defines another threshold, use its cleanup command
   when the cache is at least 10 GiB or the filesystem has less than 20 percent free.
+  Preserve the incremental cache below those thresholds. Leaf completion by itself is
+  not a reason to clean and pay for a cold rebuild.
   Never clean while a formatter, build, test, linter, typecheck, or static-analysis
   command is running. Do not manually delete build or generated directories when the
   repository owns a safe cleanup command. Full verification still belongs at the
@@ -223,6 +245,12 @@ and reuse it only for the assigned leaf. Pass the same compact handoff explicitl
    after the audit passes. Each leaf must use the exact `## What to build`,
    `## Acceptance criteria`, `## Verification`, and `## Out of scope` headings;
    acceptance criteria must be checkboxes. Present the tree and order to the owner.
+   Require focused tests at the owning boundary plus the repository formatter and
+   affected-language static analysis. Do not copy a full application build or broad
+   suite into every leaf by default. Require those broad gates when the leaf changes
+   build or generation infrastructure, when the behavior cannot be proven at a smaller
+   boundary, at meaningful dependency fan-in points, and at final parent verification.
+   An explicit audited verification command remains mandatory once published.
 5. **Isolated run setup** - On an explicit start request, create a branch and
    worktree, or adopt the clean isolated worktree the owner already requested.
    Invoke the `beanflow` tool with the audited epic id and base branch so it
@@ -242,6 +270,11 @@ and reuse it only for the assigned leaf. Pass the same compact handoff explicitl
    leaf remains, pause instead of polling or auto-continuing; an explicit resume may
    restart the run after its state changes. Esc pauses; a hard stop, retry ceiling,
    or deadline bounds the run.
+   If implementation or review discovers a missing behavior, defect, cleanup, or
+   safety requirement needed for the accepted outcome, the parent may add and audit a
+   Bean, connect it to final verification, and refresh the manifest. That is legitimate
+   discovered scope. Optional polish and speculative future design should become
+   follow-up work instead of delaying the active outcome.
 7. **Completion** - Run parent-level verification and produce a report of
    completed Beans and commits, verification evidence, remaining blockers, and
    owner questions. Delete the parent only when every child is complete and

@@ -97,8 +97,10 @@ planning directly instead of spawning another planner.
 
 After the owner approves the audited tree and starts the run, the parent creates a
 fresh implementer thread for the selected leaf with a compact handoff: the Bean id and
-worktree path. The Bean contains the accepted scope, so the full planning conversation
-is not copied into implementation turns. Guidance and rejected-completion repairs go
+worktree path. Use a context-free fork by default and never select a full-history fork.
+The Bean contains the accepted scope, so neither its body nor the planning conversation
+is copied into implementation turns. A bounded fork is reserved for a recent decision
+that cannot yet be discovered from the Bean, repository, or run state. Guidance and rejected-completion repairs go
 back to that leaf's thread. After acceptance, the parent confirms it is no longer
 running and creates a fresh thread for the next leaf. This deliberately gives up
 cross-leaf conversational context so repair history and compaction loss do not leak
@@ -215,6 +217,19 @@ guidance, leaf review, and final verification. It does not require a turn
 merely to acknowledge each routine implementer commit. Never hand the implementer an
 unresolved epic or more than one leaf just to reduce messages.
 
+Monitor with the agent wait and status interfaces. Treat timeouts as ordinary, and
+inspect the worktree only after repeated timeouts without an event. Keep process checks
+and diff summaries short. Full compiler command lines, broad diffs, and unchanged
+polling snapshots waste parent context. Nudge only when no verifier is running and
+there is evidence that work stopped.
+
+The parent review is mandatory. Add an independent specialist reviewer when the leaf
+crosses authorization, money, migration, concurrency, external-provider, security, or
+cross-language contract boundaries, or when distinct high-risk areas exceed one
+reviewer's practical scope. Do not make specialist review a routine extra pass for
+every local or low-risk leaf. Review repairs from their commit delta and affected
+boundary instead of repeating the entire audit.
+
 Repository instructions and Bean verification are read together. If the repository
 requires completion metadata and deletion, the parent records the metadata and deletes
 the Bean in a tracker-only commit after accepting the implementation. The implementer
@@ -225,6 +240,18 @@ check must exercise the owning boundary it claims to prove. An ad hoc fixture th
 bypasses the application's runtime, production mount, generated assets, styles,
 routing, or persistence cannot stand in for application-level evidence.
 
+During Bean audit, prefer focused owning-boundary tests plus the formatter and static
+analysis for each changed language. Put a full application build or broad suite in a
+leaf only when it changes build or generation infrastructure, when focused checks
+cannot prove the integration, or when the leaf is a meaningful fan-in gate. Final
+parent verification still runs the broad repository gates. Once an audited Bean names
+an explicit command, the implementer must run it.
+
+Discovery may legitimately expand an active run. When implementation or review finds
+a missing behavior, defect, cleanup, or safety requirement needed for the accepted
+outcome, add and audit a Bean, connect it to final verification, and refresh the
+manifest. Put optional polish and speculative future design into follow-up work.
+
 The implementer thread belongs to one leaf. Reuse it for that leaf's guidance and
 repair loops, then retire it after acceptance. Never carry it into another leaf or
 epic, and never leave two implementation threads active in the same worktree.
@@ -234,7 +261,8 @@ status command when one exists. Unless the repository defines another threshold,
 its safe cleanup command when the cache is at least 10 GiB or the filesystem has less
 than 20 percent free. Never clean while build, test, formatting, lint, typecheck, or
 static-analysis work is running. This avoids unbounded disk growth without paying for
-a full rebuild after every small leaf.
+a full rebuild after every small leaf. Below those thresholds, preserve the incremental
+cache even though a leaf completed.
 
 ## Fidelity gap vs Pi
 
