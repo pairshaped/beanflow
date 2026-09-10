@@ -5,16 +5,17 @@ status: draft
 type: epic
 priority: normal
 tags:
-    - enhancement
     - needs-triage
     - beans
-    - pi
     - agent-workflow
     - automation
-    - skills
     - plugins
+    - beanflow-epic
+    - enhancement
+    - pi
+    - skills
 created_at: 2026-08-16T21:53:16Z
-updated_at: 2026-08-16T21:53:16Z
+updated_at: 2026-09-10T16:11:22Z
 ---
 
 # Objective
@@ -41,16 +42,16 @@ Beans remains the authoritative tracker. Beanflow must not introduce a competing
 ## 3. Bean tree
 
 - Create one epic container Bean as the hard scope boundary.
-- Break the plan into independently committable executable leaf Beans.
+- Break the plan into independently committable executable Task Beans.
 - Represent hierarchy through parent relationships and execution order through blocked-by relationships.
-- Allow nested grouping Beans, but execute only leaves.
+- Allow nested Milestones, but execute only Tasks.
 - Keep unrelated Beans outside the tree inaccessible to the runner.
 
 ## 4. Audit and review
 
-- Audit every executable leaf for focused scope, sufficient context, explicit acceptance criteria, verification commands, dependencies, and safe autonomy.
-- Reject vague, duplicate, oversized, or judgment-dependent leaves.
-- Mark executable leaves ready-for-agent only after the audit passes.
+- Audit every executable Task for focused scope, sufficient context, explicit acceptance criteria, verification commands, dependencies, and safe autonomy.
+- Reject vague, duplicate, oversized, or judgment-dependent Tasks.
+- Mark executable Tasks ready-for-agent only after the audit passes.
 - Present the tree, intended order, assumptions, unresolved decisions, and expected verification to the owner.
 - Permit further questions and revisions before execution.
 - Require a current user message that clearly asks to start before arming a run. Resolve the audited parent from context and ask when more than one parent is plausible.
@@ -66,15 +67,15 @@ Beans remains the authoritative tracker. Beanflow must not introduce a competing
 
 ## 6. Autonomous execution
 
-- Select one ready leaf at a time using dependency order, then priority and stable creation order as tie breakers.
+- Select one ready Task at a time using dependency order, then priority and stable creation order as tie breakers.
 - Move the selected Bean to in-progress and implement only its scope.
 - Apply repository testing, formatting, generated-code, and validation rules.
 - Diagnose failures before declaring a blocker.
-- When the leaf is complete, verify it, delete its Bean, and create one atomic local commit containing implementation, tests, generated artifacts, and Bean deletion.
+- When the Task is complete, verify it, delete its Bean, and create one atomic local commit containing implementation, tests, generated artifacts, and Bean deletion.
 - Never push automatically.
-- If a Bean is genuinely blocked, record concrete evidence and the exact decision or external change required, then continue with independent ready leaves.
-- Reconsider blocked leaves after other work changes their prerequisites.
-- If a missing decision would materially change product intent, block that leaf instead of guessing.
+- If a Bean is genuinely blocked, record concrete evidence and the exact decision or external change required, then continue with independent ready Tasks.
+- Reconsider blocked Tasks after other work changes their prerequisites.
+- If a missing decision would materially change product intent, block that Task instead of guessing.
 - Continue across compaction, resume, and agent settlement while eligible scoped work remains.
 - Treat an Esc-aborted Pi turn as an immediate pause. Preserve the run so a later plain-language request can resume it.
 - Support a hard stop file, retry ceiling, and optional deadline so an unattended run cannot loop forever.
@@ -83,8 +84,8 @@ Beans remains the authoritative tracker. Beanflow must not introduce a competing
 
 - Run parent-level integration verification after all executable children complete.
 - If integration work is discovered, create and audit another child rather than hiding untracked work in a final cleanup.
-- Delete the parent Bean only when every scoped child is complete and parent verification passes.
-- If blockers remain, preserve the parent and blocked leaves.
+- Delete the parent Bean only when every scoped child is complete and Epic checkpoint passes.
+- If blockers remain, preserve the parent and blocked Tasks.
 - Produce a report listing completed Beans and commits, verification evidence, remaining blockers, and precise owner questions.
 
 ## 8. Landing
@@ -113,8 +114,8 @@ Install the repository directly as a local Pi package. OMP and Codex adapters re
 - The approved parent tree is the only executable scope.
 - New descendants require an explicit manifest refresh.
 - Unrelated dirty changes are never staged, reformatted, reverted, or committed.
-- One completed leaf produces one reviewable commit.
-- Completed leaf deletion is part of the same commit as its implementation.
+- One completed Task produces one reviewable commit.
+- Completed Task deletion is part of the same commit as its implementation.
 - Blocked Beans remain present and explain the blocker.
 - The runner does not push, land, deploy, or perform external side effects without separate authority.
 - Owner stop instructions always win.
@@ -126,7 +127,7 @@ Install the repository directly as a local Pi package. OMP and Codex adapters re
 2. Build read-only Beans discovery and parent-tree audit.
 3. Build deterministic scope manifest and run status handling.
 4. Build branch and worktree setup with repository-policy adapters.
-5. Build the single-leaf execution contract and atomic completion commit flow.
+5. Build the single-Task execution contract and atomic completion commit flow.
 6. Build blocker recording, skipping, reevaluation, and final reporting.
 7. Add Pi session, compaction, settlement, and abort handling for live-session continuation.
 8. Add agent-callable status, resume, and manifest-refresh operations.
@@ -140,11 +141,11 @@ Install the repository directly as a local Pi package. OMP and Codex adapters re
 - [ ] A parent Bean can be audited into a deterministic frozen execution manifest.
 - [ ] Starting an approved parent creates a repository-compliant branch and worktree.
 - [ ] Only ready executable descendants in the approved manifest can be selected.
-- [ ] Each completed leaf is verified, deleted, and committed atomically with its implementation.
-- [ ] A blocked leaf is preserved with actionable evidence while independent work continues.
+- [ ] Each completed Task is verified, deleted, and committed atomically with its implementation.
+- [ ] A blocked Task is preserved with actionable evidence while independent work continues.
 - [ ] The run continues through Pi agent settlement, compaction, and resume while eligible work remains, and Esc pauses it immediately.
 - [ ] Hard stop, retry ceiling, and optional deadline controls work.
-- [ ] Completion leaves either a fully verified local branch or a report containing only genuine blockers.
+- [ ] Completion Tasks either a fully verified local branch or a report containing only genuine blockers.
 - [ ] Landing requires separate approval and follows repository merge and cleanup policy.
 - [ ] Tests exercise selection, scope isolation, dependencies, completion, deletion, blockers, retries, stopping, resume, and unrelated dirty changes.
 - [ ] The Pi package is successfully used to execute its own audited child Bean tree.

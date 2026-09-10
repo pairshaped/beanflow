@@ -5,7 +5,7 @@ import {
   eligibleWorkRemains,
   isAbortedStopReason,
   lastAssistantStopReason,
-  nextEligibleLeaf,
+  nextEligibleTask,
   type SessionEntry,
 } from '../src/core/continuation.js';
 import { buildTree } from '../src/core/discovery.js';
@@ -13,7 +13,7 @@ import type { BeanRef, RunState, ScopeManifest } from '../src/core/types.js';
 
 const ref = (id: string): BeanRef => ({ id, path: `.beans/${id}.md`, title: id });
 
-function leaf(id: string, opts: Partial<Bean> = {}): Bean {
+function task(id: string, opts: Partial<Bean> = {}): Bean {
   return {
     id,
     path: `.beans/${id}.md`,
@@ -31,14 +31,14 @@ function leaf(id: string, opts: Partial<Bean> = {}): Bean {
 
 function runState(overrides: Partial<RunState> = {}): RunState {
   return {
-    schemaVersion: 1,
+    schemaVersion: 2,
     runId: 'r1',
-    parentBean: ref('e'),
-    manifest: { parentBean: ref('e'), frozenAt: 't0', executableLeaves: [] },
+    epic: ref('e'),
+    manifest: { epic: ref('e'), frozenAt: 't0', tasks: [] },
     phase: 'running',
     baseBranch: null,
     baseCommit: null,
-    selectedLeaf: null,
+    selectedTask: null,
     blockers: [],
     attempts: {},
     startedAt: 't0',
@@ -97,42 +97,42 @@ describe('decideContinuation', () => {
 });
 
 describe('eligibleWorkRemains', () => {
-  it('is true when a leaf is selectable', () => {
-    const epic = leaf('e', { type: 'epic' });
-    const a = leaf('a', { parent: 'e' });
-    const b = leaf('b', { parent: 'e', blockedBy: ['a'] });
+  it('is true when a task is selectable', () => {
+    const epic = task('e', { type: 'epic' });
+    const a = task('a', { parent: 'e' });
+    const b = task('b', { parent: 'e', blockedBy: ['a'] });
     const tree = buildTree([epic, a, b]);
-    const manifest: ScopeManifest = { parentBean: ref('e'), frozenAt: 't0', executableLeaves: [ref('a'), ref('b')] };
+    const manifest: ScopeManifest = { epic: ref('e'), frozenAt: 't0', tasks: [ref('a'), ref('b')] };
     expect(eligibleWorkRemains(tree, manifest, runState({ manifest }))).toBe(true);
   });
 
-  it('is false when every remaining leaf is blocked', () => {
-    const epic = leaf('e', { type: 'epic' });
-    const a = leaf('a', { parent: 'e' });
+  it('is false when every remaining task is blocked', () => {
+    const epic = task('e', { type: 'epic' });
+    const a = task('a', { parent: 'e' });
     const tree = buildTree([epic, a]);
-    const manifest: ScopeManifest = { parentBean: ref('e'), frozenAt: 't0', executableLeaves: [ref('a')] };
+    const manifest: ScopeManifest = { epic: ref('e'), frozenAt: 't0', tasks: [ref('a')] };
     const state = runState({
       manifest,
-      blockers: [{ leaf: ref('a'), evidence: 'x', requiredDecision: 'y', recordedAt: 't1' }],
+      blockers: [{ task: ref('a'), evidence: 'x', requiredDecision: 'y', recordedAt: 't1' }],
     });
     expect(eligibleWorkRemains(tree, manifest, state)).toBe(false);
   });
 
-  it('treats a leaf deleted from the tree as completed', () => {
-    const epic = leaf('e', { type: 'epic' });
-    const b = leaf('b', { parent: 'e', blockedBy: ['a'] });
+  it('treats a task deleted from the tree as completed', () => {
+    const epic = task('e', { type: 'epic' });
+    const b = task('b', { parent: 'e', blockedBy: ['a'] });
     const tree = buildTree([epic, b]); // 'a' is gone
-    const manifest: ScopeManifest = { parentBean: ref('e'), frozenAt: 't0', executableLeaves: [ref('a'), ref('b')] };
+    const manifest: ScopeManifest = { epic: ref('e'), frozenAt: 't0', tasks: [ref('a'), ref('b')] };
     expect(eligibleWorkRemains(tree, manifest, runState({ manifest }))).toBe(true);
-    expect(nextEligibleLeaf(tree, manifest, runState({ manifest }))?.id).toBe('b');
+    expect(nextEligibleTask(tree, manifest, runState({ manifest }))?.id).toBe('b');
   });
 
-  it('treats a completed manifest leaf as completed even while its file remains', () => {
-    const epic = leaf('e', { type: 'epic' });
-    const a = leaf('a', { parent: 'e', status: 'completed' });
-    const b = leaf('b', { parent: 'e', blockedBy: ['a'] });
+  it('treats a completed manifest task as completed even while its file remains', () => {
+    const epic = task('e', { type: 'epic' });
+    const a = task('a', { parent: 'e', status: 'completed' });
+    const b = task('b', { parent: 'e', blockedBy: ['a'] });
     const tree = buildTree([epic, a, b]);
-    const manifest: ScopeManifest = { parentBean: ref('e'), frozenAt: 't0', executableLeaves: [ref('a'), ref('b')] };
-    expect(nextEligibleLeaf(tree, manifest, runState({ manifest }))?.id).toBe('b');
+    const manifest: ScopeManifest = { epic: ref('e'), frozenAt: 't0', tasks: [ref('a'), ref('b')] };
+    expect(nextEligibleTask(tree, manifest, runState({ manifest }))?.id).toBe('b');
   });
 });

@@ -42,23 +42,23 @@ describe('parseOperation', () => {
 });
 
 describe('decideResume', () => {
-  const leaf = { id: 'leaf', path: '.beans/leaf.md', title: 'Leaf' };
+  const task = { id: 'task', path: '.beans/task.md', title: 'Task' };
   const parent = { id: 'epic', path: '.beans/epic.md', title: 'Epic' };
   const state: RunState = {
-    schemaVersion: 1,
+    schemaVersion: 2,
     runId: 'run',
-    parentBean: parent,
-    manifest: { parentBean: parent, frozenAt: 't0', executableLeaves: [leaf] },
+    epic: parent,
+    manifest: { epic: parent, frozenAt: 't0', tasks: [task] },
     phase: 'running',
     baseBranch: 'main',
     baseCommit: 'abc123',
-    selectedLeaf: leaf,
+    selectedTask: task,
     blockers: [],
     attempts: {},
     startedAt: 't0',
     updatedAt: 't0',
   };
-  const parentBean: Bean = {
+  const epic: Bean = {
     ...parent,
     status: 'in-progress',
     type: 'feature',
@@ -69,14 +69,14 @@ describe('decideResume', () => {
     body: '',
   };
 
-  it('advances to parent verification after the last leaf is deleted', () => {
-    const tree = buildTree([parentBean]);
+  it('advances to Epic checkpoint after the last task is deleted', () => {
+    const tree = buildTree([epic]);
     const decision = decideResume(state, tree, 't1');
 
     expect(decision.canResume).toBe(true);
     expect(decision.state.phase).toBe('running');
-    expect(decision.state.selectedLeaf).toBeNull();
-    expect(decision.message).toContain('parent-level verification');
+    expect(decision.state.selectedTask).toBeNull();
+    expect(decision.message).toContain('Epic checkpoint');
   });
 
   it('completes the run after the verified parent is deleted', () => {

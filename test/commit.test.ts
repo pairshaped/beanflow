@@ -37,7 +37,7 @@ describe('commitAtomic', () => {
     const repo = makeRepo();
     writeFileSync(join(repo, 'a.ts'), 'a');
     writeFileSync(join(repo, 'b.ts'), 'b');
-    const hash = commitAtomic(repo, 'leaf commit', ['a.ts', 'b.ts']);
+    const hash = commitAtomic(repo, 'task commit', ['a.ts', 'b.ts']);
     expect(hash).toMatch(/^[0-9a-f]{40}$/);
     expect(committedFiles(repo).sort()).toEqual(['a.ts', 'b.ts']);
   });
@@ -54,8 +54,8 @@ describe('commitAtomic', () => {
     const repo = makeRepo();
     writeFileSync(join(repo, 'a.ts'), 'a');
     writeFileSync(join(repo, 'unrelated.ts'), 'x');
-    expect(() => commitAtomic(repo, 'leaf commit', ['a.ts'])).toThrow(FatalError);
-    expect(() => commitAtomic(repo, 'leaf commit', ['a.ts'])).toThrow(/unrelated/);
+    expect(() => commitAtomic(repo, 'task commit', ['a.ts'])).toThrow(FatalError);
+    expect(() => commitAtomic(repo, 'task commit', ['a.ts'])).toThrow(/unrelated/);
   });
 
   it('refuses an empty path set', () => {

@@ -10,17 +10,17 @@ export interface BeanRef {
 
 /** A frozen list of approved executable descendants, in dependency order. */
 export interface ScopeManifest {
-  parentBean: BeanRef;
+  epic: BeanRef;
   /** ISO 8601 timestamp of when the manifest was frozen. */
   frozenAt: string;
-  /** Grouping descendants retained so deleted children do not turn containers into work. */
-  groupingBeans?: BeanRef[];
-  executableLeaves: BeanRef[];
+  /** Milestones retained so deleting their Tasks does not turn them into work. */
+  milestones?: BeanRef[];
+  tasks: BeanRef[];
 }
 
-/** Evidence that a leaf is genuinely blocked, recorded to the Bean. */
+/** Evidence that a task is genuinely blocked, recorded to the Bean. */
 export interface BlockerReceipt {
-  leaf: BeanRef;
+  task: BeanRef;
   evidence: string;
   requiredDecision: string;
   /** ISO 8601 timestamp of when the blocker was recorded. */
@@ -31,24 +31,24 @@ export interface BlockerReceipt {
 export type RunPhase =
   | 'armed' // manifest frozen; authorized but branch/worktree not yet created
   | 'setting-up' // creating branch and worktree, recording base
-  | 'running' // selecting and executing leaves
+  | 'running' // selecting and executing tasks
   | 'paused' // owner stopped via Esc or hard stop; resumable
-  | 'completed'; // all leaves done and parent verified
+  | 'completed'; // all Milestones and Tasks done and Epic verified
 
 /** Persistent, resumable state for one run. */
 export interface RunState {
-  schemaVersion: 1;
+  schemaVersion: 2;
   runId: string;
-  parentBean: BeanRef;
+  epic: BeanRef;
   manifest: ScopeManifest;
   phase: RunPhase;
   baseBranch: string | null;
   baseCommit: string | null;
   /** Absolute isolated worktree path. Optional only for schema-v1 compatibility. */
   worktreePath?: string | null;
-  selectedLeaf: BeanRef | null;
+  selectedTask: BeanRef | null;
   blockers: BlockerReceipt[];
-  /** Consecutive no-progress attempts per leaf, keyed by leaf id. */
+  /** Consecutive no-progress attempts per task, keyed by task id. */
   attempts: Record<string, number>;
   /** Optional bounds for an unattended run: max total attempts and a deadline. */
   retryCeiling?: number;

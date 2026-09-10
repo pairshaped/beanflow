@@ -1,11 +1,11 @@
-// Completion report and the parent-deletion decision. The parent Bean is
+// Completion report and the Epic-deletion decision. The Epic is
 // deleted only when every scoped child is complete, verification passed,
 // and no blockers remain.
 
 import type { BeanRef, BlockerReceipt, ScopeManifest } from './types.js';
 
-export interface CompletedLeaf {
-  leaf: BeanRef;
+export interface CompletedTask {
+  task: BeanRef;
   commitHash: string;
 }
 
@@ -15,33 +15,33 @@ export interface VerificationResult {
 }
 
 export interface CompletionReport {
-  parentBean: BeanRef;
-  completed: CompletedLeaf[];
+  epic: BeanRef;
+  completed: CompletedTask[];
   blockers: BlockerReceipt[];
   ownerQuestions: string[];
   verification: VerificationResult;
-  allChildrenComplete: boolean;
+  allTasksComplete: boolean;
 }
 
 export function buildReport(
   manifest: ScopeManifest,
-  completed: CompletedLeaf[],
+  completed: CompletedTask[],
   blockers: BlockerReceipt[],
   verification: VerificationResult,
 ): CompletionReport {
-  const completedIds = new Set(completed.map((c) => c.leaf.id));
+  const completedIds = new Set(completed.map((c) => c.task.id));
   return {
-    parentBean: manifest.parentBean,
+    epic: manifest.epic,
     completed,
     blockers,
-    ownerQuestions: blockers.map((b) => `${b.leaf.title}: ${b.requiredDecision}`),
+    ownerQuestions: blockers.map((b) => `${b.task.title}: ${b.requiredDecision}`),
     verification,
-    allChildrenComplete: manifest.executableLeaves.every((l) => completedIds.has(l.id)),
+    allTasksComplete: manifest.tasks.every((task) => completedIds.has(task.id)),
   };
 }
 
-export function canDeleteParent(report: CompletionReport): boolean {
-  return report.allChildrenComplete && report.verification.passed && report.blockers.length === 0;
+export function canDeleteEpic(report: CompletionReport): boolean {
+  return report.allTasksComplete && report.verification.passed && report.blockers.length === 0;
 }
 
 export interface ChildBeanRequest {
@@ -49,7 +49,7 @@ export interface ChildBeanRequest {
   body: string;
 }
 
-/** Produce a child Bean request for integration work discovered during parent verification. */
+/** Produce a Task request for integration work discovered during Epic verification. */
 export function integrationChildRequest(title: string, whatToBuild: string, verification: string): ChildBeanRequest {
   return {
     title,

@@ -2,26 +2,26 @@ import { describe, expect, it } from 'vitest';
 import { deserializeState, roundTripState, serializeState } from '../src/core/state.js';
 import type { RunState } from '../src/core/types.js';
 
-const leaf = (id: string, title: string) => ({ id, path: `.beans/${id}.md`, title });
+const task = (id: string, title: string) => ({ id, path: `.beans/${id}.md`, title });
 
 function sampleState(): RunState {
-  const parentBean = { id: 'beanflow-gh4l', path: '.beans/beanflow-gh4l.md', title: 'Build Beanflow' };
+  const epic = { id: 'beanflow-gh4l', path: '.beans/beanflow-gh4l.md', title: 'Build Beanflow' };
   return {
-    schemaVersion: 1,
+    schemaVersion: 2,
     runId: 'run-1',
-    parentBean,
+    epic,
     manifest: {
-      parentBean,
+      epic,
       frozenAt: '2026-08-16T00:00:00Z',
-      executableLeaves: [leaf('beanflow-a', 'Leaf A'), leaf('beanflow-b', 'Leaf B')],
+      tasks: [task('beanflow-a', 'Task A'), task('beanflow-b', 'Task B')],
     },
     phase: 'running',
     baseBranch: 'master',
     baseCommit: 'abc123',
-    selectedLeaf: leaf('beanflow-a', 'Leaf A'),
+    selectedTask: task('beanflow-a', 'Task A'),
     blockers: [
       {
-        leaf: leaf('beanflow-c', 'Leaf C'),
+        task: task('beanflow-c', 'Task C'),
         evidence: 'needs decision X',
         requiredDecision: 'choose X or Y',
         recordedAt: '2026-08-16T00:00:00Z',
@@ -39,11 +39,11 @@ describe('state schema', () => {
   });
 
   it('serializes stable JSON with the schema version', () => {
-    expect(serializeState(sampleState())).toContain('"schemaVersion": 1');
+    expect(serializeState(sampleState())).toContain('"schemaVersion": 2');
   });
 
   it('rejects an unknown schema version', () => {
-    const json = JSON.stringify({ ...sampleState(), schemaVersion: 2 });
+    const json = JSON.stringify({ ...sampleState(), schemaVersion: 1 });
     expect(() => deserializeState(json)).toThrow(/schema/i);
   });
 

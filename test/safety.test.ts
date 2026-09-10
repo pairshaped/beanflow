@@ -16,14 +16,14 @@ import type { RunState } from '../src/core/types.js';
 
 function state(overrides: Partial<RunState> = {}): RunState {
   return {
-    schemaVersion: 1,
+    schemaVersion: 2,
     runId: 'r1',
-    parentBean: { id: 'e', path: '.beans/e.md', title: 'E' },
-    manifest: { parentBean: { id: 'e', path: '.beans/e.md', title: 'E' }, frozenAt: 't0', executableLeaves: [] },
+    epic: { id: 'e', path: '.beans/e.md', title: 'E' },
+    manifest: { epic: { id: 'e', path: '.beans/e.md', title: 'E' }, frozenAt: 't0', tasks: [] },
     phase: 'running',
     baseBranch: null,
     baseCommit: null,
-    selectedLeaf: null,
+    selectedTask: null,
     blockers: [],
     attempts: {},
     startedAt: 't0',
@@ -77,7 +77,7 @@ describe('checkBounds and shouldStop', () => {
     expect(shouldStop(checkBounds(state(), dir, '2026-01-01T00:00:00Z'))).toBe(false);
   });
 
-  it('totalAttempts sums across leaves', () => {
+  it('totalAttempts sums across tasks', () => {
     expect(totalAttempts(state({ attempts: { a: 1, b: 2, c: 4 } }))).toBe(7);
   });
 });

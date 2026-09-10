@@ -6,7 +6,7 @@ import { existsSync } from 'node:fs';
 import { createInterface } from 'node:readline';
 import { join } from 'node:path';
 import { pathToFileURL } from 'node:url';
-import { allManifestLeavesComplete, decideContinuation, nextEligibleLeaf } from '../core/continuation.js';
+import { allManifestTasksComplete, decideContinuation, nextEligibleTask } from '../core/continuation.js';
 import { discoverBeans } from '../core/discovery.js';
 import { activeRunId, isRunWorktree, loadRunState, persistRunState, worktreeStateDir } from '../core/runstate.js';
 import { checkBounds, shouldStop } from '../core/safety.js';
@@ -42,60 +42,52 @@ export function decideStopHook(input: StopHookInput): StopHookDecision {
     if (!existsSync(beansDir)) return { block: false };
 
     const tree = discoverBeans(beansDir);
-    const selectedLeaf = nextEligibleLeaf(tree, state.manifest, state);
-    const eligible = selectedLeaf !== null;
-    if (!eligible && allManifestLeavesComplete(tree, state.manifest)) {
-      if (!tree.byId.has(state.parentBean.id)) {
-        persistRunState({ ...state, phase: 'completed', selectedLeaf: null, updatedAt: new Date().toISOString() }, cwd);
+    const selectedTask = nextEligibleTask(tree, state.manifest, state);
+    const eligible = selectedTask !== null;
+    if (!eligible && allManifestTasksComplete(tree, state.manifest)) {
+      if (!tree.byId.has(state.epic.id)) {
+        persistRunState({ ...state, phase: 'completed', selectedTask: null, updatedAt: new Date().toISOString() }, cwd);
         return { block: false };
       }
       if (state.blockers.length === 0) {
-        persistRunState({ ...state, phase: 'running', selectedLeaf: null, updatedAt: new Date().toISOString() }, cwd);
+        persistRunState({ ...state, phase: 'running', selectedTask: null, updatedAt: new Date().toISOString() }, cwd);
         return {
           block: true,
-          reason: `Continue the beanflow run: verify parent ${state.parentBean.id} and delete it only if verification passes.`,
+          reason: `Continue the beanflow run: verify parent ${state.epic.id} and delete it only if verification passes.`,
         };
       }
     }
     if (!eligible && state.phase === 'running') {
-      persistRunState({ ...state, phase: 'paused', selectedLeaf: null, updatedAt: new Date().toISOString() }, cwd);
+      persistRunState({ ...state, phase: 'paused', selectedTask: null, updatedAt: new Date().toISOString() }, cwd);
       return { block: false };
     }
-    if (selectedLeaf?.id !== state.selectedLeaf?.id) {
-      persistRunState({ ...state, selectedLeaf, updatedAt: new Date().toISOString() }, cwd);
+    if (selectedTask?.id !== state.selectedTask?.id) {
+      persistRunState({ ...state, selectedTask, updatedAt: new Date().toISOString() }, cwd);
     }
     const decision = decideContinuation({ phase: state.phase, lastStopReason: null, eligibleWorkRemains: eligible });
     if (decision.shouldContinue) {
       return {
         block: true,
         reason:
-          `Continue the beanflow run as the owner-facing orchestrator beginning with leaf ${selectedLeaf!.id}: ` +
-          'create a fresh beanflow-implementer thread for this leaf. Reuse that thread only for guidance and repairs ' +
-          'on the same leaf, then retire it after acceptance. Send the Bean id and worktree path to the implementer, ' +
-          'keep the parent turn active, and wait in bounded intervals for the leaf outcome, focused question, ' +
-          'or blocker. Do not end the parent turn and assume a background notification will resume monitoring. ' +
-          'While the implementer is active, answer interim owner questions in commentary only and resume waiting. ' +
-          'Immediately before any user-facing final response, inspect the agent tree, confirm the implementer is ' +
-          'terminal, and review a completed outcome in this same turn. ' +
-          'A terminal implementer is not a stopping condition while this run has eligible work: after acceptance, ' +
-          'delete the accepted Bean, commit only its tracker and dependency cleanup, perform required cache cleanup, ' +
-          'start the next selected leaf, and resume bounded waiting. ' +
-          'Before accepting completed, verify the worktree is clean, the Bean remains intact, required checks ran, ' +
-          'the leaf formatter and static-analysis gate passed, the code and tests prove the acceptance criteria, ' +
+          `Continue the beanflow run in this task, beginning with task ${selectedTask!.id}. ` +
+          'Implement only the selected task, run its required checks, commit it while keeping the Bean intact, then ' +
+          'skeptically review the resulting diff and its criterion-by-criterion proof. Repair any failed review findings ' +
+          'and rerun affected checks before acceptance. ' +
+          'Before accepting the task, verify the worktree is clean, the Bean remains intact, required checks ran, ' +
+          'the task cheap local proof passed, including focused tests, formatting, and reliably scoped static analysis, ' +
+          'the code and tests prove the acceptance criteria, ' +
           'and replaced code was deleted or has an explicit cleanup Bean blocking final verification. For a replaced ' +
           'route, renderer, shell, workflow, or shared boundary, inventory the outgoing production path including ' +
           'authentication controls, alerts, metadata, accessibility, responsive controls, scripts, and lifecycle effects; ' +
           'preserve each behavior or require accepted scope that explicitly removes it. Treat a failing ' +
           'test that names a changed route, replaced renderer, migrated workflow, shared shell, or other touched boundary ' +
-          'as a leaf regression unless it reproduces at the recorded base commit or concrete evidence traces it to ' +
+          'as a task regression unless it reproduces at the recorded base commit or concrete evidence traces it to ' +
           'unchanged code. A later Bean does not excuse behavior removed by the current migration. ' +
-          'Reject failures back to the same implementer in batches of at most three independently checkable gaps without ' +
-          'advancing the run. Before inspecting code for needs_guidance, require exactly one GUIDANCE_QUESTION line ' +
-          'with a focused unresolved decision, choices, and consequences. If it is absent or invalid, bounce it without ' +
-          'code inspection: ask the implementer to continue when the next safe action is clear, or return one valid ' +
-          'GUIDANCE_QUESTION with choices and consequences. Otherwise resolve the question and send the guidance ' +
-          'back to that same thread. After acceptance, inspect repository-owned build-cache status and clean safely ' +
-          'before the next leaf when the cache is at least 10 GiB or the filesystem has less than 20 percent free.',
+          'After acceptance, delete the accepted Bean, commit only its tracker and dependency cleanup, inspect ' +
+          'repository-owned build-cache status, clean safely when the cache is at least 10 GiB and the filesystem has ' +
+          'less than 20 GiB free. If every Task in the owning Milestone is accepted, run and accept the Milestone ' +
+          'checkpoint before continuing with the next selected Task. Pause only when the run is complete, ' +
+          'genuinely blocked, explicitly paused or stopped by the owner, or waiting for an owner-only decision.',
       };
     }
     return { block: false };

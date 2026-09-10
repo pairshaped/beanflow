@@ -56,19 +56,19 @@ describe('Codex MCP server', () => {
     execFileSync('git', ['init', '-q', '-b', 'f/stale-owner'], { cwd });
     const missingWorktree = join(tmpdir(), `missing-beanflow-worktree-${Date.now()}`);
     const state: RunState = {
-      schemaVersion: 1,
+      schemaVersion: 2,
       runId: 'stale-run',
-      parentBean: { id: 'epic', path: join(missingWorktree, '.beans', 'epic.md'), title: 'Epic' },
+      epic: { id: 'epic', path: join(missingWorktree, '.beans', 'epic.md'), title: 'Epic' },
       manifest: {
-        parentBean: { id: 'epic', path: join(missingWorktree, '.beans', 'epic.md'), title: 'Epic' },
+        epic: { id: 'epic', path: join(missingWorktree, '.beans', 'epic.md'), title: 'Epic' },
         frozenAt: '2026-08-17T00:00:00Z',
-        executableLeaves: [],
+        tasks: [],
       },
       phase: 'running',
       baseBranch: 'main',
       baseCommit: 'abc123',
       worktreePath: missingWorktree,
-      selectedLeaf: null,
+      selectedTask: null,
       blockers: [],
       attempts: {},
       startedAt: '2026-08-17T00:00:00Z',
@@ -94,19 +94,19 @@ describe('Codex MCP server', () => {
     const cwd = mkdtempSync(join(tmpdir(), 'beanflow-live-run-'));
     execFileSync('git', ['init', '-q', '-b', 'f/live-run'], { cwd });
     const state: RunState = {
-      schemaVersion: 1,
+      schemaVersion: 2,
       runId: 'live-run',
-      parentBean: { id: 'epic', path: join(cwd, '.beans', 'epic.md'), title: 'Epic' },
+      epic: { id: 'epic', path: join(cwd, '.beans', 'epic.md'), title: 'Epic' },
       manifest: {
-        parentBean: { id: 'epic', path: join(cwd, '.beans', 'epic.md'), title: 'Epic' },
+        epic: { id: 'epic', path: join(cwd, '.beans', 'epic.md'), title: 'Epic' },
         frozenAt: '2026-08-17T00:00:00Z',
-        executableLeaves: [],
+        tasks: [],
       },
       phase: 'running',
       baseBranch: 'main',
       baseCommit: 'abc123',
       worktreePath: realpathSync(cwd),
-      selectedLeaf: null,
+      selectedTask: null,
       blockers: [],
       attempts: {},
       startedAt: '2026-08-17T00:00:00Z',
@@ -137,8 +137,8 @@ describe('Codex MCP server', () => {
       `---\n# test-epic\ntitle: Test epic\nstatus: in-progress\ntype: epic\ncreated_at: 2026-08-17T00:00:00Z\nupdated_at: 2026-08-17T00:00:00Z\n---\n`,
     );
     writeFileSync(
-      join(cwd, '.beans', 'test-leaf.md'),
-      `---\n# test-leaf\ntitle: Test leaf\nstatus: todo\ntype: task\nparent: test-epic\ncreated_at: 2026-08-17T00:00:00Z\nupdated_at: 2026-08-17T00:00:00Z\n---\n\n## What to build\n\nImplement one bounded behavior with enough context for autonomous work.\n\n## Acceptance criteria\n\n- [ ] The behavior works.\n\n## Verification\n\nRun the focused test.\n\n## Out of scope\n\nDo not change unrelated behavior.\n`,
+      join(cwd, '.beans', 'test-task.md'),
+      `---\n# test-task\ntitle: Test task\nstatus: todo\ntype: task\nparent: test-epic\ncreated_at: 2026-08-17T00:00:00Z\nupdated_at: 2026-08-17T00:00:00Z\n---\n\n## What to build\n\nImplement one bounded behavior with enough context for autonomous work.\n\n## Acceptance criteria\n\n- [ ] The behavior works.\n\n## Verification\n\nRun the focused test.\n\n## Out of scope\n\nDo not change unrelated behavior.\n`,
     );
     execFileSync('git', ['init', '-b', 'main'], { cwd });
     execFileSync('git', ['config', 'user.email', 'dave@rapin.com'], { cwd });
@@ -156,7 +156,7 @@ describe('Codex MCP server', () => {
       })))!;
       const text = (resp.result as { content: { text: string }[] }).content[0].text;
       expect(text).toMatch(/Started Beanflow run/);
-      expect(text).toMatch(/selected test-leaf/);
+      expect(text).toMatch(/selected test-task/);
       const runId = activeRunId(cwd);
       expect(runId).not.toBeNull();
       expect(loadRunState(runId!, cwd).worktreePath).toBe(realpathSync(cwd));
@@ -178,8 +178,8 @@ describe('Codex MCP server', () => {
         `---\n# epic-${suffix}\ntitle: Epic ${suffix.toUpperCase()}\nstatus: in-progress\ntype: epic\ncreated_at: 2026-08-17T00:00:00Z\nupdated_at: 2026-08-17T00:00:00Z\n---\n`,
       );
       writeFileSync(
-        join(repo, '.beans', `leaf-${suffix}.md`),
-        `---\n# leaf-${suffix}\ntitle: Leaf ${suffix.toUpperCase()}\nstatus: todo\ntype: task\nparent: epic-${suffix}\ncreated_at: 2026-08-17T00:00:00Z\nupdated_at: 2026-08-17T00:00:00Z\n---\n\n## What to build\n\nImplement one bounded behavior with enough context for autonomous work.\n\n## Acceptance criteria\n\n- [ ] The behavior works.\n\n## Verification\n\nRun the focused test.\n\n## Out of scope\n\nDo not change unrelated behavior.\n`,
+        join(repo, '.beans', `task-${suffix}.md`),
+        `---\n# task-${suffix}\ntitle: Task ${suffix.toUpperCase()}\nstatus: todo\ntype: task\nparent: epic-${suffix}\ncreated_at: 2026-08-17T00:00:00Z\nupdated_at: 2026-08-17T00:00:00Z\n---\n\n## What to build\n\nImplement one bounded behavior with enough context for autonomous work.\n\n## Acceptance criteria\n\n- [ ] The behavior works.\n\n## Verification\n\nRun the focused test.\n\n## Out of scope\n\nDo not change unrelated behavior.\n`,
       );
     }
 
@@ -208,13 +208,13 @@ describe('Codex MCP server', () => {
         name: 'beanflow',
         arguments: { request: `show status in worktree ${worktreeA}` },
       })))!;
-      expect((statusA.result as { content: { text: string }[] }).content[0].text).toMatch(/selected=leaf-a/);
+      expect((statusA.result as { content: { text: string }[] }).content[0].text).toMatch(/selected=task-a/);
 
       const statusB = parse(handleRequest(req(42, 'tools/call', {
         name: 'beanflow',
         arguments: { request: `show status in worktree ${worktreeB}` },
       })))!;
-      expect((statusB.result as { content: { text: string }[] }).content[0].text).toMatch(/selected=leaf-b/);
+      expect((statusB.result as { content: { text: string }[] }).content[0].text).toMatch(/selected=task-b/);
       expect(execFileSync('git', ['status', '--porcelain'], { cwd: worktreeA, encoding: 'utf8' })).toBe('');
       expect(execFileSync('git', ['status', '--porcelain'], { cwd: worktreeB, encoding: 'utf8' })).toBe('');
     } finally {
@@ -256,8 +256,8 @@ describe('Codex MCP server', () => {
       `---\n# test-epic\ntitle: Test epic\nstatus: in-progress\ntype: epic\ncreated_at: 2026-08-17T00:00:00Z\nupdated_at: 2026-08-17T00:00:00Z\n---\n`,
     );
     writeFileSync(
-      join(repo, '.beans', 'test-leaf.md'),
-      `---\n# test-leaf\ntitle: Test leaf\nstatus: todo\ntype: task\nparent: test-epic\ncreated_at: 2026-08-17T00:00:00Z\nupdated_at: 2026-08-17T00:00:00Z\n---\n\n## What to build\n\nImplement one bounded behavior with enough context for autonomous work.\n\n## Acceptance criteria\n\n- [ ] The behavior works.\n\n## Verification\n\nRun the focused test.\n\n## Out of scope\n\nDo not change unrelated behavior.\n`,
+      join(repo, '.beans', 'test-task.md'),
+      `---\n# test-task\ntitle: Test task\nstatus: todo\ntype: task\nparent: test-epic\ncreated_at: 2026-08-17T00:00:00Z\nupdated_at: 2026-08-17T00:00:00Z\n---\n\n## What to build\n\nImplement one bounded behavior with enough context for autonomous work.\n\n## Acceptance criteria\n\n- [ ] The behavior works.\n\n## Verification\n\nRun the focused test.\n\n## Out of scope\n\nDo not change unrelated behavior.\n`,
     );
     writeFileSync(join(repo, 'tracked'), 'clean\n');
     execFileSync('git', ['init', '-b', 'main'], { cwd: repo });
@@ -307,8 +307,8 @@ describe('Codex MCP server', () => {
       `---\n# test-epic\ntitle: Test epic\nstatus: in-progress\ntype: epic\ncreated_at: 2026-08-17T00:00:00Z\nupdated_at: 2026-08-17T00:00:00Z\n---\n`,
     );
     writeFileSync(
-      join(repo, '.beans', 'test-leaf.md'),
-      `---\n# test-leaf\ntitle: Test leaf\nstatus: todo\ntype: task\nparent: test-epic\ncreated_at: 2026-08-17T00:00:00Z\nupdated_at: 2026-08-17T00:00:00Z\n---\n\n## What to build\n\nImplement one bounded behavior with enough context for autonomous work.\n\n## Acceptance criteria\n\n- [ ] The behavior works.\n\n## Verification\n\nRun the focused test.\n\n## Out of scope\n\nDo not change unrelated behavior.\n`,
+      join(repo, '.beans', 'test-task.md'),
+      `---\n# test-task\ntitle: Test task\nstatus: todo\ntype: task\nparent: test-epic\ncreated_at: 2026-08-17T00:00:00Z\nupdated_at: 2026-08-17T00:00:00Z\n---\n\n## What to build\n\nImplement one bounded behavior with enough context for autonomous work.\n\n## Acceptance criteria\n\n- [ ] The behavior works.\n\n## Verification\n\nRun the focused test.\n\n## Out of scope\n\nDo not change unrelated behavior.\n`,
     );
     writeFileSync(join(repo, 'tracked'), 'clean\n');
     execFileSync('git', ['init', '-b', 'main'], { cwd: repo });
@@ -333,31 +333,31 @@ describe('Codex MCP server', () => {
     }
   });
 
-  it('reports the next eligible leaf after the selected leaf is deleted', () => {
+  it('reports the next eligible task after the selected task is deleted', () => {
     const cwd = mkdtempSync(join(tmpdir(), 'beanflow-mcp-status-'));
     execFileSync('git', ['init', '-q', '-b', 'main'], { cwd });
     mkdirSync(join(cwd, '.beans'));
     writeFileSync(
       join(cwd, '.beans', 'next.md'),
-      `---\n# next\ntitle: Next leaf\nstatus: todo\ntype: task\ncreated_at: 2026-08-17T00:00:00Z\nupdated_at: 2026-08-17T00:00:00Z\n---\n`,
+      `---\n# next\ntitle: Next task\nstatus: todo\ntype: task\ncreated_at: 2026-08-17T00:00:00Z\nupdated_at: 2026-08-17T00:00:00Z\n---\n`,
     );
     const state: RunState = {
-      schemaVersion: 1,
+      schemaVersion: 2,
       runId: 'advanced-run',
-      parentBean: { id: 'epic', path: '.beans/epic.md', title: 'Epic' },
+      epic: { id: 'epic', path: '.beans/epic.md', title: 'Epic' },
       manifest: {
-        parentBean: { id: 'epic', path: '.beans/epic.md', title: 'Epic' },
+        epic: { id: 'epic', path: '.beans/epic.md', title: 'Epic' },
         frozenAt: '2026-08-17T00:00:00Z',
-        executableLeaves: [
-          { id: 'done', path: '.beans/done.md', title: 'Done leaf' },
-          { id: 'next', path: '.beans/next.md', title: 'Next leaf' },
+        tasks: [
+          { id: 'done', path: '.beans/done.md', title: 'Done task' },
+          { id: 'next', path: '.beans/next.md', title: 'Next task' },
         ],
       },
       phase: 'running',
       baseBranch: 'main',
       baseCommit: 'abc123',
       worktreePath: realpathSync(cwd),
-      selectedLeaf: { id: 'done', path: '.beans/done.md', title: 'Done leaf' },
+      selectedTask: { id: 'done', path: '.beans/done.md', title: 'Done task' },
       blockers: [],
       attempts: {},
       startedAt: '2026-08-17T00:00:00Z',
@@ -379,7 +379,7 @@ describe('Codex MCP server', () => {
         arguments: { request: `resume in worktree ${cwd}` },
       })))!;
       expect((resume.result as { content: { text: string }[] }).content[0].text).toMatch(/Resuming/);
-      expect(loadRunState(state.runId, cwd).selectedLeaf?.id).toBe('next');
+      expect(loadRunState(state.runId, cwd).selectedTask?.id).toBe('next');
     } finally {
       disarmRun(cwd);
     }
@@ -388,19 +388,19 @@ describe('Codex MCP server', () => {
   it('rejects invalid named resume worktrees', () => {
     const cwd = mkdtempSync(join(tmpdir(), 'beanflow-mcp-invalid-resume-'));
     const state: RunState = {
-      schemaVersion: 1,
+      schemaVersion: 2,
       runId: 'invalid-resume-run',
-      parentBean: { id: 'epic', path: join(cwd, '.beans', 'epic.md'), title: 'Epic' },
+      epic: { id: 'epic', path: join(cwd, '.beans', 'epic.md'), title: 'Epic' },
       manifest: {
-        parentBean: { id: 'epic', path: join(cwd, '.beans', 'epic.md'), title: 'Epic' },
+        epic: { id: 'epic', path: join(cwd, '.beans', 'epic.md'), title: 'Epic' },
         frozenAt: 't0',
-        executableLeaves: [],
+        tasks: [],
       },
       phase: 'running',
       baseBranch: 'main',
       baseCommit: 'abc123',
       worktreePath: cwd,
-      selectedLeaf: null,
+      selectedTask: null,
       blockers: [],
       attempts: {},
       startedAt: 't0',
@@ -426,30 +426,30 @@ describe('Codex MCP server', () => {
     }
   });
 
-  it('refuses to resume when every remaining leaf has a recorded blocker', () => {
+  it('refuses to resume when every remaining task has a recorded blocker', () => {
     const cwd = mkdtempSync(join(tmpdir(), 'beanflow-mcp-project-'));
     execFileSync('git', ['init', '-q', '-b', 'f/blocked'], { cwd });
     const beansDir = join(cwd, '.beans');
     mkdirSync(beansDir);
-    const leaf: BeanRef = { id: 'beanflow-leaf', path: '.beans/beanflow-leaf.md', title: 'Blocked leaf' };
+    const task: BeanRef = { id: 'beanflow-task', path: '.beans/beanflow-task.md', title: 'Blocked task' };
     writeFileSync(
-      join(beansDir, 'beanflow-leaf.md'),
-      `---\n# beanflow-leaf\ntitle: Blocked leaf\nstatus: todo\ntype: task\ncreated_at: 2026-08-17T00:00:00Z\nupdated_at: 2026-08-17T00:00:00Z\n---\n`,
+      join(beansDir, 'beanflow-task.md'),
+      `---\n# beanflow-task\ntitle: Blocked task\nstatus: todo\ntype: task\ncreated_at: 2026-08-17T00:00:00Z\nupdated_at: 2026-08-17T00:00:00Z\n---\n`,
     );
     const state: RunState = {
-      schemaVersion: 1,
+      schemaVersion: 2,
       runId: 'blocked-run',
-      parentBean: { id: 'beanflow-epic', path: '.beans/beanflow-epic.md', title: 'Epic' },
+      epic: { id: 'beanflow-epic', path: '.beans/beanflow-epic.md', title: 'Epic' },
       manifest: {
-        parentBean: { id: 'beanflow-epic', path: '.beans/beanflow-epic.md', title: 'Epic' },
+        epic: { id: 'beanflow-epic', path: '.beans/beanflow-epic.md', title: 'Epic' },
         frozenAt: '2026-08-17T00:00:00Z',
-        executableLeaves: [leaf],
+        tasks: [task],
       },
       phase: 'running',
       baseBranch: 'main',
       baseCommit: 'abc123',
-      selectedLeaf: null,
-      blockers: [{ leaf, evidence: 'Owner input needed', requiredDecision: 'Choose one', recordedAt: '2026-08-17T01:00:00Z' }],
+      selectedTask: null,
+      blockers: [{ task, evidence: 'Owner input needed', requiredDecision: 'Choose one', recordedAt: '2026-08-17T01:00:00Z' }],
       attempts: {},
       startedAt: '2026-08-17T00:00:00Z',
       updatedAt: '2026-08-17T01:00:00Z',
@@ -462,7 +462,7 @@ describe('Codex MCP server', () => {
     try {
       const resp = parse(handleRequest(req(4, 'tools/call', { name: 'beanflow', arguments: { request: 'resume' } })))!;
       const text = (resp.result as { content: { text: string }[] }).content[0].text;
-      expect(text).toBe('Beanflow cannot resume: no eligible leaf exists while 1 recorded blocker remains unresolved.');
+      expect(text).toBe('Beanflow cannot resume: no eligible task exists while 1 recorded blocker remains unresolved.');
       expect(loadRunState(state.runId, cwd).phase).toBe('paused');
     } finally {
       process.chdir(originalCwd);
@@ -479,25 +479,25 @@ describe('Codex MCP server', () => {
       join(beansDir, 'epic.md'),
       `---\n# epic\ntitle: Epic\nstatus: in-progress\ntype: epic\ncreated_at: 2026-08-17T00:00:00Z\nupdated_at: 2026-08-17T00:00:00Z\n---\n`,
     );
-    const leaf = (id: string, title: string) =>
+    const task = (id: string, title: string) =>
       `---\n# ${id}\ntitle: ${title}\nstatus: todo\ntype: task\nparent: epic\ncreated_at: 2026-08-17T00:00:00Z\nupdated_at: 2026-08-17T00:00:00Z\n---\n\n## What to build\n\nImplement one bounded behavior with enough context for autonomous work.\n\n## Acceptance criteria\n\n- [ ] The behavior works.\n\n## Verification\n\nRun the focused test.\n\n## Out of scope\n\nDo not change unrelated behavior.\n`;
-    writeFileSync(join(beansDir, 'current.md'), leaf('current', 'Current'));
-    writeFileSync(join(beansDir, 'new.md'), leaf('new', 'New'));
+    writeFileSync(join(beansDir, 'current.md'), task('current', 'Current'));
+    writeFileSync(join(beansDir, 'new.md'), task('new', 'New'));
     const completed: BeanRef = { id: 'completed', path: join(beansDir, 'completed.md'), title: 'Completed' };
     const state: RunState = {
-      schemaVersion: 1,
+      schemaVersion: 2,
       runId: 'refresh-run',
-      parentBean: { id: 'epic', path: join(beansDir, 'epic.md'), title: 'Epic' },
+      epic: { id: 'epic', path: join(beansDir, 'epic.md'), title: 'Epic' },
       manifest: {
-        parentBean: { id: 'epic', path: join(beansDir, 'epic.md'), title: 'Epic' },
+        epic: { id: 'epic', path: join(beansDir, 'epic.md'), title: 'Epic' },
         frozenAt: '2026-08-17T00:00:00Z',
-        executableLeaves: [completed, { id: 'current', path: join(beansDir, 'current.md'), title: 'Current' }],
+        tasks: [completed, { id: 'current', path: join(beansDir, 'current.md'), title: 'Current' }],
       },
       phase: 'running',
       baseBranch: 'main',
       baseCommit: 'abc123',
       worktreePath: realpathSync(cwd),
-      selectedLeaf: null,
+      selectedTask: null,
       blockers: [],
       attempts: {},
       startedAt: '2026-08-17T00:00:00Z',
@@ -515,16 +515,16 @@ describe('Codex MCP server', () => {
       expect(text).toMatch(/Refreshed Beanflow run refresh-run/);
       const refreshed = loadRunState(state.runId, cwd);
       expect(refreshed.manifest.frozenAt).not.toBe(state.manifest.frozenAt);
-      expect(refreshed.manifest.executableLeaves.map((item) => item.id)).toEqual(['completed', 'current', 'new']);
-      expect(refreshed.selectedLeaf?.id).toBe('current');
+      expect(refreshed.manifest.tasks.map((item) => item.id)).toEqual(['completed', 'current', 'new']);
+      expect(refreshed.selectedTask?.id).toBe('current');
     } finally {
       disarmRun(cwd);
     }
   });
 
-  it('does not turn a completed leaf parent into executable work during refresh', () => {
-    const cwd = mkdtempSync(join(tmpdir(), 'beanflow-mcp-refresh-grouping-'));
-    execFileSync('git', ['init', '-q', '-b', 'f/refresh-grouping'], { cwd });
+  it('does not turn a completed task parent into executable work during refresh', () => {
+    const cwd = mkdtempSync(join(tmpdir(), 'beanflow-mcp-refresh-milestone-'));
+    execFileSync('git', ['init', '-q', '-b', 'f/refresh-milestone'], { cwd });
     const beansDir = join(cwd, '.beans');
     mkdirSync(beansDir);
     writeFileSync(
@@ -542,20 +542,20 @@ describe('Codex MCP server', () => {
     const completed: BeanRef = { id: 'completed', path: join(beansDir, 'completed.md'), title: 'Completed' };
     const group: BeanRef = { id: 'group', path: join(beansDir, 'group.md'), title: 'Group' };
     const state = {
-      schemaVersion: 1,
-      runId: 'refresh-grouping-run',
-      parentBean: { id: 'epic', path: join(beansDir, 'epic.md'), title: 'Epic' },
+      schemaVersion: 2,
+      runId: 'refresh-milestone-run',
+      epic: { id: 'epic', path: join(beansDir, 'epic.md'), title: 'Epic' },
       manifest: {
-        parentBean: { id: 'epic', path: join(beansDir, 'epic.md'), title: 'Epic' },
+        epic: { id: 'epic', path: join(beansDir, 'epic.md'), title: 'Epic' },
         frozenAt: '2026-08-17T00:00:00Z',
-        groupingBeans: [group],
-        executableLeaves: [completed],
+        milestones: [group],
+        tasks: [completed],
       },
       phase: 'running',
       baseBranch: 'main',
       baseCommit: 'abc123',
       worktreePath: realpathSync(cwd),
-      selectedLeaf: null,
+      selectedTask: null,
       blockers: [],
       attempts: {},
       startedAt: '2026-08-17T00:00:00Z',
@@ -570,9 +570,9 @@ describe('Codex MCP server', () => {
         arguments: { request: `refresh the manifest in worktree ${cwd}` },
       })))!;
       const text = (refresh.result as { content: { text: string }[] }).content[0].text;
-      expect(text).toMatch(/Refreshed Beanflow run refresh-grouping-run/);
+      expect(text).toMatch(/Refreshed Beanflow run refresh-milestone-run/);
       const refreshed = loadRunState(state.runId, cwd);
-      expect(refreshed.manifest.executableLeaves.map((item) => item.id)).toEqual(['completed', 'new']);
+      expect(refreshed.manifest.tasks.map((item) => item.id)).toEqual(['completed', 'new']);
     } finally {
       disarmRun(cwd);
     }

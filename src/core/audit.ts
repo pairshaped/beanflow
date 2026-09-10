@@ -1,4 +1,4 @@
-// Audit each executable leaf for the six criteria the workflow requires:
+// Audit each executable task for the six criteria the workflow requires:
 // focused scope, sufficient context, explicit acceptance criteria,
 // verification commands, resolvable dependencies, and safe autonomy.
 
@@ -11,8 +11,8 @@ export interface AuditFinding {
   reason: string;
 }
 
-export interface LeafAudit {
-  leaf: Bean;
+export interface TaskAudit {
+  task: Bean;
   findings: AuditFinding[];
   passed: boolean;
 }
@@ -52,28 +52,28 @@ function checkboxCount(text: string): number {
 const MIN_CONTEXT_CHARS = 40;
 const MAX_AC_ITEMS = 15;
 
-function checkFocusedScope(leaf: Bean): AuditFinding {
-  const wtb = headingCount(leaf.body, 'What to build');
+function checkFocusedScope(task: Bean): AuditFinding {
+  const wtb = headingCount(task.body, 'What to build');
   if (wtb !== 1) {
     return { check: 'focused-scope', pass: false, reason: `expected one "What to build" section, found ${wtb}` };
   }
-  const ac = checkboxCount(section(leaf.body, 'Acceptance criteria'));
+  const ac = checkboxCount(section(task.body, 'Acceptance criteria'));
   if (ac < 1 || ac > MAX_AC_ITEMS) {
     return { check: 'focused-scope', pass: false, reason: `acceptance criteria count ${ac} outside 1..${MAX_AC_ITEMS}` };
   }
   return { check: 'focused-scope', pass: true, reason: 'single focused scope with a bounded acceptance checklist' };
 }
 
-function checkContext(leaf: Bean): AuditFinding {
-  const wtb = section(leaf.body, 'What to build');
+function checkContext(task: Bean): AuditFinding {
+  const wtb = section(task.body, 'What to build');
   if (wtb.length < MIN_CONTEXT_CHARS) {
     return { check: 'context', pass: false, reason: `"What to build" is too thin (${wtb.length} chars)` };
   }
   return { check: 'context', pass: true, reason: 'sufficient context in "What to build"' };
 }
 
-function checkAcceptanceCriteria(leaf: Bean): AuditFinding {
-  const ac = section(leaf.body, 'Acceptance criteria');
+function checkAcceptanceCriteria(task: Bean): AuditFinding {
+  const ac = section(task.body, 'Acceptance criteria');
   const count = checkboxCount(ac);
   if (count < 1) {
     return { check: 'acceptance-criteria', pass: false, reason: 'no checkboxed acceptance criteria found' };
@@ -81,18 +81,18 @@ function checkAcceptanceCriteria(leaf: Bean): AuditFinding {
   return { check: 'acceptance-criteria', pass: true, reason: `${count} acceptance criteria found` };
 }
 
-function checkVerification(leaf: Bean): AuditFinding {
-  const v = section(leaf.body, 'Verification');
+function checkVerification(task: Bean): AuditFinding {
+  const v = section(task.body, 'Verification');
   if (v.length === 0) {
     return { check: 'verification', pass: false, reason: 'no verification commands' };
   }
   return { check: 'verification', pass: true, reason: 'verification commands present' };
 }
 
-function checkDependencies(leaf: Bean, tree: BeanTree): AuditFinding {
+function checkDependencies(task: Bean, tree: BeanTree): AuditFinding {
   const missing: string[] = [];
-  if (leaf.parent !== null && !tree.byId.has(leaf.parent)) missing.push(`parent ${leaf.parent}`);
-  for (const dep of leaf.blockedBy) {
+  if (task.parent !== null && !tree.byId.has(task.parent)) missing.push(`parent ${task.parent}`);
+  for (const dep of task.blockedBy) {
     if (!tree.byId.has(dep)) missing.push(`blocked-by ${dep}`);
   }
   if (missing.length > 0) {
@@ -101,28 +101,28 @@ function checkDependencies(leaf: Bean, tree: BeanTree): AuditFinding {
   return { check: 'dependencies', pass: true, reason: 'parent and blocked-by resolve within the tree' };
 }
 
-function checkSafeAutonomy(leaf: Bean): AuditFinding {
-  const oos = section(leaf.body, 'Out of scope');
+function checkSafeAutonomy(task: Bean): AuditFinding {
+  const oos = section(task.body, 'Out of scope');
   if (oos.length === 0) {
     return { check: 'safe-autonomy', pass: false, reason: 'no "Out of scope" boundaries' };
   }
   return { check: 'safe-autonomy', pass: true, reason: 'scope boundaries declared' };
 }
 
-export function auditLeaf(leaf: Bean, tree: BeanTree): LeafAudit {
+export function auditTask(task: Bean, tree: BeanTree): TaskAudit {
   const findings = [
-    checkFocusedScope(leaf),
-    checkContext(leaf),
-    checkAcceptanceCriteria(leaf),
-    checkVerification(leaf),
-    checkDependencies(leaf, tree),
-    checkSafeAutonomy(leaf),
+    checkFocusedScope(task),
+    checkContext(task),
+    checkAcceptanceCriteria(task),
+    checkVerification(task),
+    checkDependencies(task, tree),
+    checkSafeAutonomy(task),
   ];
-  return { leaf, findings, passed: findings.every((f) => f.pass) };
+  return { task, findings, passed: findings.every((f) => f.pass) };
 }
 
-export function auditTree(tree: BeanTree): LeafAudit[] {
+export function auditTree(tree: BeanTree): TaskAudit[] {
   return tree.beans
-    .filter((b) => tree.kindOf.get(b.id) === 'leaf')
-    .map((b) => auditLeaf(b, tree));
+    .filter((b) => tree.kindOf.get(b.id) === 'task')
+    .map((b) => auditTask(b, tree));
 }

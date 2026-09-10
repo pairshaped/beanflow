@@ -1,7 +1,7 @@
 // Failure semantics: classify errors so the runner knows how to react.
 //
 // - retryable: transient, worth retrying with backoff up to the retry ceiling.
-// - blocker: needs a decision or external change; record evidence and skip the leaf.
+// - blocker: needs a decision or external change; record evidence and skip the task.
 // - fatal: unrecoverable or a violated safety invariant; stop the run.
 
 export type FailureKind = 'retryable' | 'blocker' | 'fatal';

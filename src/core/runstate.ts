@@ -51,7 +51,7 @@ export function loadRunState(runId: string, worktreePath?: string): RunState {
 /** Resolve the isolated worktree that owns a run, including legacy states. */
 export function runWorktreePath(state: RunState, fallbackCwd: string): string {
   if (state.worktreePath) return resolve(state.worktreePath);
-  if (isAbsolute(state.parentBean.path)) return dirname(dirname(state.parentBean.path));
+  if (isAbsolute(state.epic.path)) return dirname(dirname(state.epic.path));
   return resolve(fallbackCwd);
 }
 
@@ -112,7 +112,7 @@ export function activeRunId(worktreePath?: string): string | null {
 
 export interface RunStatus {
   phase: RunPhase;
-  selectedLeaf: BeanRef | null;
+  selectedTask: BeanRef | null;
   blockers: BlockerReceipt[];
   updatedAt: string;
 }
@@ -120,7 +120,7 @@ export interface RunStatus {
 export function statusOf(state: RunState): RunStatus {
   return {
     phase: state.phase,
-    selectedLeaf: state.selectedLeaf,
+    selectedTask: state.selectedTask,
     blockers: state.blockers,
     updatedAt: state.updatedAt,
   };

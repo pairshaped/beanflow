@@ -1,5 +1,5 @@
 // State file schema: serialize and validate RunState. Filesystem persistence
-// and the state-directory override live in a later leaf; this module only
+// and the state-directory override live in a later task; this module only
 // defines the schema and its round-trip.
 
 import type { BeanRef, RunPhase, RunState, ScopeManifest } from './types.js';
@@ -21,12 +21,12 @@ function isBeanRef(x: unknown): x is BeanRef {
 function isScopeManifest(x: unknown): x is ScopeManifest {
   return (
     isRecord(x) &&
-    isBeanRef(x.parentBean) &&
+    isBeanRef(x.epic) &&
     isString(x.frozenAt) &&
-    (x.groupingBeans === undefined ||
-      (Array.isArray(x.groupingBeans) && x.groupingBeans.every(isBeanRef))) &&
-    Array.isArray(x.executableLeaves) &&
-    x.executableLeaves.every(isBeanRef)
+    (x.milestones === undefined ||
+      (Array.isArray(x.milestones) && x.milestones.every(isBeanRef))) &&
+    Array.isArray(x.tasks) &&
+    x.tasks.every(isBeanRef)
   );
 }
 
@@ -37,7 +37,7 @@ function isRunPhase(x: unknown): x is RunPhase {
 function isBlockerReceipt(x: unknown): boolean {
   return (
     isRecord(x) &&
-    isBeanRef(x.leaf) &&
+    isBeanRef(x.task) &&
     isString(x.evidence) &&
     isString(x.requiredDecision) &&
     isString(x.recordedAt)
@@ -46,16 +46,16 @@ function isBlockerReceipt(x: unknown): boolean {
 
 function isRunState(x: unknown): x is RunState {
   if (!isRecord(x)) return false;
-  if (x.schemaVersion !== 1) return false;
+  if (x.schemaVersion !== 2) return false;
   return (
     isString(x.runId) &&
-    isBeanRef(x.parentBean) &&
+    isBeanRef(x.epic) &&
     isScopeManifest(x.manifest) &&
     isRunPhase(x.phase) &&
     (x.baseBranch === null || isString(x.baseBranch)) &&
     (x.baseCommit === null || isString(x.baseCommit)) &&
     (x.worktreePath === undefined || x.worktreePath === null || isString(x.worktreePath)) &&
-    (x.selectedLeaf === null || isBeanRef(x.selectedLeaf)) &&
+    (x.selectedTask === null || isBeanRef(x.selectedTask)) &&
     Array.isArray(x.blockers) &&
     x.blockers.every(isBlockerReceipt) &&
     isRecord(x.attempts) &&

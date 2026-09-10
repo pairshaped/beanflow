@@ -54,7 +54,7 @@ describe('land', () => {
     expect(git(repo, ['branch', '--list', 'feature']).trim()).toBe('');
   });
 
-  it('refuses without approval and leaves target, worktree, and branch untouched', () => {
+  it('refuses without approval and tasks target, worktree, and branch untouched', () => {
     const { repo, worktree } = makeRepoWithFeature();
     const before = git(repo, ['rev-parse', 'HEAD']).trim();
     expect(() => land(req(repo, worktree, false))).toThrow(FatalError);

@@ -2,8 +2,8 @@
 // settlement and compaction while eligible work remains, but an Esc-aborted
 // turn pauses it and must not be restarted by agent_settled.
 
-import { blockedLeafIds } from './blockers.js';
-import { selectNextLeaf } from './selection.js';
+import { blockedTaskIds } from './blockers.js';
+import { selectNextTask } from './selection.js';
 import type { BeanTree } from './discovery.js';
 import type { BeanRef, RunPhase, RunState, ScopeManifest } from './types.js';
 
@@ -49,31 +49,31 @@ export function decideContinuation(opts: {
   return { shouldContinue: true, reason: 'eligible work remains' };
 }
 
-/** Next selectable manifest leaf after deleted Beans are treated as completed. */
-export function nextEligibleLeaf(tree: BeanTree, manifest: ScopeManifest, state: RunState): BeanRef | null {
-  const completed = manifest.executableLeaves
-    .filter((leaf) => {
-      const current = tree.byId.get(leaf.id);
+/** Next selectable manifest task after deleted Beans are treated as completed. */
+export function nextEligibleTask(tree: BeanTree, manifest: ScopeManifest, state: RunState): BeanRef | null {
+  const completed = manifest.tasks
+    .filter((task) => {
+      const current = tree.byId.get(task.id);
       return !current || current.status === 'completed';
     })
-    .map((leaf) => leaf.id);
-  const blocked = blockedLeafIds(state);
-  const leaves = manifest.executableLeaves
+    .map((task) => task.id);
+  const blocked = blockedTaskIds(state);
+  const tasks = manifest.tasks
     .filter((l) => tree.byId.has(l.id))
     .map((l) => tree.byId.get(l.id)!);
-  const selected = selectNextLeaf(leaves, new Set(completed), blocked);
-  return selected ? manifest.executableLeaves.find((leaf) => leaf.id === selected.id) ?? null : null;
+  const selected = selectNextTask(tasks, new Set(completed), blocked);
+  return selected ? manifest.tasks.find((task) => task.id === selected.id) ?? null : null;
 }
 
-/** True when every frozen leaf has been deleted or explicitly completed. */
-export function allManifestLeavesComplete(tree: BeanTree, manifest: ScopeManifest): boolean {
-  return manifest.executableLeaves.every((leaf) => {
-    const current = tree.byId.get(leaf.id);
+/** True when every frozen task has been deleted or explicitly completed. */
+export function allManifestTasksComplete(tree: BeanTree, manifest: ScopeManifest): boolean {
+  return manifest.tasks.every((task) => {
+    const current = tree.byId.get(task.id);
     return !current || current.status === 'completed';
   });
 }
 
-/** True when some manifest leaf is still selectable (present, unblocked, deps done). */
+/** True when some manifest task is still selectable (present, unblocked, deps done). */
 export function eligibleWorkRemains(tree: BeanTree, manifest: ScopeManifest, state: RunState): boolean {
-  return nextEligibleLeaf(tree, manifest, state) !== null;
+  return nextEligibleTask(tree, manifest, state) !== null;
 }

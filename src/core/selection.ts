@@ -1,4 +1,4 @@
-// Select the next ready leaf: dependency order first (blockers must be done),
+// Select the next ready task: dependency order first (blockers must be done),
 // then priority, then stable creation order as tie breakers.
 
 import type { Bean } from './bean.js';
@@ -15,15 +15,15 @@ export function priorityRank(priority: string): number {
   return PRIORITY_RANK[priority] ?? 2;
 }
 
-export function selectNextLeaf(
-  leaves: Bean[],
+export function selectNextTask(
+  tasks: Bean[],
   completed: ReadonlySet<string>,
   blocked: ReadonlySet<string>,
 ): Bean | null {
-  const ready = leaves.filter((leaf) => {
-    if (leaf.status === 'completed' || leaf.status === 'scrapped') return false;
-    if (completed.has(leaf.id) || blocked.has(leaf.id)) return false;
-    return leaf.blockedBy.every((dep) => completed.has(dep));
+  const ready = tasks.filter((task) => {
+    if (task.status === 'completed' || task.status === 'scrapped') return false;
+    if (completed.has(task.id) || blocked.has(task.id)) return false;
+    return task.blockedBy.every((dep) => completed.has(dep));
   });
   if (ready.length === 0) return null;
   ready.sort((a, b) => {

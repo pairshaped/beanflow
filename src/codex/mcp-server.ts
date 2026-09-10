@@ -7,13 +7,13 @@ import { execFileSync } from 'node:child_process';
 import { realpathSync } from 'node:fs';
 import { isAbsolute, join } from 'node:path';
 import { pathToFileURL } from 'node:url';
-import { auditLeaf } from '../core/audit.js';
+import { auditTask } from '../core/audit.js';
 import { discoverBeans } from '../core/discovery.js';
-import { nextEligibleLeaf } from '../core/continuation.js';
+import { nextEligibleTask } from '../core/continuation.js';
 import { freezeManifest } from '../core/manifest.js';
 import { activeRunId, disarmRun, isRunWorktree, loadRunState, persistRunState, runWorktreeExists, runWorktreePath, statusOf } from '../core/runstate.js';
 import { armRun } from '../core/runstate.js';
-import { selectNextLeaf } from '../core/selection.js';
+import { selectNextTask } from '../core/selection.js';
 import { decideResume, parseOperation } from '../core/tool.js';
 import type { RunState } from '../core/types.js';
 
@@ -138,29 +138,29 @@ function startFromCurrentWorktree(request: string): string {
   } catch (err) {
     return `Beanflow cannot start: ${(err as Error).message}`;
   }
-  const failures = manifest.executableLeaves
-    .map((leaf) => auditLeaf(tree.byId.get(leaf.id)!, tree))
+  const failures = manifest.tasks
+    .map((task) => auditTask(tree.byId.get(task.id)!, tree))
     .filter((audit) => !audit.passed);
   if (failures.length > 0) {
     const detail = failures
-      .map((audit) => `${audit.leaf.id}: ${audit.findings.filter((finding) => !finding.pass).map((finding) => finding.check).join(', ')}`)
+      .map((audit) => `${audit.task.id}: ${audit.findings.filter((finding) => !finding.pass).map((finding) => finding.check).join(', ')}`)
       .join('; ');
     return `Beanflow cannot start: the manifest audit failed (${detail}).`;
   }
 
-  const leaves = manifest.executableLeaves.map((leaf) => tree.byId.get(leaf.id)!);
-  const selected = selectNextLeaf(leaves, new Set(), new Set());
+  const tasks = manifest.tasks.map((task) => tree.byId.get(task.id)!);
+  const selected = selectNextTask(tasks, new Set(), new Set());
   const runId = `${parentId}-${Date.now()}`;
   const state: RunState = {
-    schemaVersion: 1,
+    schemaVersion: 2,
     runId,
-    parentBean: manifest.parentBean,
+    epic: manifest.epic,
     manifest,
     phase: 'running',
     baseBranch,
     baseCommit,
     worktreePath,
-    selectedLeaf: selected ? manifest.executableLeaves.find((leaf) => leaf.id === selected.id)! : null,
+    selectedTask: selected ? manifest.tasks.find((task) => task.id === selected.id)! : null,
     blockers: [],
     attempts: {},
     startedAt: now,
@@ -169,7 +169,7 @@ function startFromCurrentWorktree(request: string): string {
   persistRunState(state, worktreePath);
   armRun(runId, worktreePath);
   const staleNotice = retiredStaleRun ? `Retired stale Beanflow run ${retiredStaleRun}. ` : '';
-  return `${staleNotice}Started Beanflow run ${runId} in ${worktreePath} on ${branchName}; frozen ${manifest.executableLeaves.length} leaves and selected ${state.selectedLeaf?.id ?? 'none'}.`;
+  return `${staleNotice}Started Beanflow run ${runId} in ${worktreePath} on ${branchName}; frozen ${manifest.tasks.length} tasks and selected ${state.selectedTask?.id ?? 'none'}.`;
 }
 
 function refreshActiveManifest(request: string): string {
@@ -190,32 +190,32 @@ function refreshActiveManifest(request: string): string {
   const tree = discoverBeans(join(cwd, '.beans'));
   let currentManifest;
   try {
-    const knownGroupingIds = new Set(
-      state.manifest.groupingBeans?.map((bean) => bean.id) ?? [],
+    const knownMilestoneIds = new Set(
+      state.manifest.milestones?.map((bean) => bean.id) ?? [],
     );
-    currentManifest = freezeManifest(tree, state.parentBean.id, now, knownGroupingIds);
+    currentManifest = freezeManifest(tree, state.epic.id, now, knownMilestoneIds);
   } catch (err) {
     return `Beanflow cannot refresh: ${(err as Error).message}`;
   }
-  const failures = currentManifest.executableLeaves
-    .map((leaf) => auditLeaf(tree.byId.get(leaf.id)!, tree))
+  const failures = currentManifest.tasks
+    .map((task) => auditTask(tree.byId.get(task.id)!, tree))
     .filter((audit) => !audit.passed);
   if (failures.length > 0) {
     const detail = failures
-      .map((audit) => `${audit.leaf.id}: ${audit.findings.filter((finding) => !finding.pass).map((finding) => finding.check).join(', ')}`)
+      .map((audit) => `${audit.task.id}: ${audit.findings.filter((finding) => !finding.pass).map((finding) => finding.check).join(', ')}`)
       .join('; ');
     return `Beanflow cannot refresh: the manifest audit failed (${detail}).`;
   }
 
-  const completedHistory = state.manifest.executableLeaves.filter((leaf) => !tree.byId.has(leaf.id));
+  const completedHistory = state.manifest.tasks.filter((task) => !tree.byId.has(task.id));
   const manifest = {
     ...currentManifest,
-    executableLeaves: [...completedHistory, ...currentManifest.executableLeaves],
+    tasks: [...completedHistory, ...currentManifest.tasks],
   };
   const refreshed = { ...state, manifest, updatedAt: now };
-  const selectedLeaf = nextEligibleLeaf(tree, manifest, refreshed);
-  persistRunState({ ...refreshed, selectedLeaf }, cwd);
-  return `Refreshed Beanflow run ${runId}; frozen ${manifest.executableLeaves.length} leaves and selected ${selectedLeaf?.id ?? 'none'}.`;
+  const selectedTask = nextEligibleTask(tree, manifest, refreshed);
+  persistRunState({ ...refreshed, selectedTask }, cwd);
+  return `Refreshed Beanflow run ${runId}; frozen ${manifest.tasks.length} tasks and selected ${selectedTask?.id ?? 'none'}.`;
 }
 
 function runBeanflow(request: string): string {
@@ -235,8 +235,8 @@ function runBeanflow(request: string): string {
       }
       const s = statusOf(state);
       const tree = discoverBeans(join(runWorktreePath(state, cwd), '.beans'));
-      const selectedLeaf = nextEligibleLeaf(tree, state.manifest, state);
-      return `Run ${runId}: phase=${s.phase}, selected=${selectedLeaf?.id ?? 'none'}, blockers=${s.blockers.length}.`;
+      const selectedTask = nextEligibleTask(tree, state.manifest, state);
+      return `Run ${runId}: phase=${s.phase}, selected=${selectedTask?.id ?? 'none'}, blockers=${s.blockers.length}.`;
     }
     case 'resume': {
       const requested = requestWorktreeContext(request, 'resume');

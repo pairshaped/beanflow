@@ -2,7 +2,7 @@
 // active run can resume. Users never memorize commands; the tool takes one
 // request string and resolves it here.
 
-import { allManifestLeavesComplete, nextEligibleLeaf } from './continuation.js';
+import { allManifestTasksComplete, nextEligibleTask } from './continuation.js';
 import type { BeanTree } from './discovery.js';
 import type { RunState } from './types.js';
 
@@ -15,20 +15,20 @@ export interface ResumeDecision {
 }
 
 export function decideResume(state: RunState, tree: BeanTree, resumedAt: string): ResumeDecision {
-  const selectedLeaf = nextEligibleLeaf(tree, state.manifest, state);
-  if (!selectedLeaf) {
-    if (allManifestLeavesComplete(tree, state.manifest)) {
-      const parentExists = tree.byId.has(state.parentBean.id);
-      if (!parentExists) {
+  const selectedTask = nextEligibleTask(tree, state.manifest, state);
+  if (!selectedTask) {
+    if (allManifestTasksComplete(tree, state.manifest)) {
+      const epicExists = tree.byId.has(state.epic.id);
+      if (!epicExists) {
         return {
           canResume: false,
           state: {
             ...state,
             phase: 'completed',
-            selectedLeaf: null,
+            selectedTask: null,
             updatedAt: resumedAt,
           },
-          message: 'Beanflow run is complete: every scoped leaf and the parent Bean are gone.',
+          message: 'Beanflow run is complete: every scoped Task and the Epic are gone.',
         };
       }
       if (state.blockers.length === 0) {
@@ -37,10 +37,10 @@ export function decideResume(state: RunState, tree: BeanTree, resumedAt: string)
           state: {
             ...state,
             phase: 'running',
-            selectedLeaf: null,
+            selectedTask: null,
             updatedAt: resumedAt,
           },
-          message: `Every scoped leaf is complete. Run parent-level verification for ${state.parentBean.id}, then delete the parent Bean only if it passes.`,
+          message: `Every scoped Task is complete. Run the Epic checkpoint for ${state.epic.id}, then delete the Epic only if it passes.`,
         };
       }
     }
@@ -51,10 +51,10 @@ export function decideResume(state: RunState, tree: BeanTree, resumedAt: string)
         : '';
     return {
       canResume: false,
-      state: state.phase === 'running' || state.selectedLeaf !== null
-        ? { ...state, phase: 'paused', selectedLeaf: null, updatedAt: resumedAt }
+      state: state.phase === 'running' || state.selectedTask !== null
+        ? { ...state, phase: 'paused', selectedTask: null, updatedAt: resumedAt }
         : state,
-      message: `Beanflow cannot resume: no eligible leaf exists${blockerDetail}.`,
+      message: `Beanflow cannot resume: no eligible task exists${blockerDetail}.`,
     };
   }
 
@@ -63,7 +63,7 @@ export function decideResume(state: RunState, tree: BeanTree, resumedAt: string)
     state: {
       ...state,
       phase: 'running',
-      selectedLeaf,
+      selectedTask,
       updatedAt: resumedAt,
     },
     message: 'Resuming the beanflow run.',

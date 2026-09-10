@@ -3,7 +3,7 @@ import { beanIdFromPath, parseBean } from '../src/core/bean.js';
 
 describe('beanIdFromPath', () => {
   it('extracts the id before the first --', () => {
-    expect(beanIdFromPath('.beans/beanflow-67xs--single-leaf.md')).toBe('beanflow-67xs');
+    expect(beanIdFromPath('.beans/beanflow-67xs--single-task.md')).toBe('beanflow-67xs');
   });
 
   it('handles a path without a slug separator', () => {
@@ -14,7 +14,7 @@ describe('beanIdFromPath', () => {
 describe('parseBean', () => {
   const raw = `---
 # beanflow-67xs
-title: Single-leaf selection and atomic completion commit
+title: Single-task selection and atomic completion commit
 status: todo
 type: task
 tags:
@@ -36,9 +36,9 @@ Do the thing.
 `;
 
   it('parses frontmatter and body', () => {
-    const bean = parseBean('.beans/beanflow-67xs--single-leaf.md', raw);
+    const bean = parseBean('.beans/beanflow-67xs--single-task.md', raw);
     expect(bean.id).toBe('beanflow-67xs');
-    expect(bean.title).toBe('Single-leaf selection and atomic completion commit');
+    expect(bean.title).toBe('Single-task selection and atomic completion commit');
     expect(bean.status).toBe('todo');
     expect(bean.type).toBe('task');
     expect(bean.parent).toBe('beanflow-twc8');

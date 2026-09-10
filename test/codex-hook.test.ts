@@ -61,18 +61,18 @@ function makeRepo(): string {
 
 function runState(overrides: Partial<RunState> = {}): RunState {
   return {
-    schemaVersion: 1,
+    schemaVersion: 2,
     runId: 'r1',
-    parentBean: { id: 'e', path: '.beans/e.md', title: 'E' },
+    epic: { id: 'e', path: '.beans/e.md', title: 'E' },
     manifest: {
-      parentBean: { id: 'e', path: '.beans/e.md', title: 'E' },
+      epic: { id: 'e', path: '.beans/e.md', title: 'E' },
       frozenAt: 't0',
-      executableLeaves: [{ id: 'a', path: '.beans/a.md', title: 'A' }],
+      tasks: [{ id: 'a', path: '.beans/a.md', title: 'A' }],
     },
     phase: 'running',
     baseBranch: null,
     baseCommit: null,
-    selectedLeaf: null,
+    selectedTask: null,
     blockers: [],
     attempts: {},
     startedAt: 't0',
@@ -100,29 +100,24 @@ describe('Codex Stop hook', () => {
     const decision = decideStopHook({ hook_event_name: 'Stop', cwd: repo });
     expect(decision.block).toBe(true);
     expect(decision.reason).toMatch(/Continue the beanflow run/);
-    expect(decision.reason).toContain('beanflow-implementer');
-    expect(decision.reason).toContain('leaf a');
-    expect(decision.reason).toContain('fresh beanflow-implementer thread');
-    expect(decision.reason).toContain('Reuse that thread only for guidance and repairs');
-    expect(decision.reason).toContain('retire it after acceptance');
-    expect(decision.reason).toContain('interim owner questions in commentary only');
-    expect(decision.reason).toContain('Immediately before any user-facing final response');
-    expect(decision.reason).toContain('confirm the implementer is terminal');
-    expect(decision.reason).toContain('review a completed outcome in this same turn');
-    expect(decision.reason).toContain('terminal implementer is not a stopping condition');
+    expect(decision.reason).toContain('task a');
+    expect(decision.reason).toContain('Implement only the selected task');
+    expect(decision.reason).toContain('skeptically review the resulting diff');
+    expect(decision.reason).toContain('Repair any failed review findings');
     expect(decision.reason).toContain('delete the accepted Bean');
     expect(decision.reason).toContain('commit only its tracker and dependency cleanup');
-    expect(decision.reason).toContain('start the next selected leaf');
+    expect(decision.reason).toContain('run and accept the Milestone checkpoint');
+    expect(decision.reason).toContain('next selected Task');
     expect(decision.reason).toContain('verify the worktree is clean');
     expect(decision.reason).toContain('the Bean remains intact');
-    expect(decision.reason).toContain('leaf formatter and static-analysis gate passed');
+    expect(decision.reason).toContain('task cheap local proof passed');
+    expect(decision.reason).toContain('focused tests, formatting, and reliably scoped static analysis');
     expect(decision.reason).toContain('explicit cleanup Bean blocking final verification');
     expect(decision.reason).toContain('inventory the outgoing production path');
     expect(decision.reason).toContain('responsive controls, scripts, and lifecycle effects');
     expect(decision.reason).toContain('Treat a failing test that names a changed route');
     expect(decision.reason).toContain('reproduces at the recorded base commit');
     expect(decision.reason).toContain('A later Bean does not excuse behavior removed');
-    expect(decision.reason).toContain('Reject failures back to the same implementer');
     expect(decision.reason).toContain('build-cache status');
   });
 
@@ -130,8 +125,8 @@ describe('Codex Stop hook', () => {
     const worktree = makeRepo();
     const otherCheckout = makeRepo();
     const state = runState();
-    state.parentBean.path = join(worktree, '.beans', 'e--build-a-widget.md');
-    state.manifest.parentBean.path = state.parentBean.path;
+    state.epic.path = join(worktree, '.beans', 'e--build-a-widget.md');
+    state.manifest.epic.path = state.epic.path;
     persistRunState(state);
     armRun('r1');
 
@@ -159,12 +154,12 @@ describe('Codex Stop hook', () => {
     disarmRun(worktreeB);
   });
 
-  it('pauses the run when every remaining leaf is blocked', () => {
+  it('pauses the run when every remaining task is blocked', () => {
     const repo = makeRepo();
     const state = runState({
       blockers: [
         {
-          leaf: { id: 'a', path: '.beans/a.md', title: 'A' },
+          task: { id: 'a', path: '.beans/a.md', title: 'A' },
           evidence: 'Owner input needed',
           requiredDecision: 'Choose one',
           recordedAt: 't1',
@@ -178,9 +173,9 @@ describe('Codex Stop hook', () => {
     expect(loadRunState('r1').phase).toBe('paused');
   });
 
-  it('continues into parent verification when every manifest leaf is complete', () => {
+  it('continues into Epic checkpoint when every manifest task is complete', () => {
     const repo = makeRepo();
-    const state = runState({ manifest: { ...runState().manifest, executableLeaves: [] } });
+    const state = runState({ manifest: { ...runState().manifest, tasks: [] } });
     persistRunState(state);
     armRun('r1');
 
@@ -190,9 +185,9 @@ describe('Codex Stop hook', () => {
     expect(loadRunState('r1').phase).toBe('running');
   });
 
-  it('completes the run after parent verification deletes the parent Bean', () => {
+  it('completes the run after Epic checkpoint deletes the Epic', () => {
     const repo = makeRepo();
-    const state = runState({ manifest: { ...runState().manifest, executableLeaves: [] } });
+    const state = runState({ manifest: { ...runState().manifest, tasks: [] } });
     persistRunState(state);
     armRun('r1');
     unlinkSync(join(repo, '.beans', 'e--build-a-widget.md'));

@@ -28,19 +28,19 @@ describe('freezeManifest', () => {
     const b = bean('b', { parent: 'g', blockedBy: ['a'] });
     const c = bean('c', { parent: 'g', blockedBy: ['a', 'b'] });
     const manifest = freezeManifest(buildTree([epic, grp, a, b, c]), 'e', 't0');
-    expect(manifest.executableLeaves.map((x) => x.id)).toEqual(['a', 'b', 'c']);
+    expect(manifest.tasks.map((x) => x.id)).toEqual(['a', 'b', 'c']);
   });
 
-  it('omits terminal leaves and treats completed dependencies as satisfied', () => {
+  it('omits terminal tasks and treats completed dependencies as satisfied', () => {
     const epic = bean('e', { type: 'epic' });
     const completed = bean('a', { parent: 'e', status: 'completed' });
     const scrapped = bean('unused', { parent: 'e', status: 'scrapped' });
     const remaining = bean('b', { parent: 'e', blockedBy: ['a'] });
     const manifest = freezeManifest(buildTree([epic, completed, scrapped, remaining]), 'e', 't0');
-    expect(manifest.executableLeaves.map((leaf) => leaf.id)).toEqual(['b']);
+    expect(manifest.tasks.map((task) => task.id)).toEqual(['b']);
   });
 
-  it('rejects a remaining leaf blocked by a scrapped dependency', () => {
+  it('rejects a remaining task blocked by a scrapped dependency', () => {
     const epic = bean('e', { type: 'epic' });
     const scrapped = bean('a', { parent: 'e', status: 'scrapped' });
     const remaining = bean('b', { parent: 'e', blockedBy: ['a'] });
@@ -54,18 +54,18 @@ describe('freezeManifest', () => {
     expect(() => freezeManifest(tree, 'nope', 't0')).toThrow(FatalError);
   });
 
-  it('rejects a leaf as the parent', () => {
+  it('rejects a task as the parent', () => {
     const tree = buildTree([bean('a')]);
-    expect(() => freezeManifest(tree, 'a', 't0')).toThrow(/not a grouping/);
+    expect(() => freezeManifest(tree, 'a', 't0')).toThrow(/not an Epic/);
   });
 
-  it('rejects a leaf blocked by an unknown bean', () => {
+  it('rejects a task blocked by an unknown bean', () => {
     const epic = bean('e', { type: 'epic' });
     const a = bean('a', { parent: 'e', blockedBy: ['zzz'] });
     expect(() => freezeManifest(buildTree([epic, a]), 'e', 't0')).toThrow(/unknown bean/);
   });
 
-  it('rejects a leaf blocked by a bean outside the scope', () => {
+  it('rejects a task blocked by a bean outside the scope', () => {
     const epic = bean('e', { type: 'epic' });
     const inScope = bean('a', { parent: 'e' });
     const outside = bean('x');
@@ -90,6 +90,6 @@ describe('freezeManifest', () => {
     const tree = buildTree([epic, a, b, c]);
     const m1 = freezeManifest(tree, 'e', 't0');
     const m2 = freezeManifest(tree, 'e', 't1');
-    expect(m1.executableLeaves.map((x) => x.id)).toEqual(m2.executableLeaves.map((x) => x.id));
+    expect(m1.tasks.map((x) => x.id)).toEqual(m2.tasks.map((x) => x.id));
   });
 });

@@ -1,7 +1,7 @@
 import { readdirSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { describe, expect, it } from 'vitest';
-import { discoverBeans, executableLeaves } from '../src/core/discovery.js';
+import { discoverBeans, tasks } from '../src/core/discovery.js';
 
 const fixtures = fileURLToPath(new URL('./fixtures', import.meta.url));
 
@@ -18,13 +18,13 @@ describe('discoverBeans', () => {
     expect(dddd.blockedBy).toEqual(['beanflow-cccc']);
   });
 
-  it('classifies grouping beans and executable leaves', () => {
+  it('classifies milestone beans and executable tasks', () => {
     const tree = discoverBeans(fixtures);
-    expect(tree.kindOf.get('beanflow-aaaa')).toBe('grouping');
-    expect(tree.kindOf.get('beanflow-bbbb')).toBe('grouping');
-    expect(tree.kindOf.get('beanflow-cccc')).toBe('leaf');
-    expect(tree.kindOf.get('beanflow-dddd')).toBe('leaf');
-    expect(executableLeaves(tree).map((b) => b.id).sort()).toEqual(
+    expect(tree.kindOf.get('beanflow-aaaa')).toBe('epic');
+    expect(tree.kindOf.get('beanflow-bbbb')).toBe('milestone');
+    expect(tree.kindOf.get('beanflow-cccc')).toBe('task');
+    expect(tree.kindOf.get('beanflow-dddd')).toBe('task');
+    expect(tasks(tree).map((b) => b.id).sort()).toEqual(
       ['beanflow-cccc', 'beanflow-dddd', 'beanflow-eeee', 'beanflow-ffff'].sort(),
     );
   });

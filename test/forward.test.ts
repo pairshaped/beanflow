@@ -8,10 +8,10 @@ import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import { auditTree } from '../src/core/audit.js';
 import { commitAtomic } from '../src/core/commit.js';
-import { buildReport, canDeleteParent } from '../src/core/completion.js';
+import { buildReport, canDeleteEpic } from '../src/core/completion.js';
 import { discoverBeans } from '../src/core/discovery.js';
 import { freezeManifest } from '../src/core/manifest.js';
-import { selectNextLeaf } from '../src/core/selection.js';
+import { selectNextTask } from '../src/core/selection.js';
 import { setupIsolatedRun } from '../src/core/worktree.js';
 import { land } from '../src/core/landing.js';
 
@@ -79,7 +79,7 @@ describe('forward test', () => {
 
     // Manifest freeze.
     const manifest = freezeManifest(tree, 'e', 't0');
-    expect(manifest.executableLeaves.map((l) => l.id)).toEqual(['a', 'b']);
+    expect(manifest.tasks.map((l) => l.id)).toEqual(['a', 'b']);
 
     // Isolated run setup.
     const worktree = join(repo, '.worktrees', 'run-1');
@@ -92,14 +92,14 @@ describe('forward test', () => {
     expect(setup.baseCommit).toMatch(/^[0-9a-f]{40}$/);
 
     const completed: string[] = [];
-    const leavesOf = (dir: string) => {
+    const tasksOf = (dir: string) => {
       const t = discoverBeans(dir);
-      return t.beans.filter((b) => t.kindOf.get(b.id) === 'leaf');
+      return t.beans.filter((b) => t.kindOf.get(b.id) === 'task');
     };
 
-    // Complete leaf a: implement, delete its Bean, commit atomically.
+    // Complete task a: implement, delete its Bean, commit atomically.
     {
-      const next = selectNextLeaf(leavesOf(join(worktree, '.beans')), new Set(completed), new Set());
+      const next = selectNextTask(tasksOf(join(worktree, '.beans')), new Set(completed), new Set());
       expect(next?.id).toBe('a');
       writeFileSync(join(worktree, 'foundation.txt'), 'foundation');
       rmSync(join(worktree, '.beans', 'a--foundation.md'));
@@ -107,9 +107,9 @@ describe('forward test', () => {
       completed.push('a');
     }
 
-    // Complete leaf b after a is done.
+    // Complete task b after a is done.
     {
-      const next = selectNextLeaf(leavesOf(join(worktree, '.beans')), new Set(completed), new Set());
+      const next = selectNextTask(tasksOf(join(worktree, '.beans')), new Set(completed), new Set());
       expect(next?.id).toBe('b');
       writeFileSync(join(worktree, 'work.txt'), 'work');
       rmSync(join(worktree, '.beans', 'b--do-work.md'));
@@ -120,11 +120,11 @@ describe('forward test', () => {
     // Completion report: parent deletable.
     const report = buildReport(
       manifest,
-      completed.map((id) => ({ leaf: { id, path: `.beans/${id}.md`, title: id }, commitHash: 'h' })),
+      completed.map((id) => ({ task: { id, path: `.beans/${id}.md`, title: id }, commitHash: 'h' })),
       [],
       { passed: true, evidence: 'true' },
     );
-    expect(canDeleteParent(report)).toBe(true);
+    expect(canDeleteEpic(report)).toBe(true);
 
     // Landing.
     const result = land({

@@ -1,7 +1,7 @@
 // The host-specific surface of Beanflow.
 //
 // The core is host-neutral. A host implements this adapter and drives the
-// core by calling its lifecycle entry points (added in later leaves). Pi is
+// core by calling its lifecycle entry points (added in later tasks). Pi is
 // the only V1 host; the core must never import Pi code.
 
 export interface HostAdapter {

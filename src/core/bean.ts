@@ -10,6 +10,7 @@ export interface Bean {
   parent: string | null;
   blockedBy: string[];
   priority: string;
+  tags?: string[];
   createdAt: string;
   body: string;
 }
@@ -29,6 +30,7 @@ interface Frontmatter {
   parent?: unknown;
   blocked_by?: unknown;
   priority?: unknown;
+  tags?: unknown;
   created_at?: unknown;
 }
 
@@ -67,6 +69,7 @@ export function parseBean(path: string, raw: string): Bean {
     parent: asString(frontmatter.parent),
     blockedBy: asStringList(frontmatter.blocked_by),
     priority: asString(frontmatter.priority) ?? 'normal',
+    tags: asStringList(frontmatter.tags),
     createdAt: asString(frontmatter.created_at) ?? '',
     body,
   };

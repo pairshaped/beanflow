@@ -22,16 +22,16 @@ import { parseOperation } from "../dist/core/tool.js";
 import { checkBounds, shouldStop } from "../dist/core/safety.js";
 
 function runWorktreePath(
-  state: { worktreePath?: string | null; parentBean: { path: string } },
+  state: { worktreePath?: string | null; epic: { path: string } },
   fallbackCwd: string,
 ): string {
   if (state.worktreePath) return resolve(state.worktreePath);
-  if (isAbsolute(state.parentBean.path)) return dirname(dirname(state.parentBean.path));
+  if (isAbsolute(state.epic.path)) return dirname(dirname(state.epic.path));
   return resolve(fallbackCwd);
 }
 
 function isRunWorktree(
-  state: { worktreePath?: string | null; parentBean: { path: string } },
+  state: { worktreePath?: string | null; epic: { path: string } },
   cwd: string,
 ): boolean {
   return resolve(cwd) === runWorktreePath(state, cwd);
@@ -71,7 +71,7 @@ export default function (pi: ExtensionAPI) {
     });
 
     if (decision.shouldContinue) {
-      await pi.sendUserMessage("Continue the beanflow run: implement the next eligible leaf.", {
+      await pi.sendUserMessage("Continue the beanflow run: implement the next eligible task.", {
         deliverAs: "followUp",
       });
     }
@@ -104,7 +104,7 @@ export default function (pi: ExtensionAPI) {
             };
           }
           const s = statusOf(state);
-          const text = `Run ${runId}: phase=${s.phase}, selected=${s.selectedLeaf?.id ?? "none"}, blockers=${s.blockers.length}.`;
+          const text = `Run ${runId}: phase=${s.phase}, selected=${s.selectedTask?.id ?? "none"}, blockers=${s.blockers.length}.`;
           return { content: [{ type: "text", text }], details: {} };
         }
         case "resume": {
@@ -134,7 +134,7 @@ export default function (pi: ExtensionAPI) {
               ? ` while ${blockerCount} recorded blocker${blockerCount === 1 ? "" : "s"} remain${blockerCount === 1 ? "s" : ""} unresolved`
               : "";
             return {
-              content: [{ type: "text", text: `Beanflow cannot resume: no eligible leaf exists${blockerDetail}.` }],
+              content: [{ type: "text", text: `Beanflow cannot resume: no eligible task exists${blockerDetail}.` }],
               details: {},
             };
           }

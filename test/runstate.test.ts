@@ -14,18 +14,18 @@ afterEach(() => {
 
 function sampleState(): RunState {
   return {
-    schemaVersion: 1,
+    schemaVersion: 2,
     runId: 'run-1',
-    parentBean: { id: 'e', path: '.beans/e.md', title: 'Epic' },
+    epic: { id: 'e', path: '.beans/e.md', title: 'Epic' },
     manifest: {
-      parentBean: { id: 'e', path: '.beans/e.md', title: 'Epic' },
+      epic: { id: 'e', path: '.beans/e.md', title: 'Epic' },
       frozenAt: '2026-08-16T00:00:00Z',
-      executableLeaves: [{ id: 'a', path: '.beans/a.md', title: 'A' }],
+      tasks: [{ id: 'a', path: '.beans/a.md', title: 'A' }],
     },
     phase: 'running',
     baseBranch: null,
     baseCommit: null,
-    selectedLeaf: { id: 'a', path: '.beans/a.md', title: 'A' },
+    selectedTask: { id: 'a', path: '.beans/a.md', title: 'A' },
     blockers: [],
     attempts: {},
     startedAt: '2026-08-16T00:00:00Z',
@@ -49,10 +49,10 @@ describe('run state persistence', () => {
     expect(stateDir()).toMatch(/\.local\/state\/beanflow$/);
   });
 
-  it('reports phase and selected leaf via statusOf', () => {
+  it('reports phase and selected task via statusOf', () => {
     const status = statusOf(sampleState());
     expect(status.phase).toBe('running');
-    expect(status.selectedLeaf?.id).toBe('a');
+    expect(status.selectedTask?.id).toBe('a');
   });
 });
 

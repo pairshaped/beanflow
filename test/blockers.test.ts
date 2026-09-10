@@ -5,7 +5,7 @@ import { describe, expect, it } from 'vitest';
 import type { Bean } from '../src/core/bean.js';
 import {
   appendBlockerEvidence,
-  blockedLeafIds,
+  blockedTaskIds,
   bumpAttempt,
   clearBlocker,
   DEFAULT_STALL_THRESHOLD,
@@ -13,10 +13,10 @@ import {
   recordBlocker,
   resetAttempts,
 } from '../src/core/blockers.js';
-import { selectNextLeaf } from '../src/core/selection.js';
+import { selectNextTask } from '../src/core/selection.js';
 import type { RunState } from '../src/core/types.js';
 
-function leaf(id: string, opts: Partial<Bean> = {}): Bean {
+function task(id: string, opts: Partial<Bean> = {}): Bean {
   return {
     id,
     path: `.beans/${id}.md`,
@@ -34,18 +34,18 @@ function leaf(id: string, opts: Partial<Bean> = {}): Bean {
 
 function runState(overrides: Partial<RunState> = {}): RunState {
   return {
-    schemaVersion: 1,
+    schemaVersion: 2,
     runId: 'r1',
-    parentBean: { id: 'e', path: '.beans/e.md', title: 'E' },
+    epic: { id: 'e', path: '.beans/e.md', title: 'E' },
     manifest: {
-      parentBean: { id: 'e', path: '.beans/e.md', title: 'E' },
+      epic: { id: 'e', path: '.beans/e.md', title: 'E' },
       frozenAt: 't0',
-      executableLeaves: [],
+      tasks: [],
     },
     phase: 'running',
     baseBranch: null,
     baseCommit: null,
-    selectedLeaf: null,
+    selectedTask: null,
     blockers: [],
     attempts: {},
     startedAt: 't0',
@@ -56,38 +56,38 @@ function runState(overrides: Partial<RunState> = {}): RunState {
 
 describe('blocker recording', () => {
   it('records a blocker and derives the blocked set without mutating the original', () => {
-    const a = leaf('a');
+    const a = task('a');
     const s = runState();
     const receipt = {
-      leaf: { id: a.id, path: a.path, title: a.title },
+      task: { id: a.id, path: a.path, title: a.title },
       evidence: 'needs X',
       requiredDecision: 'choose X or Y',
       recordedAt: 't1',
     };
     const next = recordBlocker(s, receipt);
     expect(next.blockers).toHaveLength(1);
-    expect(blockedLeafIds(next)).toEqual(new Set(['a']));
+    expect(blockedTaskIds(next)).toEqual(new Set(['a']));
     expect(s.blockers).toHaveLength(0);
   });
 
-  it('lets selection continue with independent leaves while one is blocked', () => {
-    const a = leaf('a', { createdAt: '2026-01-01T00:00:00Z' });
-    const b = leaf('b', { createdAt: '2026-01-02T00:00:00Z' });
-    expect(selectNextLeaf([a, b], new Set(), new Set(['a']))?.id).toBe('b');
+  it('lets selection continue with independent tasks while one is blocked', () => {
+    const a = task('a', { createdAt: '2026-01-01T00:00:00Z' });
+    const b = task('b', { createdAt: '2026-01-02T00:00:00Z' });
+    expect(selectNextTask([a, b], new Set(), new Set(['a']))?.id).toBe('b');
   });
 
-  it('reconsiders a blocked leaf after its blocker is cleared', () => {
-    const a = leaf('a', { createdAt: '2026-01-01T00:00:00Z' });
-    const b = leaf('b', { createdAt: '2026-01-02T00:00:00Z' });
+  it('reconsiders a blocked task after its blocker is cleared', () => {
+    const a = task('a', { createdAt: '2026-01-01T00:00:00Z' });
+    const b = task('b', { createdAt: '2026-01-02T00:00:00Z' });
     const s = runState({
       blockers: [
-        { leaf: { id: 'a', path: '.beans/a.md', title: 'a' }, evidence: 'x', requiredDecision: 'y', recordedAt: 't1' },
+        { task: { id: 'a', path: '.beans/a.md', title: 'a' }, evidence: 'x', requiredDecision: 'y', recordedAt: 't1' },
       ],
     });
-    expect(blockedLeafIds(s)).toEqual(new Set(['a']));
+    expect(blockedTaskIds(s)).toEqual(new Set(['a']));
     const cleared = clearBlocker(s, 'a');
-    expect(blockedLeafIds(cleared)).toEqual(new Set());
-    expect(selectNextLeaf([a, b], new Set(), blockedLeafIds(cleared))?.id).toBe('a');
+    expect(blockedTaskIds(cleared)).toEqual(new Set());
+    expect(selectNextTask([a, b], new Set(), blockedTaskIds(cleared))?.id).toBe('a');
   });
 });
 
@@ -116,7 +116,7 @@ describe('appendBlockerEvidence', () => {
     const path = join(dir, 'a.md');
     writeFileSync(path, '---\ntitle: A\n---\n\nbody\n');
     appendBlockerEvidence(path, {
-      leaf: { id: 'a', path, title: 'A' },
+      task: { id: 'a', path, title: 'A' },
       evidence: 'needs X',
       requiredDecision: 'choose',
       recordedAt: 't1',

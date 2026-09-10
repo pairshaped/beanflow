@@ -2,7 +2,7 @@ import { readdirSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { parseBean, type Bean } from './bean.js';
 
-export type BeanKind = 'grouping' | 'leaf';
+export type BeanKind = 'epic' | 'milestone' | 'task';
 
 export interface BeanTree {
   beans: Bean[];
@@ -11,7 +11,7 @@ export interface BeanTree {
   kindOf: Map<string, BeanKind>;
 }
 
-/** Build index maps and classify each bean as grouping or executable leaf. */
+/** Build index maps and classify each Bean by its Beanflow role. */
 export function buildTree(beans: Bean[]): BeanTree {
   const byId = new Map(beans.map((b) => [b.id, b]));
   const childrenOf = new Map<string, Bean[]>();
@@ -25,8 +25,12 @@ export function buildTree(beans: Bean[]): BeanTree {
   const kindOf = new Map<string, BeanKind>();
   for (const b of beans) {
     const hasChildren = (childrenOf.get(b.id)?.length ?? 0) > 0;
-    const isContainerType = b.type === 'epic' || b.type === 'milestone';
-    kindOf.set(b.id, isContainerType || hasChildren ? 'grouping' : 'leaf');
+    const kind: BeanKind = b.tags?.includes('beanflow-epic') || b.type === 'epic'
+      ? 'epic'
+      : b.tags?.includes('beanflow-milestone') || hasChildren
+        ? 'milestone'
+        : 'task';
+    kindOf.set(b.id, kind);
   }
   return { beans, byId, childrenOf, kindOf };
 }
@@ -41,6 +45,6 @@ export function discoverBeans(dir: string): BeanTree {
   return buildTree(beans);
 }
 
-export function executableLeaves(tree: BeanTree): Bean[] {
-  return tree.beans.filter((b) => tree.kindOf.get(b.id) === 'leaf');
+export function tasks(tree: BeanTree): Bean[] {
+  return tree.beans.filter((b) => tree.kindOf.get(b.id) === 'task');
 }

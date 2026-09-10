@@ -1,5 +1,5 @@
 // Blocker handling: record actionable evidence, keep the Bean present, skip to
-// independent leaves, reconsider after prerequisites change, and detect stalls.
+// independent tasks, reconsider after prerequisites change, and detect stalls.
 
 import { appendFileSync } from 'node:fs';
 import type { Bean } from './bean.js';
@@ -8,13 +8,13 @@ import type { BlockerReceipt, RunState } from './types.js';
 export const DEFAULT_STALL_THRESHOLD = 3;
 
 export function makeBlockerReceipt(
-  leaf: Bean,
+  task: Bean,
   evidence: string,
   requiredDecision: string,
   recordedAt: string,
 ): BlockerReceipt {
   return {
-    leaf: { id: leaf.id, path: leaf.path, title: leaf.title },
+    task: { id: task.id, path: task.path, title: task.title },
     evidence,
     requiredDecision,
     recordedAt,
@@ -25,30 +25,30 @@ export function recordBlocker(state: RunState, receipt: BlockerReceipt): RunStat
   return { ...state, blockers: [...state.blockers, receipt] };
 }
 
-export function blockedLeafIds(state: RunState): Set<string> {
-  return new Set(state.blockers.map((b) => b.leaf.id));
+export function blockedTaskIds(state: RunState): Set<string> {
+  return new Set(state.blockers.map((b) => b.task.id));
 }
 
-export function clearBlocker(state: RunState, leafId: string): RunState {
-  return { ...state, blockers: state.blockers.filter((b) => b.leaf.id !== leafId) };
+export function clearBlocker(state: RunState, taskId: string): RunState {
+  return { ...state, blockers: state.blockers.filter((b) => b.task.id !== taskId) };
 }
 
-export function bumpAttempt(state: RunState, leafId: string): RunState {
-  return { ...state, attempts: { ...state.attempts, [leafId]: (state.attempts[leafId] ?? 0) + 1 } };
+export function bumpAttempt(state: RunState, taskId: string): RunState {
+  return { ...state, attempts: { ...state.attempts, [taskId]: (state.attempts[taskId] ?? 0) + 1 } };
 }
 
-export function resetAttempts(state: RunState, leafId: string): RunState {
+export function resetAttempts(state: RunState, taskId: string): RunState {
   const attempts = { ...state.attempts };
-  delete attempts[leafId];
+  delete attempts[taskId];
   return { ...state, attempts };
 }
 
 export function isStalled(
   state: RunState,
-  leafId: string,
+  taskId: string,
   threshold: number = DEFAULT_STALL_THRESHOLD,
 ): boolean {
-  return (state.attempts[leafId] ?? 0) >= threshold;
+  return (state.attempts[taskId] ?? 0) >= threshold;
 }
 
 export function blockerSection(receipt: BlockerReceipt): string {
