@@ -2,7 +2,7 @@
 name: beanflow
 description: >-
   Carry a feature through a bounded, audited delivery run: requirements, an audited
-  Bean tree, implementation and per-Bean review in an isolated worktree, and a
+  Bean tree, implementation and per-Task review in an isolated worktree, and a
   reviewable completion or blocker report. Use when the user wants to start, resume,
   check, or land a Beanflow run.
 ---
@@ -40,8 +40,9 @@ legible.
    testable acceptance criteria, exact verification, dependencies, and safe autonomy.
    Reject vague, duplicate, oversized, microscopic, or judgment-dependent Tasks. Each Task must use
    the exact `## What to build`, `## Acceptance criteria`, `## Verification`, and
-   `## Out of scope` headings; acceptance criteria must be checkboxes. Present the tree
-   and execution order to the owner.
+   `## Out of scope` headings; acceptance criteria must be checkboxes. Audit every
+   Milestone for a concrete integration outcome and explicit checkpoint commands.
+   Present the tree and execution order to the owner.
 5. **Isolated run setup**: On an explicit start request, create a branch and worktree,
    or adopt the clean isolated worktree the owner already requested. Use the `beanflow`
    tool with the audited epic id and base branch. It records the absolute worktree path
@@ -62,7 +63,7 @@ legible.
    into the feature branch, resolve and verify there, fast-forward the target, then
    remove the clean worktree and branch.
 
-## Per-Bean checkpoints
+## Task checkpoints
 
 ### 1. Implement
 
@@ -96,7 +97,7 @@ owning boundary, formatting, and the affected-language static analysis that can 
 scoped reliably to the changed package, crate, module, or targets. This normally
 includes focused Rust Clippy plus scoped TypeScript lint and typecheck when those
 invocations exist. Use the repository's equivalent checks for other languages. Run
-these checks at the Bean where they can catch a defect close to its cause.
+these checks at the Task where they can catch a defect close to its cause.
 
 Classify a check by its actual cost and scope, not its tool name. Formatting, focused
 tests, scoped lint and typecheck, and focused Clippy are normally cheap. Smoke tests,

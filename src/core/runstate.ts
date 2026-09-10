@@ -113,6 +113,7 @@ export function activeRunId(worktreePath?: string): string | null {
 export interface RunStatus {
   phase: RunPhase;
   selectedTask: BeanRef | null;
+  selectedMilestone: BeanRef | null;
   blockers: BlockerReceipt[];
   updatedAt: string;
 }
@@ -121,6 +122,7 @@ export function statusOf(state: RunState): RunStatus {
   return {
     phase: state.phase,
     selectedTask: state.selectedTask,
+    selectedMilestone: state.selectedMilestone,
     blockers: state.blockers,
     updatedAt: state.updatedAt,
   };

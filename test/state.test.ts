@@ -7,18 +7,22 @@ const task = (id: string, title: string) => ({ id, path: `.beans/${id}.md`, titl
 function sampleState(): RunState {
   const epic = { id: 'beanflow-gh4l', path: '.beans/beanflow-gh4l.md', title: 'Build Beanflow' };
   return {
-    schemaVersion: 2,
+    schemaVersion: 3,
     runId: 'run-1',
     epic,
     manifest: {
       epic,
       frozenAt: '2026-08-16T00:00:00Z',
-      tasks: [task('beanflow-a', 'Task A'), task('beanflow-b', 'Task B')],
+      milestones: [{
+        milestone: task('beanflow-m', 'Milestone'),
+        tasks: [task('beanflow-a', 'Task A'), task('beanflow-b', 'Task B')],
+      }],
     },
     phase: 'running',
     baseBranch: 'master',
     baseCommit: 'abc123',
     selectedTask: task('beanflow-a', 'Task A'),
+    selectedMilestone: null,
     blockers: [
       {
         task: task('beanflow-c', 'Task C'),
@@ -39,7 +43,7 @@ describe('state schema', () => {
   });
 
   it('serializes stable JSON with the schema version', () => {
-    expect(serializeState(sampleState())).toContain('"schemaVersion": 2');
+    expect(serializeState(sampleState())).toContain('"schemaVersion": 3');
   });
 
   it('rejects an unknown schema version', () => {

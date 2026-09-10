@@ -6,7 +6,12 @@ import { existsSync } from 'node:fs';
 import { createInterface } from 'node:readline';
 import { join } from 'node:path';
 import { pathToFileURL } from 'node:url';
-import { allManifestTasksComplete, decideContinuation, nextEligibleTask } from '../core/continuation.js';
+import {
+  allManifestMilestonesComplete,
+  decideContinuation,
+  nextEligibleTask,
+  nextMilestoneCheckpoint,
+} from '../core/continuation.js';
 import { discoverBeans } from '../core/discovery.js';
 import { activeRunId, isRunWorktree, loadRunState, persistRunState, worktreeStateDir } from '../core/runstate.js';
 import { checkBounds, shouldStop } from '../core/safety.js';
@@ -43,14 +48,43 @@ export function decideStopHook(input: StopHookInput): StopHookDecision {
 
     const tree = discoverBeans(beansDir);
     const selectedTask = nextEligibleTask(tree, state.manifest, state);
+    const selectedMilestone = nextMilestoneCheckpoint(tree, state.manifest);
     const eligible = selectedTask !== null;
-    if (!eligible && allManifestTasksComplete(tree, state.manifest)) {
+    if (selectedMilestone && state.phase === 'running' && state.blockers.length === 0) {
+      persistRunState({
+        ...state,
+        selectedTask: null,
+        selectedMilestone,
+        updatedAt: new Date().toISOString(),
+      }, cwd);
+      return {
+        block: true,
+        reason:
+          `Continue the beanflow run with the Milestone checkpoint for ${selectedMilestone.id}. ` +
+          'Run the repository-defined build, smoke tests, broader test suite, and any other deferred heavy checks. ' +
+          'Skeptically review the combined Milestone diff and verify its Tasks work together. Repair failures and ' +
+          'rerun affected checks. Delete the Milestone only after the checkpoint passes, then continue with the next Task.',
+      };
+    }
+    if (!eligible && allManifestMilestonesComplete(tree, state.manifest)) {
       if (!tree.byId.has(state.epic.id)) {
-        persistRunState({ ...state, phase: 'completed', selectedTask: null, updatedAt: new Date().toISOString() }, cwd);
+        persistRunState({
+          ...state,
+          phase: 'completed',
+          selectedTask: null,
+          selectedMilestone: null,
+          updatedAt: new Date().toISOString(),
+        }, cwd);
         return { block: false };
       }
-      if (state.blockers.length === 0) {
-        persistRunState({ ...state, phase: 'running', selectedTask: null, updatedAt: new Date().toISOString() }, cwd);
+      if (state.phase === 'running' && state.blockers.length === 0) {
+        persistRunState({
+          ...state,
+          phase: 'running',
+          selectedTask: null,
+          selectedMilestone: null,
+          updatedAt: new Date().toISOString(),
+        }, cwd);
         return {
           block: true,
           reason: `Continue the beanflow run: verify parent ${state.epic.id} and delete it only if verification passes.`,
@@ -58,30 +92,36 @@ export function decideStopHook(input: StopHookInput): StopHookDecision {
       }
     }
     if (!eligible && state.phase === 'running') {
-      persistRunState({ ...state, phase: 'paused', selectedTask: null, updatedAt: new Date().toISOString() }, cwd);
+      persistRunState({
+        ...state,
+        phase: 'paused',
+        selectedTask: null,
+        selectedMilestone: null,
+        updatedAt: new Date().toISOString(),
+      }, cwd);
       return { block: false };
     }
-    if (selectedTask?.id !== state.selectedTask?.id) {
-      persistRunState({ ...state, selectedTask, updatedAt: new Date().toISOString() }, cwd);
+    if (selectedTask?.id !== state.selectedTask?.id || state.selectedMilestone !== null) {
+      persistRunState({ ...state, selectedTask, selectedMilestone: null, updatedAt: new Date().toISOString() }, cwd);
     }
     const decision = decideContinuation({ phase: state.phase, lastStopReason: null, eligibleWorkRemains: eligible });
     if (decision.shouldContinue) {
       return {
         block: true,
         reason:
-          `Continue the beanflow run in this task, beginning with task ${selectedTask!.id}. ` +
-          'Implement only the selected task, run its required checks, commit it while keeping the Bean intact, then ' +
+          `Continue the beanflow run in this chat, beginning with Task ${selectedTask!.id}. ` +
+          'Implement only the selected Task, run its required checks, commit it while keeping the Bean intact, then ' +
           'skeptically review the resulting diff and its criterion-by-criterion proof. Repair any failed review findings ' +
           'and rerun affected checks before acceptance. ' +
-          'Before accepting the task, verify the worktree is clean, the Bean remains intact, required checks ran, ' +
-          'the task cheap local proof passed, including focused tests, formatting, and reliably scoped static analysis, ' +
+          'Before accepting the Task, verify the worktree is clean, the Bean remains intact, required checks ran, ' +
+          'the cheap local proof for the Task passed, including focused tests, formatting, and reliably scoped static analysis, ' +
           'the code and tests prove the acceptance criteria, ' +
           'and replaced code was deleted or has an explicit cleanup Bean blocking final verification. For a replaced ' +
           'route, renderer, shell, workflow, or shared boundary, inventory the outgoing production path including ' +
           'authentication controls, alerts, metadata, accessibility, responsive controls, scripts, and lifecycle effects; ' +
           'preserve each behavior or require accepted scope that explicitly removes it. Treat a failing ' +
           'test that names a changed route, replaced renderer, migrated workflow, shared shell, or other touched boundary ' +
-          'as a task regression unless it reproduces at the recorded base commit or concrete evidence traces it to ' +
+          'as a Task regression unless it reproduces at the recorded base commit or concrete evidence traces it to ' +
           'unchanged code. A later Bean does not excuse behavior removed by the current migration. ' +
           'After acceptance, delete the accepted Bean, commit only its tracker and dependency cleanup, inspect ' +
           'repository-owned build-cache status, clean safely when the cache is at least 10 GiB and the filesystem has ' +

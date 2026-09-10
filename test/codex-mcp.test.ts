@@ -56,19 +56,20 @@ describe('Codex MCP server', () => {
     execFileSync('git', ['init', '-q', '-b', 'f/stale-owner'], { cwd });
     const missingWorktree = join(tmpdir(), `missing-beanflow-worktree-${Date.now()}`);
     const state: RunState = {
-      schemaVersion: 2,
+      schemaVersion: 3,
       runId: 'stale-run',
       epic: { id: 'epic', path: join(missingWorktree, '.beans', 'epic.md'), title: 'Epic' },
       manifest: {
         epic: { id: 'epic', path: join(missingWorktree, '.beans', 'epic.md'), title: 'Epic' },
         frozenAt: '2026-08-17T00:00:00Z',
-        tasks: [],
+        milestones: [],
       },
       phase: 'running',
       baseBranch: 'main',
       baseCommit: 'abc123',
       worktreePath: missingWorktree,
       selectedTask: null,
+      selectedMilestone: null,
       blockers: [],
       attempts: {},
       startedAt: '2026-08-17T00:00:00Z',
@@ -94,19 +95,20 @@ describe('Codex MCP server', () => {
     const cwd = mkdtempSync(join(tmpdir(), 'beanflow-live-run-'));
     execFileSync('git', ['init', '-q', '-b', 'f/live-run'], { cwd });
     const state: RunState = {
-      schemaVersion: 2,
+      schemaVersion: 3,
       runId: 'live-run',
       epic: { id: 'epic', path: join(cwd, '.beans', 'epic.md'), title: 'Epic' },
       manifest: {
         epic: { id: 'epic', path: join(cwd, '.beans', 'epic.md'), title: 'Epic' },
         frozenAt: '2026-08-17T00:00:00Z',
-        tasks: [],
+        milestones: [],
       },
       phase: 'running',
       baseBranch: 'main',
       baseCommit: 'abc123',
       worktreePath: realpathSync(cwd),
       selectedTask: null,
+      selectedMilestone: null,
       blockers: [],
       attempts: {},
       startedAt: '2026-08-17T00:00:00Z',
@@ -137,8 +139,12 @@ describe('Codex MCP server', () => {
       `---\n# test-epic\ntitle: Test epic\nstatus: in-progress\ntype: epic\ncreated_at: 2026-08-17T00:00:00Z\nupdated_at: 2026-08-17T00:00:00Z\n---\n`,
     );
     writeFileSync(
+      join(cwd, '.beans', 'test-milestone.md'),
+      `---\n# test-milestone\ntitle: Test milestone\nstatus: todo\ntype: feature\nparent: test-epic\ncreated_at: 2026-08-17T00:00:00Z\nupdated_at: 2026-08-17T00:00:00Z\n---\n\n## Milestone checkpoint\n\n- [ ] \`pnpm test\`\n`,
+    );
+    writeFileSync(
       join(cwd, '.beans', 'test-task.md'),
-      `---\n# test-task\ntitle: Test task\nstatus: todo\ntype: task\nparent: test-epic\ncreated_at: 2026-08-17T00:00:00Z\nupdated_at: 2026-08-17T00:00:00Z\n---\n\n## What to build\n\nImplement one bounded behavior with enough context for autonomous work.\n\n## Acceptance criteria\n\n- [ ] The behavior works.\n\n## Verification\n\nRun the focused test.\n\n## Out of scope\n\nDo not change unrelated behavior.\n`,
+      `---\n# test-task\ntitle: Test task\nstatus: todo\ntype: task\nparent: test-milestone\ncreated_at: 2026-08-17T00:00:00Z\nupdated_at: 2026-08-17T00:00:00Z\n---\n\n## What to build\n\nImplement one bounded behavior with enough context for autonomous work.\n\n## Acceptance criteria\n\n- [ ] The behavior works.\n\n## Verification\n\nRun the focused test.\n\n## Out of scope\n\nDo not change unrelated behavior.\n`,
     );
     execFileSync('git', ['init', '-b', 'main'], { cwd });
     execFileSync('git', ['config', 'user.email', 'dave@rapin.com'], { cwd });
@@ -178,8 +184,12 @@ describe('Codex MCP server', () => {
         `---\n# epic-${suffix}\ntitle: Epic ${suffix.toUpperCase()}\nstatus: in-progress\ntype: epic\ncreated_at: 2026-08-17T00:00:00Z\nupdated_at: 2026-08-17T00:00:00Z\n---\n`,
       );
       writeFileSync(
+        join(repo, '.beans', `milestone-${suffix}.md`),
+        `---\n# milestone-${suffix}\ntitle: Milestone ${suffix.toUpperCase()}\nstatus: todo\ntype: feature\nparent: epic-${suffix}\ncreated_at: 2026-08-17T00:00:00Z\nupdated_at: 2026-08-17T00:00:00Z\n---\n\n## Milestone checkpoint\n\n- [ ] \`pnpm test\`\n`,
+      );
+      writeFileSync(
         join(repo, '.beans', `task-${suffix}.md`),
-        `---\n# task-${suffix}\ntitle: Task ${suffix.toUpperCase()}\nstatus: todo\ntype: task\nparent: epic-${suffix}\ncreated_at: 2026-08-17T00:00:00Z\nupdated_at: 2026-08-17T00:00:00Z\n---\n\n## What to build\n\nImplement one bounded behavior with enough context for autonomous work.\n\n## Acceptance criteria\n\n- [ ] The behavior works.\n\n## Verification\n\nRun the focused test.\n\n## Out of scope\n\nDo not change unrelated behavior.\n`,
+        `---\n# task-${suffix}\ntitle: Task ${suffix.toUpperCase()}\nstatus: todo\ntype: task\nparent: milestone-${suffix}\ncreated_at: 2026-08-17T00:00:00Z\nupdated_at: 2026-08-17T00:00:00Z\n---\n\n## What to build\n\nImplement one bounded behavior with enough context for autonomous work.\n\n## Acceptance criteria\n\n- [ ] The behavior works.\n\n## Verification\n\nRun the focused test.\n\n## Out of scope\n\nDo not change unrelated behavior.\n`,
       );
     }
 
@@ -256,8 +266,12 @@ describe('Codex MCP server', () => {
       `---\n# test-epic\ntitle: Test epic\nstatus: in-progress\ntype: epic\ncreated_at: 2026-08-17T00:00:00Z\nupdated_at: 2026-08-17T00:00:00Z\n---\n`,
     );
     writeFileSync(
+      join(repo, '.beans', 'test-milestone.md'),
+      `---\n# test-milestone\ntitle: Test milestone\nstatus: todo\ntype: feature\nparent: test-epic\ncreated_at: 2026-08-17T00:00:00Z\nupdated_at: 2026-08-17T00:00:00Z\n---\n\n## Milestone checkpoint\n\n- [ ] \`pnpm test\`\n`,
+    );
+    writeFileSync(
       join(repo, '.beans', 'test-task.md'),
-      `---\n# test-task\ntitle: Test task\nstatus: todo\ntype: task\nparent: test-epic\ncreated_at: 2026-08-17T00:00:00Z\nupdated_at: 2026-08-17T00:00:00Z\n---\n\n## What to build\n\nImplement one bounded behavior with enough context for autonomous work.\n\n## Acceptance criteria\n\n- [ ] The behavior works.\n\n## Verification\n\nRun the focused test.\n\n## Out of scope\n\nDo not change unrelated behavior.\n`,
+      `---\n# test-task\ntitle: Test task\nstatus: todo\ntype: task\nparent: test-milestone\ncreated_at: 2026-08-17T00:00:00Z\nupdated_at: 2026-08-17T00:00:00Z\n---\n\n## What to build\n\nImplement one bounded behavior with enough context for autonomous work.\n\n## Acceptance criteria\n\n- [ ] The behavior works.\n\n## Verification\n\nRun the focused test.\n\n## Out of scope\n\nDo not change unrelated behavior.\n`,
     );
     writeFileSync(join(repo, 'tracked'), 'clean\n');
     execFileSync('git', ['init', '-b', 'main'], { cwd: repo });
@@ -307,8 +321,12 @@ describe('Codex MCP server', () => {
       `---\n# test-epic\ntitle: Test epic\nstatus: in-progress\ntype: epic\ncreated_at: 2026-08-17T00:00:00Z\nupdated_at: 2026-08-17T00:00:00Z\n---\n`,
     );
     writeFileSync(
+      join(repo, '.beans', 'test-milestone.md'),
+      `---\n# test-milestone\ntitle: Test milestone\nstatus: todo\ntype: feature\nparent: test-epic\ncreated_at: 2026-08-17T00:00:00Z\nupdated_at: 2026-08-17T00:00:00Z\n---\n\n## Milestone checkpoint\n\n- [ ] \`pnpm test\`\n`,
+    );
+    writeFileSync(
       join(repo, '.beans', 'test-task.md'),
-      `---\n# test-task\ntitle: Test task\nstatus: todo\ntype: task\nparent: test-epic\ncreated_at: 2026-08-17T00:00:00Z\nupdated_at: 2026-08-17T00:00:00Z\n---\n\n## What to build\n\nImplement one bounded behavior with enough context for autonomous work.\n\n## Acceptance criteria\n\n- [ ] The behavior works.\n\n## Verification\n\nRun the focused test.\n\n## Out of scope\n\nDo not change unrelated behavior.\n`,
+      `---\n# test-task\ntitle: Test task\nstatus: todo\ntype: task\nparent: test-milestone\ncreated_at: 2026-08-17T00:00:00Z\nupdated_at: 2026-08-17T00:00:00Z\n---\n\n## What to build\n\nImplement one bounded behavior with enough context for autonomous work.\n\n## Acceptance criteria\n\n- [ ] The behavior works.\n\n## Verification\n\nRun the focused test.\n\n## Out of scope\n\nDo not change unrelated behavior.\n`,
     );
     writeFileSync(join(repo, 'tracked'), 'clean\n');
     execFileSync('git', ['init', '-b', 'main'], { cwd: repo });
@@ -338,26 +356,34 @@ describe('Codex MCP server', () => {
     execFileSync('git', ['init', '-q', '-b', 'main'], { cwd });
     mkdirSync(join(cwd, '.beans'));
     writeFileSync(
+      join(cwd, '.beans', 'milestone.md'),
+      `---\n# milestone\ntitle: Milestone\nstatus: todo\ntype: feature\nparent: epic\ncreated_at: 2026-08-17T00:00:00Z\nupdated_at: 2026-08-17T00:00:00Z\n---\n\n## Milestone checkpoint\n\n- [ ] \`pnpm test\`\n`,
+    );
+    writeFileSync(
       join(cwd, '.beans', 'next.md'),
-      `---\n# next\ntitle: Next task\nstatus: todo\ntype: task\ncreated_at: 2026-08-17T00:00:00Z\nupdated_at: 2026-08-17T00:00:00Z\n---\n`,
+      `---\n# next\ntitle: Next task\nstatus: todo\ntype: task\nparent: milestone\ncreated_at: 2026-08-17T00:00:00Z\nupdated_at: 2026-08-17T00:00:00Z\n---\n`,
     );
     const state: RunState = {
-      schemaVersion: 2,
+      schemaVersion: 3,
       runId: 'advanced-run',
       epic: { id: 'epic', path: '.beans/epic.md', title: 'Epic' },
       manifest: {
         epic: { id: 'epic', path: '.beans/epic.md', title: 'Epic' },
         frozenAt: '2026-08-17T00:00:00Z',
-        tasks: [
-          { id: 'done', path: '.beans/done.md', title: 'Done task' },
-          { id: 'next', path: '.beans/next.md', title: 'Next task' },
-        ],
+        milestones: [{
+          milestone: { id: 'milestone', path: '.beans/milestone.md', title: 'Milestone' },
+          tasks: [
+            { id: 'done', path: '.beans/done.md', title: 'Done task' },
+            { id: 'next', path: '.beans/next.md', title: 'Next task' },
+          ],
+        }],
       },
       phase: 'running',
       baseBranch: 'main',
       baseCommit: 'abc123',
       worktreePath: realpathSync(cwd),
       selectedTask: { id: 'done', path: '.beans/done.md', title: 'Done task' },
+      selectedMilestone: null,
       blockers: [],
       attempts: {},
       startedAt: '2026-08-17T00:00:00Z',
@@ -388,19 +414,20 @@ describe('Codex MCP server', () => {
   it('rejects invalid named resume worktrees', () => {
     const cwd = mkdtempSync(join(tmpdir(), 'beanflow-mcp-invalid-resume-'));
     const state: RunState = {
-      schemaVersion: 2,
+      schemaVersion: 3,
       runId: 'invalid-resume-run',
       epic: { id: 'epic', path: join(cwd, '.beans', 'epic.md'), title: 'Epic' },
       manifest: {
         epic: { id: 'epic', path: join(cwd, '.beans', 'epic.md'), title: 'Epic' },
         frozenAt: 't0',
-        tasks: [],
+        milestones: [],
       },
       phase: 'running',
       baseBranch: 'main',
       baseCommit: 'abc123',
       worktreePath: cwd,
       selectedTask: null,
+      selectedMilestone: null,
       blockers: [],
       attempts: {},
       startedAt: 't0',
@@ -433,22 +460,30 @@ describe('Codex MCP server', () => {
     mkdirSync(beansDir);
     const task: BeanRef = { id: 'beanflow-task', path: '.beans/beanflow-task.md', title: 'Blocked task' };
     writeFileSync(
+      join(beansDir, 'beanflow-milestone.md'),
+      `---\n# beanflow-milestone\ntitle: Milestone\nstatus: todo\ntype: feature\nparent: beanflow-epic\ncreated_at: 2026-08-17T00:00:00Z\nupdated_at: 2026-08-17T00:00:00Z\n---\n\n## Milestone checkpoint\n\n- [ ] \`pnpm test\`\n`,
+    );
+    writeFileSync(
       join(beansDir, 'beanflow-task.md'),
-      `---\n# beanflow-task\ntitle: Blocked task\nstatus: todo\ntype: task\ncreated_at: 2026-08-17T00:00:00Z\nupdated_at: 2026-08-17T00:00:00Z\n---\n`,
+      `---\n# beanflow-task\ntitle: Blocked task\nstatus: todo\ntype: task\nparent: beanflow-milestone\ncreated_at: 2026-08-17T00:00:00Z\nupdated_at: 2026-08-17T00:00:00Z\n---\n`,
     );
     const state: RunState = {
-      schemaVersion: 2,
+      schemaVersion: 3,
       runId: 'blocked-run',
       epic: { id: 'beanflow-epic', path: '.beans/beanflow-epic.md', title: 'Epic' },
       manifest: {
         epic: { id: 'beanflow-epic', path: '.beans/beanflow-epic.md', title: 'Epic' },
         frozenAt: '2026-08-17T00:00:00Z',
-        tasks: [task],
+        milestones: [{
+          milestone: { id: 'beanflow-milestone', path: '.beans/beanflow-milestone.md', title: 'Milestone' },
+          tasks: [task],
+        }],
       },
       phase: 'running',
       baseBranch: 'main',
       baseCommit: 'abc123',
       selectedTask: null,
+      selectedMilestone: null,
       blockers: [{ task, evidence: 'Owner input needed', requiredDecision: 'Choose one', recordedAt: '2026-08-17T01:00:00Z' }],
       attempts: {},
       startedAt: '2026-08-17T00:00:00Z',
@@ -479,25 +514,33 @@ describe('Codex MCP server', () => {
       join(beansDir, 'epic.md'),
       `---\n# epic\ntitle: Epic\nstatus: in-progress\ntype: epic\ncreated_at: 2026-08-17T00:00:00Z\nupdated_at: 2026-08-17T00:00:00Z\n---\n`,
     );
+    writeFileSync(
+      join(beansDir, 'milestone.md'),
+      `---\n# milestone\ntitle: Milestone\nstatus: todo\ntype: feature\nparent: epic\ncreated_at: 2026-08-17T00:00:00Z\nupdated_at: 2026-08-17T00:00:00Z\n---\n\n## Milestone checkpoint\n\n- [ ] \`pnpm test\`\n`,
+    );
     const task = (id: string, title: string) =>
-      `---\n# ${id}\ntitle: ${title}\nstatus: todo\ntype: task\nparent: epic\ncreated_at: 2026-08-17T00:00:00Z\nupdated_at: 2026-08-17T00:00:00Z\n---\n\n## What to build\n\nImplement one bounded behavior with enough context for autonomous work.\n\n## Acceptance criteria\n\n- [ ] The behavior works.\n\n## Verification\n\nRun the focused test.\n\n## Out of scope\n\nDo not change unrelated behavior.\n`;
+      `---\n# ${id}\ntitle: ${title}\nstatus: todo\ntype: task\nparent: milestone\ncreated_at: 2026-08-17T00:00:00Z\nupdated_at: 2026-08-17T00:00:00Z\n---\n\n## What to build\n\nImplement one bounded behavior with enough context for autonomous work.\n\n## Acceptance criteria\n\n- [ ] The behavior works.\n\n## Verification\n\nRun the focused test.\n\n## Out of scope\n\nDo not change unrelated behavior.\n`;
     writeFileSync(join(beansDir, 'current.md'), task('current', 'Current'));
     writeFileSync(join(beansDir, 'new.md'), task('new', 'New'));
     const completed: BeanRef = { id: 'completed', path: join(beansDir, 'completed.md'), title: 'Completed' };
     const state: RunState = {
-      schemaVersion: 2,
+      schemaVersion: 3,
       runId: 'refresh-run',
       epic: { id: 'epic', path: join(beansDir, 'epic.md'), title: 'Epic' },
       manifest: {
         epic: { id: 'epic', path: join(beansDir, 'epic.md'), title: 'Epic' },
         frozenAt: '2026-08-17T00:00:00Z',
-        tasks: [completed, { id: 'current', path: join(beansDir, 'current.md'), title: 'Current' }],
+        milestones: [{
+          milestone: { id: 'milestone', path: join(beansDir, 'milestone.md'), title: 'Milestone' },
+          tasks: [completed, { id: 'current', path: join(beansDir, 'current.md'), title: 'Current' }],
+        }],
       },
       phase: 'running',
       baseBranch: 'main',
       baseCommit: 'abc123',
       worktreePath: realpathSync(cwd),
       selectedTask: null,
+      selectedMilestone: null,
       blockers: [],
       attempts: {},
       startedAt: '2026-08-17T00:00:00Z',
@@ -515,14 +558,14 @@ describe('Codex MCP server', () => {
       expect(text).toMatch(/Refreshed Beanflow run refresh-run/);
       const refreshed = loadRunState(state.runId, cwd);
       expect(refreshed.manifest.frozenAt).not.toBe(state.manifest.frozenAt);
-      expect(refreshed.manifest.tasks.map((item) => item.id)).toEqual(['completed', 'current', 'new']);
+      expect(refreshed.manifest.milestones[0].tasks.map((item) => item.id)).toEqual(['completed', 'current', 'new']);
       expect(refreshed.selectedTask?.id).toBe('current');
     } finally {
       disarmRun(cwd);
     }
   });
 
-  it('does not turn a completed task parent into executable work during refresh', () => {
+  it('preserves an accepted Milestone while adding a later Milestone during refresh', () => {
     const cwd = mkdtempSync(join(tmpdir(), 'beanflow-mcp-refresh-milestone-'));
     execFileSync('git', ['init', '-q', '-b', 'f/refresh-milestone'], { cwd });
     const beansDir = join(cwd, '.beans');
@@ -532,30 +575,30 @@ describe('Codex MCP server', () => {
       `---\n# epic\ntitle: Epic\nstatus: in-progress\ntype: epic\ncreated_at: 2026-08-17T00:00:00Z\nupdated_at: 2026-08-17T00:00:00Z\n---\n`,
     );
     writeFileSync(
-      join(beansDir, 'group.md'),
-      `---\n# group\ntitle: Group\nstatus: todo\ntype: feature\nparent: epic\ncreated_at: 2026-08-17T00:00:00Z\nupdated_at: 2026-08-17T00:00:00Z\n---\n\nThis is a container Bean; execute its child tasks.\n`,
+      join(beansDir, 'next-group.md'),
+      `---\n# next-group\ntitle: Next group\nstatus: todo\ntype: feature\nparent: epic\nblocked_by:\n    - group\ncreated_at: 2026-08-17T00:00:00Z\nupdated_at: 2026-08-17T00:00:00Z\n---\n\n## Milestone checkpoint\n\n- [ ] \`pnpm test\`\n`,
     );
     writeFileSync(
       join(beansDir, 'new.md'),
-      `---\n# new\ntitle: New\nstatus: todo\ntype: task\nparent: epic\ncreated_at: 2026-08-17T00:00:00Z\nupdated_at: 2026-08-17T00:00:00Z\n---\n\n## What to build\n\nImplement one bounded behavior with enough context for autonomous work.\n\n## Acceptance criteria\n\n- [ ] The behavior works.\n\n## Verification\n\nRun the focused test.\n\n## Out of scope\n\nDo not change unrelated behavior.\n`,
+      `---\n# new\ntitle: New\nstatus: todo\ntype: task\nparent: next-group\nblocked_by:\n    - completed\ncreated_at: 2026-08-17T00:00:00Z\nupdated_at: 2026-08-17T00:00:00Z\n---\n\n## What to build\n\nImplement one bounded behavior with enough context for autonomous work.\n\n## Acceptance criteria\n\n- [ ] The behavior works.\n\n## Verification\n\nRun the focused test.\n\n## Out of scope\n\nDo not change unrelated behavior.\n`,
     );
     const completed: BeanRef = { id: 'completed', path: join(beansDir, 'completed.md'), title: 'Completed' };
     const group: BeanRef = { id: 'group', path: join(beansDir, 'group.md'), title: 'Group' };
     const state = {
-      schemaVersion: 2,
+      schemaVersion: 3,
       runId: 'refresh-milestone-run',
       epic: { id: 'epic', path: join(beansDir, 'epic.md'), title: 'Epic' },
       manifest: {
         epic: { id: 'epic', path: join(beansDir, 'epic.md'), title: 'Epic' },
         frozenAt: '2026-08-17T00:00:00Z',
-        milestones: [group],
-        tasks: [completed],
+        milestones: [{ milestone: group, tasks: [completed] }],
       },
       phase: 'running',
       baseBranch: 'main',
       baseCommit: 'abc123',
       worktreePath: realpathSync(cwd),
       selectedTask: null,
+      selectedMilestone: null,
       blockers: [],
       attempts: {},
       startedAt: '2026-08-17T00:00:00Z',
@@ -572,7 +615,10 @@ describe('Codex MCP server', () => {
       const text = (refresh.result as { content: { text: string }[] }).content[0].text;
       expect(text).toMatch(/Refreshed Beanflow run refresh-milestone-run/);
       const refreshed = loadRunState(state.runId, cwd);
-      expect(refreshed.manifest.tasks.map((item) => item.id)).toEqual(['completed', 'new']);
+      expect(refreshed.manifest.milestones.map((scope) => scope.milestone.id)).toEqual(['group', 'next-group']);
+      expect(refreshed.manifest.milestones[0].tasks.map((item) => item.id)).toEqual(['completed']);
+      expect(refreshed.manifest.milestones[1].tasks.map((item) => item.id)).toEqual(['new']);
+      expect(refreshed.selectedTask?.id).toBe('new');
     } finally {
       disarmRun(cwd);
     }

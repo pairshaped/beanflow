@@ -2,7 +2,7 @@
 // active run can resume. Users never memorize commands; the tool takes one
 // request string and resolves it here.
 
-import { allManifestTasksComplete, nextEligibleTask } from './continuation.js';
+import { allManifestMilestonesComplete, nextEligibleTask, nextMilestoneCheckpoint } from './continuation.js';
 import type { BeanTree } from './discovery.js';
 import type { RunState } from './types.js';
 
@@ -16,8 +16,16 @@ export interface ResumeDecision {
 
 export function decideResume(state: RunState, tree: BeanTree, resumedAt: string): ResumeDecision {
   const selectedTask = nextEligibleTask(tree, state.manifest, state);
+  const selectedMilestone = nextMilestoneCheckpoint(tree, state.manifest);
+  if (selectedMilestone) {
+    return {
+      canResume: true,
+      state: { ...state, phase: 'running', selectedTask: null, selectedMilestone, updatedAt: resumedAt },
+      message: `Run the Milestone checkpoint for ${selectedMilestone.id}, then delete the Milestone only if it passes.`,
+    };
+  }
   if (!selectedTask) {
-    if (allManifestTasksComplete(tree, state.manifest)) {
+    if (allManifestMilestonesComplete(tree, state.manifest)) {
       const epicExists = tree.byId.has(state.epic.id);
       if (!epicExists) {
         return {
@@ -26,9 +34,10 @@ export function decideResume(state: RunState, tree: BeanTree, resumedAt: string)
             ...state,
             phase: 'completed',
             selectedTask: null,
+            selectedMilestone: null,
             updatedAt: resumedAt,
           },
-          message: 'Beanflow run is complete: every scoped Task and the Epic are gone.',
+          message: 'Beanflow run is complete: every scoped Task, Milestone, and the Epic are gone.',
         };
       }
       if (state.blockers.length === 0) {
@@ -38,9 +47,10 @@ export function decideResume(state: RunState, tree: BeanTree, resumedAt: string)
             ...state,
             phase: 'running',
             selectedTask: null,
+            selectedMilestone: null,
             updatedAt: resumedAt,
           },
-          message: `Every scoped Task is complete. Run the Epic checkpoint for ${state.epic.id}, then delete the Epic only if it passes.`,
+          message: `Every scoped Milestone is accepted. Run the Epic checkpoint for ${state.epic.id}, then delete the Epic only if it passes.`,
         };
       }
     }
@@ -51,8 +61,8 @@ export function decideResume(state: RunState, tree: BeanTree, resumedAt: string)
         : '';
     return {
       canResume: false,
-      state: state.phase === 'running' || state.selectedTask !== null
-        ? { ...state, phase: 'paused', selectedTask: null, updatedAt: resumedAt }
+      state: state.phase === 'running' || state.selectedTask !== null || state.selectedMilestone !== null
+        ? { ...state, phase: 'paused', selectedTask: null, selectedMilestone: null, updatedAt: resumedAt }
         : state,
       message: `Beanflow cannot resume: no eligible task exists${blockerDetail}.`,
     };
@@ -64,6 +74,7 @@ export function decideResume(state: RunState, tree: BeanTree, resumedAt: string)
       ...state,
       phase: 'running',
       selectedTask,
+      selectedMilestone: null,
       updatedAt: resumedAt,
     },
     message: 'Resuming the beanflow run.',

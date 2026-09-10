@@ -21,31 +21,34 @@ function bean(id: string, opts: Partial<Bean> = {}): Bean {
 }
 
 describe('freezeManifest', () => {
-  it('freezes descendants in dependency order', () => {
+  it('freezes Milestones and their Tasks in dependency order', () => {
     const epic = bean('e', { type: 'epic' });
     const grp = bean('g', { type: 'feature', parent: 'e' });
     const a = bean('a', { parent: 'g' });
     const b = bean('b', { parent: 'g', blockedBy: ['a'] });
     const c = bean('c', { parent: 'g', blockedBy: ['a', 'b'] });
     const manifest = freezeManifest(buildTree([epic, grp, a, b, c]), 'e', 't0');
-    expect(manifest.tasks.map((x) => x.id)).toEqual(['a', 'b', 'c']);
+    expect(manifest.milestones.map((scope) => scope.milestone.id)).toEqual(['g']);
+    expect(manifest.milestones[0].tasks.map((task) => task.id)).toEqual(['a', 'b', 'c']);
   });
 
-  it('omits terminal tasks and treats completed dependencies as satisfied', () => {
+  it('keeps completed Tasks as history, omits scrapped Tasks, and satisfies completed dependencies', () => {
     const epic = bean('e', { type: 'epic' });
-    const completed = bean('a', { parent: 'e', status: 'completed' });
-    const scrapped = bean('unused', { parent: 'e', status: 'scrapped' });
-    const remaining = bean('b', { parent: 'e', blockedBy: ['a'] });
-    const manifest = freezeManifest(buildTree([epic, completed, scrapped, remaining]), 'e', 't0');
-    expect(manifest.tasks.map((task) => task.id)).toEqual(['b']);
+    const milestone = bean('m', { type: 'feature', parent: 'e' });
+    const completed = bean('a', { parent: 'm', status: 'completed' });
+    const scrapped = bean('unused', { parent: 'm', status: 'scrapped' });
+    const remaining = bean('b', { parent: 'm', blockedBy: ['a'] });
+    const manifest = freezeManifest(buildTree([epic, milestone, completed, scrapped, remaining]), 'e', 't0');
+    expect(manifest.milestones[0].tasks.map((task) => task.id)).toEqual(['a', 'b']);
   });
 
   it('rejects a remaining task blocked by a scrapped dependency', () => {
     const epic = bean('e', { type: 'epic' });
-    const scrapped = bean('a', { parent: 'e', status: 'scrapped' });
-    const remaining = bean('b', { parent: 'e', blockedBy: ['a'] });
-    expect(() => freezeManifest(buildTree([epic, scrapped, remaining]), 'e', 't0')).toThrow(
-      /blocked by scrapped bean a/,
+    const milestone = bean('m', { type: 'feature', parent: 'e' });
+    const scrapped = bean('a', { parent: 'm', status: 'scrapped' });
+    const remaining = bean('b', { parent: 'm', blockedBy: ['a'] });
+    expect(() => freezeManifest(buildTree([epic, milestone, scrapped, remaining]), 'e', 't0')).toThrow(
+      /blocked by scrapped Bean a/,
     );
   });
 
@@ -61,35 +64,66 @@ describe('freezeManifest', () => {
 
   it('rejects a task blocked by an unknown bean', () => {
     const epic = bean('e', { type: 'epic' });
-    const a = bean('a', { parent: 'e', blockedBy: ['zzz'] });
-    expect(() => freezeManifest(buildTree([epic, a]), 'e', 't0')).toThrow(/unknown bean/);
+    const milestone = bean('m', { type: 'feature', parent: 'e' });
+    const a = bean('a', { parent: 'm', blockedBy: ['zzz'] });
+    expect(() => freezeManifest(buildTree([epic, milestone, a]), 'e', 't0')).toThrow(/unknown Bean/);
   });
 
   it('rejects a task blocked by a bean outside the scope', () => {
     const epic = bean('e', { type: 'epic' });
-    const inScope = bean('a', { parent: 'e' });
+    const milestone = bean('m', { type: 'feature', parent: 'e' });
+    const inScope = bean('a', { parent: 'm' });
     const outside = bean('x');
-    const bad = bean('b', { parent: 'e', blockedBy: ['x'] });
-    expect(() => freezeManifest(buildTree([epic, inScope, outside, bad]), 'e', 't0')).toThrow(
-      /outside the frozen scope/,
+    const bad = bean('b', { parent: 'm', blockedBy: ['x'] });
+    expect(() => freezeManifest(buildTree([epic, milestone, inScope, outside, bad]), 'e', 't0')).toThrow(
+      /outside its checkpoint scope/,
     );
   });
 
   it('rejects a dependency cycle', () => {
     const epic = bean('e', { type: 'epic' });
-    const a = bean('a', { parent: 'e', blockedBy: ['b'] });
-    const b = bean('b', { parent: 'e', blockedBy: ['a'] });
-    expect(() => freezeManifest(buildTree([epic, a, b]), 'e', 't0')).toThrow(/cycle/);
+    const milestone = bean('m', { type: 'feature', parent: 'e' });
+    const a = bean('a', { parent: 'm', blockedBy: ['b'] });
+    const b = bean('b', { parent: 'm', blockedBy: ['a'] });
+    expect(() => freezeManifest(buildTree([epic, milestone, a, b]), 'e', 't0')).toThrow(/cycle/);
   });
 
   it('is deterministic across freezes', () => {
     const epic = bean('e', { type: 'epic' });
-    const a = bean('a', { parent: 'e' });
-    const b = bean('b', { parent: 'e' });
-    const c = bean('c', { parent: 'e' });
-    const tree = buildTree([epic, a, b, c]);
+    const milestone = bean('m', { type: 'feature', parent: 'e' });
+    const a = bean('a', { parent: 'm' });
+    const b = bean('b', { parent: 'm' });
+    const c = bean('c', { parent: 'm' });
+    const tree = buildTree([epic, milestone, a, b, c]);
     const m1 = freezeManifest(tree, 'e', 't0');
     const m2 = freezeManifest(tree, 'e', 't1');
-    expect(m1.tasks.map((x) => x.id)).toEqual(m2.tasks.map((x) => x.id));
+    expect(m1.milestones).toEqual(m2.milestones);
+  });
+
+  it('rejects a Task directly under an Epic', () => {
+    const epic = bean('e', { type: 'epic' });
+    const directTask = bean('a', { parent: 'e' });
+    expect(() => freezeManifest(buildTree([epic, directTask]), 'e', 't0')).toThrow(/without a Milestone/);
+  });
+
+  it('orders Milestones and allows later Tasks to depend on earlier Milestone Tasks', () => {
+    const epic = bean('e', { type: 'epic' });
+    const first = bean('m1', { type: 'feature', parent: 'e' });
+    const second = bean('m2', { type: 'feature', parent: 'e', blockedBy: ['m1'] });
+    const a = bean('a', { parent: 'm1' });
+    const b = bean('b', { parent: 'm2', blockedBy: ['a'] });
+    const manifest = freezeManifest(buildTree([epic, second, b, first, a]), 'e', 't0');
+
+    expect(manifest.milestones.map((scope) => scope.milestone.id)).toEqual(['m1', 'm2']);
+    expect(manifest.milestones.map((scope) => scope.tasks.map((task) => task.id))).toEqual([['a'], ['b']]);
+  });
+
+  it('rejects incomplete work added beneath a completed Milestone', () => {
+    const epic = bean('e', { type: 'epic' });
+    const milestone = bean('m', { type: 'feature', parent: 'e', status: 'completed' });
+    const task = bean('a', { parent: 'm' });
+    expect(() => freezeManifest(buildTree([epic, milestone, task]), 'e', 't0')).toThrow(
+      /completed Milestone m contains an incomplete Task/,
+    );
   });
 });

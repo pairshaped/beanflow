@@ -79,7 +79,8 @@ describe('forward test', () => {
 
     // Manifest freeze.
     const manifest = freezeManifest(tree, 'e', 't0');
-    expect(manifest.tasks.map((l) => l.id)).toEqual(['a', 'b']);
+    expect(manifest.milestones.map((scope) => scope.milestone.id)).toEqual(['g']);
+    expect(manifest.milestones[0].tasks.map((task) => task.id)).toEqual(['a', 'b']);
 
     // Isolated run setup.
     const worktree = join(repo, '.worktrees', 'run-1');
@@ -121,6 +122,7 @@ describe('forward test', () => {
     const report = buildReport(
       manifest,
       completed.map((id) => ({ task: { id, path: `.beans/${id}.md`, title: id }, commitHash: 'h' })),
+      [{ milestone: manifest.milestones[0].milestone, commitHash: 'mh' }],
       [],
       { passed: true, evidence: 'true' },
     );

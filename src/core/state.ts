@@ -23,10 +23,10 @@ function isScopeManifest(x: unknown): x is ScopeManifest {
     isRecord(x) &&
     isBeanRef(x.epic) &&
     isString(x.frozenAt) &&
-    (x.milestones === undefined ||
-      (Array.isArray(x.milestones) && x.milestones.every(isBeanRef))) &&
-    Array.isArray(x.tasks) &&
-    x.tasks.every(isBeanRef)
+    Array.isArray(x.milestones) &&
+    x.milestones.every((scope) =>
+      isRecord(scope) && isBeanRef(scope.milestone) && Array.isArray(scope.tasks) && scope.tasks.every(isBeanRef),
+    )
   );
 }
 
@@ -46,7 +46,7 @@ function isBlockerReceipt(x: unknown): boolean {
 
 function isRunState(x: unknown): x is RunState {
   if (!isRecord(x)) return false;
-  if (x.schemaVersion !== 2) return false;
+  if (x.schemaVersion !== 3) return false;
   return (
     isString(x.runId) &&
     isBeanRef(x.epic) &&
@@ -56,6 +56,7 @@ function isRunState(x: unknown): x is RunState {
     (x.baseCommit === null || isString(x.baseCommit)) &&
     (x.worktreePath === undefined || x.worktreePath === null || isString(x.worktreePath)) &&
     (x.selectedTask === null || isBeanRef(x.selectedTask)) &&
+    (x.selectedMilestone === null || isBeanRef(x.selectedMilestone)) &&
     Array.isArray(x.blockers) &&
     x.blockers.every(isBlockerReceipt) &&
     isRecord(x.attempts) &&

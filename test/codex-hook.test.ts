@@ -55,24 +55,29 @@ function makeRepo(): string {
   const beans = join(repo, '.beans');
   mkdirSync(beans, { recursive: true });
   writeBean(beans, 'e', 'Build a widget', 'epic', null);
-  writeBean(beans, 'a', 'Foundation', 'task', 'e');
+  writeBean(beans, 'm', 'Core Milestone', 'feature', 'e');
+  writeBean(beans, 'a', 'Foundation', 'task', 'm');
   return repo;
 }
 
 function runState(overrides: Partial<RunState> = {}): RunState {
   return {
-    schemaVersion: 2,
+    schemaVersion: 3,
     runId: 'r1',
     epic: { id: 'e', path: '.beans/e.md', title: 'E' },
     manifest: {
       epic: { id: 'e', path: '.beans/e.md', title: 'E' },
       frozenAt: 't0',
-      tasks: [{ id: 'a', path: '.beans/a.md', title: 'A' }],
+      milestones: [{
+        milestone: { id: 'm', path: '.beans/m.md', title: 'M' },
+        tasks: [{ id: 'a', path: '.beans/a.md', title: 'A' }],
+      }],
     },
     phase: 'running',
     baseBranch: null,
     baseCommit: null,
     selectedTask: null,
+    selectedMilestone: null,
     blockers: [],
     attempts: {},
     startedAt: 't0',
@@ -100,8 +105,8 @@ describe('Codex Stop hook', () => {
     const decision = decideStopHook({ hook_event_name: 'Stop', cwd: repo });
     expect(decision.block).toBe(true);
     expect(decision.reason).toMatch(/Continue the beanflow run/);
-    expect(decision.reason).toContain('task a');
-    expect(decision.reason).toContain('Implement only the selected task');
+    expect(decision.reason).toContain('Task a');
+    expect(decision.reason).toContain('Implement only the selected Task');
     expect(decision.reason).toContain('skeptically review the resulting diff');
     expect(decision.reason).toContain('Repair any failed review findings');
     expect(decision.reason).toContain('delete the accepted Bean');
@@ -110,7 +115,7 @@ describe('Codex Stop hook', () => {
     expect(decision.reason).toContain('next selected Task');
     expect(decision.reason).toContain('verify the worktree is clean');
     expect(decision.reason).toContain('the Bean remains intact');
-    expect(decision.reason).toContain('task cheap local proof passed');
+    expect(decision.reason).toContain('cheap local proof for the Task passed');
     expect(decision.reason).toContain('focused tests, formatting, and reliably scoped static analysis');
     expect(decision.reason).toContain('explicit cleanup Bean blocking final verification');
     expect(decision.reason).toContain('inventory the outgoing production path');
@@ -173,24 +178,41 @@ describe('Codex Stop hook', () => {
     expect(loadRunState('r1').phase).toBe('paused');
   });
 
-  it('continues into Epic checkpoint when every manifest task is complete', () => {
+  it('continues into the Milestone checkpoint when every scoped Task is complete', () => {
     const repo = makeRepo();
-    const state = runState({ manifest: { ...runState().manifest, tasks: [] } });
+    unlinkSync(join(repo, '.beans', 'a--foundation.md'));
+    const state = runState();
+    persistRunState(state);
+    armRun('r1');
+
+    const decision = decideStopHook({ hook_event_name: 'Stop', cwd: repo });
+    expect(decision.block).toBe(true);
+    expect(decision.reason).toContain('Milestone checkpoint for m');
+    expect(loadRunState('r1').selectedMilestone?.id).toBe('m');
+    expect(loadRunState('r1').phase).toBe('running');
+  });
+
+  it('continues into the Epic checkpoint after the Milestone is accepted', () => {
+    const repo = makeRepo();
+    unlinkSync(join(repo, '.beans', 'a--foundation.md'));
+    unlinkSync(join(repo, '.beans', 'm--core-milestone.md'));
+    const state = runState();
     persistRunState(state);
     armRun('r1');
 
     const decision = decideStopHook({ hook_event_name: 'Stop', cwd: repo });
     expect(decision.block).toBe(true);
     expect(decision.reason).toContain('verify parent e');
-    expect(loadRunState('r1').phase).toBe('running');
   });
 
-  it('completes the run after Epic checkpoint deletes the Epic', () => {
+  it('completes the run after the Epic checkpoint deletes the Epic', () => {
     const repo = makeRepo();
-    const state = runState({ manifest: { ...runState().manifest, tasks: [] } });
+    unlinkSync(join(repo, '.beans', 'a--foundation.md'));
+    unlinkSync(join(repo, '.beans', 'm--core-milestone.md'));
+    unlinkSync(join(repo, '.beans', 'e--build-a-widget.md'));
+    const state = runState();
     persistRunState(state);
     armRun('r1');
-    unlinkSync(join(repo, '.beans', 'e--build-a-widget.md'));
 
     expect(decideStopHook({ hook_event_name: 'Stop', cwd: repo }).block).toBe(false);
     expect(loadRunState('r1').phase).toBe('completed');

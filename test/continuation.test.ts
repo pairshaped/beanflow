@@ -1,11 +1,13 @@
 import { describe, expect, it } from 'vitest';
 import type { Bean } from '../src/core/bean.js';
 import {
+  allManifestMilestonesComplete,
   decideContinuation,
   eligibleWorkRemains,
   isAbortedStopReason,
   lastAssistantStopReason,
   nextEligibleTask,
+  nextMilestoneCheckpoint,
   type SessionEntry,
 } from '../src/core/continuation.js';
 import { buildTree } from '../src/core/discovery.js';
@@ -31,14 +33,15 @@ function task(id: string, opts: Partial<Bean> = {}): Bean {
 
 function runState(overrides: Partial<RunState> = {}): RunState {
   return {
-    schemaVersion: 2,
+    schemaVersion: 3,
     runId: 'r1',
     epic: ref('e'),
-    manifest: { epic: ref('e'), frozenAt: 't0', tasks: [] },
+    manifest: { epic: ref('e'), frozenAt: 't0', milestones: [] },
     phase: 'running',
     baseBranch: null,
     baseCommit: null,
     selectedTask: null,
+    selectedMilestone: null,
     blockers: [],
     attempts: {},
     startedAt: 't0',
@@ -99,18 +102,24 @@ describe('decideContinuation', () => {
 describe('eligibleWorkRemains', () => {
   it('is true when a task is selectable', () => {
     const epic = task('e', { type: 'epic' });
-    const a = task('a', { parent: 'e' });
-    const b = task('b', { parent: 'e', blockedBy: ['a'] });
-    const tree = buildTree([epic, a, b]);
-    const manifest: ScopeManifest = { epic: ref('e'), frozenAt: 't0', tasks: [ref('a'), ref('b')] };
+    const milestone = task('m', { type: 'feature', parent: 'e' });
+    const a = task('a', { parent: 'm' });
+    const b = task('b', { parent: 'm', blockedBy: ['a'] });
+    const tree = buildTree([epic, milestone, a, b]);
+    const manifest: ScopeManifest = {
+      epic: ref('e'), frozenAt: 't0', milestones: [{ milestone: ref('m'), tasks: [ref('a'), ref('b')] }],
+    };
     expect(eligibleWorkRemains(tree, manifest, runState({ manifest }))).toBe(true);
   });
 
   it('is false when every remaining task is blocked', () => {
     const epic = task('e', { type: 'epic' });
-    const a = task('a', { parent: 'e' });
-    const tree = buildTree([epic, a]);
-    const manifest: ScopeManifest = { epic: ref('e'), frozenAt: 't0', tasks: [ref('a')] };
+    const milestone = task('m', { type: 'feature', parent: 'e' });
+    const a = task('a', { parent: 'm' });
+    const tree = buildTree([epic, milestone, a]);
+    const manifest: ScopeManifest = {
+      epic: ref('e'), frozenAt: 't0', milestones: [{ milestone: ref('m'), tasks: [ref('a')] }],
+    };
     const state = runState({
       manifest,
       blockers: [{ task: ref('a'), evidence: 'x', requiredDecision: 'y', recordedAt: 't1' }],
@@ -120,19 +129,62 @@ describe('eligibleWorkRemains', () => {
 
   it('treats a task deleted from the tree as completed', () => {
     const epic = task('e', { type: 'epic' });
-    const b = task('b', { parent: 'e', blockedBy: ['a'] });
-    const tree = buildTree([epic, b]); // 'a' is gone
-    const manifest: ScopeManifest = { epic: ref('e'), frozenAt: 't0', tasks: [ref('a'), ref('b')] };
+    const milestone = task('m', { type: 'feature', parent: 'e' });
+    const b = task('b', { parent: 'm', blockedBy: ['a'] });
+    const tree = buildTree([epic, milestone, b]); // 'a' is gone
+    const manifest: ScopeManifest = {
+      epic: ref('e'), frozenAt: 't0', milestones: [{ milestone: ref('m'), tasks: [ref('a'), ref('b')] }],
+    };
     expect(eligibleWorkRemains(tree, manifest, runState({ manifest }))).toBe(true);
     expect(nextEligibleTask(tree, manifest, runState({ manifest }))?.id).toBe('b');
   });
 
   it('treats a completed manifest task as completed even while its file remains', () => {
     const epic = task('e', { type: 'epic' });
-    const a = task('a', { parent: 'e', status: 'completed' });
-    const b = task('b', { parent: 'e', blockedBy: ['a'] });
-    const tree = buildTree([epic, a, b]);
-    const manifest: ScopeManifest = { epic: ref('e'), frozenAt: 't0', tasks: [ref('a'), ref('b')] };
+    const milestone = task('m', { type: 'feature', parent: 'e' });
+    const a = task('a', { parent: 'm', status: 'completed' });
+    const b = task('b', { parent: 'm', blockedBy: ['a'] });
+    const tree = buildTree([epic, milestone, a, b]);
+    const manifest: ScopeManifest = {
+      epic: ref('e'), frozenAt: 't0', milestones: [{ milestone: ref('m'), tasks: [ref('a'), ref('b')] }],
+    };
+    expect(nextEligibleTask(tree, manifest, runState({ manifest }))?.id).toBe('b');
+  });
+
+  it('requires the current Milestone checkpoint before selecting a later Milestone Task', () => {
+    const epic = task('e', { type: 'epic' });
+    const first = task('m1', { type: 'feature', parent: 'e' });
+    const second = task('m2', { type: 'feature', parent: 'e', blockedBy: ['m1'] });
+    const later = task('b', { parent: 'm2', blockedBy: ['a'] });
+    const tree = buildTree([epic, first, second, later]);
+    const manifest: ScopeManifest = {
+      epic: ref('e'),
+      frozenAt: 't0',
+      milestones: [
+        { milestone: ref('m1'), tasks: [ref('a')] },
+        { milestone: ref('m2'), tasks: [ref('b')] },
+      ],
+    };
+    const state = runState({ manifest });
+
+    expect(nextEligibleTask(tree, manifest, state)).toBeNull();
+    expect(nextMilestoneCheckpoint(tree, manifest)?.id).toBe('m1');
+    expect(allManifestMilestonesComplete(tree, manifest)).toBe(false);
+  });
+
+  it('selects from the next Milestone only after the prior Milestone is accepted', () => {
+    const epic = task('e', { type: 'epic' });
+    const second = task('m2', { type: 'feature', parent: 'e', blockedBy: ['m1'] });
+    const later = task('b', { parent: 'm2', blockedBy: ['a'] });
+    const tree = buildTree([epic, second, later]);
+    const manifest: ScopeManifest = {
+      epic: ref('e'),
+      frozenAt: 't0',
+      milestones: [
+        { milestone: ref('m1'), tasks: [ref('a')] },
+        { milestone: ref('m2'), tasks: [ref('b')] },
+      ],
+    };
     expect(nextEligibleTask(tree, manifest, runState({ manifest }))?.id).toBe('b');
   });
 });

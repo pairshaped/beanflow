@@ -17,6 +17,12 @@ export interface TaskAudit {
   passed: boolean;
 }
 
+export interface MilestoneAudit {
+  milestone: Bean;
+  findings: AuditFinding[];
+  passed: boolean;
+}
+
 /** Extract the body of a `## <heading>` section, up to the next `## ` heading. */
 function section(body: string, heading: string): string {
   const lines = body.split('\n');
@@ -89,11 +95,17 @@ function checkVerification(task: Bean): AuditFinding {
   return { check: 'verification', pass: true, reason: 'verification commands present' };
 }
 
-function checkDependencies(task: Bean, tree: BeanTree): AuditFinding {
+function checkDependencies(
+  task: Bean,
+  tree: BeanTree,
+  satisfiedDependencies: ReadonlySet<string> = new Set(),
+): AuditFinding {
   const missing: string[] = [];
-  if (task.parent !== null && !tree.byId.has(task.parent)) missing.push(`parent ${task.parent}`);
+  if (task.parent !== null && !tree.byId.has(task.parent) && !satisfiedDependencies.has(task.parent)) {
+    missing.push(`parent ${task.parent}`);
+  }
   for (const dep of task.blockedBy) {
-    if (!tree.byId.has(dep)) missing.push(`blocked-by ${dep}`);
+    if (!tree.byId.has(dep) && !satisfiedDependencies.has(dep)) missing.push(`blocked-by ${dep}`);
   }
   if (missing.length > 0) {
     return { check: 'dependencies', pass: false, reason: `unresolvable: ${missing.join(', ')}` };
@@ -109,16 +121,40 @@ function checkSafeAutonomy(task: Bean): AuditFinding {
   return { check: 'safe-autonomy', pass: true, reason: 'scope boundaries declared' };
 }
 
-export function auditTask(task: Bean, tree: BeanTree): TaskAudit {
+export function auditTask(
+  task: Bean,
+  tree: BeanTree,
+  satisfiedDependencies: ReadonlySet<string> = new Set(),
+): TaskAudit {
   const findings = [
     checkFocusedScope(task),
     checkContext(task),
     checkAcceptanceCriteria(task),
     checkVerification(task),
-    checkDependencies(task, tree),
+    checkDependencies(task, tree, satisfiedDependencies),
     checkSafeAutonomy(task),
   ];
   return { task, findings, passed: findings.every((f) => f.pass) };
+}
+
+export function auditMilestone(
+  milestone: Bean,
+  tree: BeanTree,
+  satisfiedDependencies: ReadonlySet<string> = new Set(),
+): MilestoneAudit {
+  const checkpoint = section(milestone.body, 'Milestone checkpoint');
+  const checkpointCount = headingCount(milestone.body, 'Milestone checkpoint');
+  const findings = [
+    checkpointCount === 1 && checkboxCount(checkpoint) > 0
+      ? { check: 'milestone-checkpoint', pass: true, reason: 'explicit checkpoint checklist present' }
+      : {
+          check: 'milestone-checkpoint',
+          pass: false,
+          reason: 'expected one "Milestone checkpoint" section with at least one checklist item',
+        },
+    checkDependencies(milestone, tree, satisfiedDependencies),
+  ];
+  return { milestone, findings, passed: findings.every((finding) => finding.pass) };
 }
 
 export function auditTree(tree: BeanTree): TaskAudit[] {

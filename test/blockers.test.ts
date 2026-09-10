@@ -34,18 +34,19 @@ function task(id: string, opts: Partial<Bean> = {}): Bean {
 
 function runState(overrides: Partial<RunState> = {}): RunState {
   return {
-    schemaVersion: 2,
+    schemaVersion: 3,
     runId: 'r1',
     epic: { id: 'e', path: '.beans/e.md', title: 'E' },
     manifest: {
       epic: { id: 'e', path: '.beans/e.md', title: 'E' },
       frozenAt: 't0',
-      tasks: [],
+      milestones: [],
     },
     phase: 'running',
     baseBranch: null,
     baseCommit: null,
     selectedTask: null,
+    selectedMilestone: null,
     blockers: [],
     attempts: {},
     startedAt: 't0',

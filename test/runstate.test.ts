@@ -14,18 +14,22 @@ afterEach(() => {
 
 function sampleState(): RunState {
   return {
-    schemaVersion: 2,
+    schemaVersion: 3,
     runId: 'run-1',
     epic: { id: 'e', path: '.beans/e.md', title: 'Epic' },
     manifest: {
       epic: { id: 'e', path: '.beans/e.md', title: 'Epic' },
       frozenAt: '2026-08-16T00:00:00Z',
-      tasks: [{ id: 'a', path: '.beans/a.md', title: 'A' }],
+      milestones: [{
+        milestone: { id: 'm', path: '.beans/m.md', title: 'Milestone' },
+        tasks: [{ id: 'a', path: '.beans/a.md', title: 'A' }],
+      }],
     },
     phase: 'running',
     baseBranch: null,
     baseCommit: null,
     selectedTask: { id: 'a', path: '.beans/a.md', title: 'A' },
+    selectedMilestone: null,
     blockers: [],
     attempts: {},
     startedAt: '2026-08-16T00:00:00Z',
@@ -53,6 +57,7 @@ describe('run state persistence', () => {
     const status = statusOf(sampleState());
     expect(status.phase).toBe('running');
     expect(status.selectedTask?.id).toBe('a');
+    expect(status.selectedMilestone).toBeNull();
   });
 });
 

@@ -5,7 +5,7 @@
 import { blockedTaskIds } from './blockers.js';
 import { selectNextTask } from './selection.js';
 import type { BeanTree } from './discovery.js';
-import type { BeanRef, RunPhase, RunState, ScopeManifest } from './types.js';
+import type { BeanRef, MilestoneManifest, RunPhase, RunState, ScopeManifest } from './types.js';
 
 /** Minimal shape of a session entry, sufficient for stop-reason extraction. */
 export interface SessionEntry {
@@ -49,31 +49,57 @@ export function decideContinuation(opts: {
   return { shouldContinue: true, reason: 'eligible work remains' };
 }
 
-/** Next selectable manifest task after deleted Beans are treated as completed. */
+export function currentMilestone(tree: BeanTree, manifest: ScopeManifest): MilestoneManifest | null {
+  return manifest.milestones.find(({ milestone }) => {
+    const current = tree.byId.get(milestone.id);
+    return current && current.status !== 'completed';
+  }) ?? null;
+}
+
+/** Next selectable Task in the current Milestone. */
 export function nextEligibleTask(tree: BeanTree, manifest: ScopeManifest, state: RunState): BeanRef | null {
-  const completed = manifest.tasks
+  const scope = currentMilestone(tree, manifest);
+  if (!scope) return null;
+  if (tree.byId.get(scope.milestone.id)?.status === 'scrapped') return null;
+  const currentIndex = manifest.milestones.indexOf(scope);
+  const completed = manifest.milestones
+    .slice(0, currentIndex)
+    .flatMap((milestone) => milestone.tasks)
+    .map((task) => task.id);
+  completed.push(...scope.tasks
     .filter((task) => {
       const current = tree.byId.get(task.id);
       return !current || current.status === 'completed';
     })
-    .map((task) => task.id);
+    .map((task) => task.id));
   const blocked = blockedTaskIds(state);
-  const tasks = manifest.tasks
+  const tasks = scope.tasks
     .filter((l) => tree.byId.has(l.id))
     .map((l) => tree.byId.get(l.id)!);
   const selected = selectNextTask(tasks, new Set(completed), blocked);
-  return selected ? manifest.tasks.find((task) => task.id === selected.id) ?? null : null;
+  return selected ? scope.tasks.find((task) => task.id === selected.id) ?? null : null;
 }
 
-/** True when every frozen task has been deleted or explicitly completed. */
-export function allManifestTasksComplete(tree: BeanTree, manifest: ScopeManifest): boolean {
-  return manifest.tasks.every((task) => {
+/** Milestone awaiting its checkpoint after all of its Tasks are complete. */
+export function nextMilestoneCheckpoint(tree: BeanTree, manifest: ScopeManifest): BeanRef | null {
+  const scope = currentMilestone(tree, manifest);
+  if (!scope) return null;
+  if (tree.byId.get(scope.milestone.id)?.status === 'scrapped') return null;
+  const tasksComplete = scope.tasks.every((task) => {
     const current = tree.byId.get(task.id);
+    return !current || current.status === 'completed';
+  });
+  return tasksComplete ? scope.milestone : null;
+}
+
+export function allManifestMilestonesComplete(tree: BeanTree, manifest: ScopeManifest): boolean {
+  return manifest.milestones.every(({ milestone }) => {
+    const current = tree.byId.get(milestone.id);
     return !current || current.status === 'completed';
   });
 }
 
-/** True when some manifest task is still selectable (present, unblocked, deps done). */
+/** True when a Task or Milestone checkpoint can run. */
 export function eligibleWorkRemains(tree: BeanTree, manifest: ScopeManifest, state: RunState): boolean {
-  return nextEligibleTask(tree, manifest, state) !== null;
+  return nextEligibleTask(tree, manifest, state) !== null || nextMilestoneCheckpoint(tree, manifest) !== null;
 }

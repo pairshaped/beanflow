@@ -5,17 +5,23 @@ import type { BeanRef, ScopeManifest } from '../src/core/types.js';
 const ref = (id: string): BeanRef => ({ id, path: `.beans/${id}.md`, title: id });
 
 function manifest(...ids: string[]): ScopeManifest {
-  return { epic: ref('e'), frozenAt: 't0', tasks: ids.map(ref) };
+  return {
+    epic: ref('e'),
+    frozenAt: 't0',
+    milestones: [{ milestone: ref('m'), tasks: ids.map(ref) }],
+  };
 }
 
 const passed = { passed: true, evidence: 'pnpm test' };
 const failed = { passed: false, evidence: '' };
+const accepted = [{ milestone: ref('m'), commitHash: 'mh1' }];
 
 describe('buildReport', () => {
   it('lists completed tasks and derives owner questions from blockers', () => {
     const report = buildReport(
       manifest('a', 'b', 'c'),
       [{ task: ref('a'), commitHash: 'h1' }, { task: ref('b'), commitHash: 'h2' }],
+      accepted,
       [{ task: ref('c'), evidence: 'needs X', requiredDecision: 'choose X or Y', recordedAt: 't1' }],
       passed,
     );
@@ -28,6 +34,7 @@ describe('buildReport', () => {
     const report = buildReport(
       manifest('a', 'b'),
       [{ task: ref('a'), commitHash: 'h1' }, { task: ref('b'), commitHash: 'h2' }],
+      accepted,
       [],
       passed,
     );
@@ -41,21 +48,25 @@ describe('canDeleteEpic', () => {
     { task: ref('b'), commitHash: 'h2' },
   ];
 
-  it('is true only when all children complete, verification passed, and no blockers', () => {
-    expect(canDeleteEpic(buildReport(manifest('a', 'b'), done, [], passed))).toBe(true);
+  it('is true only when all Tasks and Milestones are complete, verification passed, and no blockers', () => {
+    expect(canDeleteEpic(buildReport(manifest('a', 'b'), done, accepted, [], passed))).toBe(true);
   });
 
   it('is false when a child is incomplete', () => {
-    expect(canDeleteEpic(buildReport(manifest('a', 'b', 'c'), done, [], passed))).toBe(false);
+    expect(canDeleteEpic(buildReport(manifest('a', 'b', 'c'), done, accepted, [], passed))).toBe(false);
   });
 
   it('is false when verification failed', () => {
-    expect(canDeleteEpic(buildReport(manifest('a', 'b'), done, [], failed))).toBe(false);
+    expect(canDeleteEpic(buildReport(manifest('a', 'b'), done, accepted, [], failed))).toBe(false);
   });
 
   it('is false when blockers remain', () => {
     const blockers = [{ task: ref('c'), evidence: 'needs X', requiredDecision: 'y', recordedAt: 't1' }];
-    expect(canDeleteEpic(buildReport(manifest('a', 'b'), done, blockers, passed))).toBe(false);
+    expect(canDeleteEpic(buildReport(manifest('a', 'b'), done, accepted, blockers, passed))).toBe(false);
+  });
+
+  it('is false until every Milestone is accepted', () => {
+    expect(canDeleteEpic(buildReport(manifest('a', 'b'), done, [], [], passed))).toBe(false);
   });
 });
 

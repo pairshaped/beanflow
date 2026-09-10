@@ -91,7 +91,7 @@ must name the exact target, authorization, evidence, and recovery boundary.
 
 ## Verification levels
 
-Per-Bean verification is focused but not optional. Every Task runs its
+Task verification is focused but not optional. Every Task runs its
 published commands and cheap local proof. That means focused owning-boundary tests,
 formatting, and scoped lint, typecheck, or Clippy where the repository supports a
 reliable focused invocation. Classify checks by actual cost, not by tool name. If one

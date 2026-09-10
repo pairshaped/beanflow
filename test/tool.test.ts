@@ -43,16 +43,18 @@ describe('parseOperation', () => {
 
 describe('decideResume', () => {
   const task = { id: 'task', path: '.beans/task.md', title: 'Task' };
+  const milestone = { id: 'milestone', path: '.beans/milestone.md', title: 'Milestone' };
   const parent = { id: 'epic', path: '.beans/epic.md', title: 'Epic' };
   const state: RunState = {
-    schemaVersion: 2,
+    schemaVersion: 3,
     runId: 'run',
     epic: parent,
-    manifest: { epic: parent, frozenAt: 't0', tasks: [task] },
+    manifest: { epic: parent, frozenAt: 't0', milestones: [{ milestone, tasks: [task] }] },
     phase: 'running',
     baseBranch: 'main',
     baseCommit: 'abc123',
     selectedTask: task,
+    selectedMilestone: null,
     blockers: [],
     attempts: {},
     startedAt: 't0',
@@ -61,7 +63,7 @@ describe('decideResume', () => {
   const epic: Bean = {
     ...parent,
     status: 'in-progress',
-    type: 'feature',
+    type: 'epic',
     parent: null,
     blockedBy: [],
     priority: 'normal',
@@ -69,13 +71,34 @@ describe('decideResume', () => {
     body: '',
   };
 
-  it('advances to Epic checkpoint after the last task is deleted', () => {
-    const tree = buildTree([epic]);
+  const milestoneBean: Bean = {
+    ...milestone,
+    status: 'in-progress',
+    type: 'feature',
+    parent: 'epic',
+    blockedBy: [],
+    priority: 'normal',
+    createdAt: 't0',
+    body: '',
+  };
+
+  it('advances to the Milestone checkpoint after its last Task is deleted', () => {
+    const tree = buildTree([epic, milestoneBean]);
     const decision = decideResume(state, tree, 't1');
 
     expect(decision.canResume).toBe(true);
     expect(decision.state.phase).toBe('running');
     expect(decision.state.selectedTask).toBeNull();
+    expect(decision.state.selectedMilestone?.id).toBe('milestone');
+    expect(decision.message).toContain('Milestone checkpoint');
+  });
+
+  it('advances to Epic checkpoint only after the Milestone is accepted', () => {
+    const tree = buildTree([epic]);
+    const decision = decideResume(state, tree, 't1');
+
+    expect(decision.canResume).toBe(true);
+    expect(decision.state.selectedMilestone).toBeNull();
     expect(decision.message).toContain('Epic checkpoint');
   });
 

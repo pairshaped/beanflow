@@ -8,14 +8,17 @@ export interface BeanRef {
   title: string;
 }
 
-/** A frozen list of approved executable descendants, in dependency order. */
+export interface MilestoneManifest {
+  milestone: BeanRef;
+  tasks: BeanRef[];
+}
+
+/** A frozen Epic hierarchy, in execution order. */
 export interface ScopeManifest {
   epic: BeanRef;
   /** ISO 8601 timestamp of when the manifest was frozen. */
   frozenAt: string;
-  /** Milestones retained so deleting their Tasks does not turn them into work. */
-  milestones?: BeanRef[];
-  tasks: BeanRef[];
+  milestones: MilestoneManifest[];
 }
 
 /** Evidence that a task is genuinely blocked, recorded to the Bean. */
@@ -37,7 +40,7 @@ export type RunPhase =
 
 /** Persistent, resumable state for one run. */
 export interface RunState {
-  schemaVersion: 2;
+  schemaVersion: 3;
   runId: string;
   epic: BeanRef;
   manifest: ScopeManifest;
@@ -47,6 +50,7 @@ export interface RunState {
   /** Absolute isolated worktree path. Optional only for schema-v1 compatibility. */
   worktreePath?: string | null;
   selectedTask: BeanRef | null;
+  selectedMilestone: BeanRef | null;
   blockers: BlockerReceipt[];
   /** Consecutive no-progress attempts per task, keyed by task id. */
   attempts: Record<string, number>;

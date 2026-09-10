@@ -1,7 +1,8 @@
 import { fileURLToPath } from 'node:url';
 import { describe, expect, it } from 'vitest';
-import { auditTask, auditTree } from '../src/core/audit.js';
-import { discoverBeans, type BeanTree } from '../src/core/discovery.js';
+import { auditMilestone, auditTask, auditTree } from '../src/core/audit.js';
+import type { Bean } from '../src/core/bean.js';
+import { buildTree, discoverBeans, type BeanTree } from '../src/core/discovery.js';
 
 const fixtures = fileURLToPath(new URL('./fixtures', import.meta.url));
 
@@ -38,5 +39,30 @@ describe('auditTask', () => {
     const results = auditTree(tree);
     const ids = results.map((r) => r.task.id).sort();
     expect(ids).toEqual(['beanflow-cccc', 'beanflow-dddd', 'beanflow-eeee', 'beanflow-ffff'].sort());
+  });
+});
+
+describe('auditMilestone', () => {
+  const milestone = (body: string): Bean => ({
+    id: 'm',
+    path: '.beans/m.md',
+    title: 'Milestone',
+    status: 'todo',
+    type: 'feature',
+    parent: null,
+    blockedBy: [],
+    body,
+    priority: 'normal',
+    createdAt: 't0',
+  });
+
+  it('requires an explicit checkpoint checklist', () => {
+    const valid = milestone('## Milestone checkpoint\n\n- [ ] `pnpm test`');
+    expect(auditMilestone(valid, buildTree([valid])).passed).toBe(true);
+
+    const missing = milestone('Container only.');
+    const result = auditMilestone(missing, buildTree([missing]));
+    expect(result.passed).toBe(false);
+    expect(result.findings.find((finding) => finding.check === 'milestone-checkpoint')?.pass).toBe(false);
   });
 });

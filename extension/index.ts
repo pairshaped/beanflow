@@ -104,7 +104,9 @@ export default function (pi: ExtensionAPI) {
             };
           }
           const s = statusOf(state);
-          const text = `Run ${runId}: phase=${s.phase}, selected=${s.selectedTask?.id ?? "none"}, blockers=${s.blockers.length}.`;
+          const selected = s.selectedTask?.id ?? s.selectedMilestone?.id ?? "none";
+          const checkpoint = s.selectedMilestone ? "Milestone" : s.selectedTask ? "Task" : "none";
+          const text = `Run ${runId}: phase=${s.phase}, checkpoint=${checkpoint}, selected=${selected}, blockers=${s.blockers.length}.`;
           return { content: [{ type: "text", text }], details: {} };
         }
         case "resume": {
